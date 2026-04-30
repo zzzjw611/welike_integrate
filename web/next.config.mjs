@@ -5,7 +5,6 @@ const nextConfig = {
   },
   webpack: (config, { isServer }) => {
     if (isServer) {
-      config.resolve.alias["@gtm"] = false;
       config.resolve.extensionAlias = {
         ".js": [".ts", ".tsx", ".js", ".jsx"],
         ".mjs": [".mts", ".mjs"],
