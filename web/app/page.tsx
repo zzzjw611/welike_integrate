@@ -70,6 +70,48 @@ export default function Home() {
           <div className="absolute inset-0">
             <div className="pixel-grid" />
             <div className="signal-wave" />
+
+            {/* Animated SVG wave lines — live neural signal */}
+            <div className="absolute inset-0 overflow-hidden pointer-events-none">
+              <svg
+                className="absolute inset-0 w-full h-full"
+                viewBox="0 0 1200 600"
+                preserveAspectRatio="none"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                {/* Wave 1 — teal, slow, wider amplitude */}
+                <path
+                  className="animate-wave-1"
+                  d="M-100 300 Q 50 180, 200 300 T 500 300 T 800 300 T 1100 300 T 1400 300"
+                  fill="none"
+                  stroke="#06f5b7"
+                  strokeWidth="1.5"
+                  opacity="0.08"
+                  style={{ filter: 'blur(3px)' }}
+                />
+                {/* Wave 2 — white, even slower, different phase */}
+                <path
+                  className="animate-wave-2"
+                  d="M-100 350 Q 100 240, 300 350 T 700 350 T 1100 350 T 1500 350"
+                  fill="none"
+                  stroke="#ffffff"
+                  strokeWidth="1"
+                  opacity="0.05"
+                  style={{ filter: 'blur(4px)' }}
+                />
+                {/* Wave 3 — teal, slowest, offset position */}
+                <path
+                  className="animate-wave-3"
+                  d="M-100 250 Q 150 160, 400 250 T 900 250 T 1400 250"
+                  fill="none"
+                  stroke="#06f5b7"
+                  strokeWidth="1"
+                  opacity="0.06"
+                  style={{ filter: 'blur(2px)' }}
+                />
+              </svg>
+            </div>
+
             {/* Neural dot cluster — top right */}
             <div className="absolute top-0 right-0 w-96 h-96 opacity-30">
               <div className="bg-neural w-full h-full" />
@@ -77,6 +119,7 @@ export default function Home() {
             {/* Subtle brand gradient glow — bottom left */}
             <div className="absolute -bottom-32 -left-32 w-96 h-96 bg-brand-500/5 rounded-full blur-3xl" />
           </div>
+
 
           {/* Content */}
           <div className="relative z-10 px-12 md:px-20 py-20 w-full">

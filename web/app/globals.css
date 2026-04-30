@@ -115,3 +115,31 @@ body {
   mask-image: radial-gradient(ellipse at 50% 50%, black 30%, transparent 70%);
   -webkit-mask-image: radial-gradient(ellipse at 50% 50%, black 30%, transparent 70%);
 }
+
+/* Animated signal wave lines */
+@keyframes wave-drift-1 {
+  0%   { transform: translateX(0); }
+  50%  { transform: translateX(-60px); }
+  100% { transform: translateX(0); }
+}
+@keyframes wave-drift-2 {
+  0%   { transform: translateX(0); }
+  50%  { transform: translateX(40px); }
+  100% { transform: translateX(0); }
+}
+@keyframes wave-drift-3 {
+  0%   { transform: translateX(0); }
+  50%  { transform: translateX(-80px); }
+  100% { transform: translateX(0); }
+}
+
+.animate-wave-1 {
+  animation: wave-drift-1 12s ease-in-out infinite;
+}
+.animate-wave-2 {
+  animation: wave-drift-2 16s ease-in-out infinite;
+}
+.animate-wave-3 {
+  animation: wave-drift-3 20s ease-in-out infinite;
+}
+
