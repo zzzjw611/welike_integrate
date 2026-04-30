@@ -232,6 +232,51 @@ body {
   100% { transform: translateX(240px) translateY(5px); opacity: 0.1; }
 }
 
+/* ===== Custom mint cursor ===== */
+.custom-cursor {
+  position: fixed;
+  pointer-events: none;
+  z-index: 9999;
+  mix-blend-mode: screen;
+  transition: width 0.3s ease-out, height 0.3s ease-out, opacity 0.3s ease-out;
+}
+
+.custom-cursor-dot {
+  width: 6px;
+  height: 6px;
+  background: #06f5b7;
+  border-radius: 50%;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  box-shadow: 0 0 6px rgba(6, 245, 183, 0.6);
+}
+
+.custom-cursor-halo {
+  width: 28px;
+  height: 28px;
+  border: 1px solid rgba(6, 245, 183, 0.25);
+  border-radius: 50%;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  transition: width 0.3s ease-out, height 0.3s ease-out, border-color 0.3s ease-out;
+}
+
+.custom-cursor.hovering .custom-cursor-halo {
+  width: 42px;
+  height: 42px;
+  border-color: rgba(6, 245, 183, 0.5);
+  box-shadow: 0 0 16px rgba(6, 245, 183, 0.2);
+}
+
+.custom-cursor.hovering .custom-cursor-dot {
+  box-shadow: 0 0 10px rgba(6, 245, 183, 0.8);
+}
+
+
 
 
 

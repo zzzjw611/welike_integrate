@@ -1,7 +1,7 @@
 "use client";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
-import { useEffect } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { ArrowRight, Radio, BarChart3, Newspaper, Code, BookOpen, Users } from "lucide-react";
 import Link from "next/link";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
@@ -11,6 +11,40 @@ export default function Home() {
   const { user, productContext, isLoading } = useAuth();
   const router = useRouter();
   const lang = useLang();
+
+  // Custom mint cursor
+  const [cursorPos, setCursorPos] = useState({ x: 0, y: 0 });
+  const [cursorHovering, setCursorHovering] = useState(false);
+
+  const handleMouseMove = useCallback((e: MouseEvent) => {
+    setCursorPos({ x: e.clientX, y: e.clientY });
+  }, []);
+
+  const handleMouseOver = useCallback((e: MouseEvent) => {
+    const target = e.target as HTMLElement;
+    if (
+      target.tagName === 'A' ||
+      target.tagName === 'BUTTON' ||
+      target.closest('a') ||
+      target.closest('button') ||
+      target.closest('[role="button"]') ||
+      target.closest('.cursor-pointer')
+    ) {
+      setCursorHovering(true);
+    } else {
+      setCursorHovering(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    window.addEventListener('mousemove', handleMouseMove);
+    window.addEventListener('mouseover', handleMouseOver);
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('mouseover', handleMouseOver);
+    };
+  }, [handleMouseMove, handleMouseOver]);
+
 
   useEffect(() => {
     if (!isLoading && user) {
@@ -31,8 +65,18 @@ export default function Home() {
   }
 
   return (
-    <div className="min-h-screen bg-surface-950 text-white overflow-x-hidden">
+    <div className="min-h-screen bg-surface-950 text-white overflow-x-hidden" style={{ cursor: 'none' }}>
+      {/* Custom mint cursor */}
+      <div
+        className={`custom-cursor${cursorHovering ? ' hovering' : ''}`}
+        style={{ left: cursorPos.x, top: cursorPos.y }}
+      >
+        <div className="custom-cursor-dot" />
+        <div className="custom-cursor-halo" />
+      </div>
+
       {/* ===== Navigation ===== */}
+
       <nav className="fixed top-0 left-0 right-0 z-50 bg-surface-950/80 backdrop-blur-sm">
         <div className="mx-auto max-w-7xl px-8 py-4 flex items-center justify-between">
           {/* Logo */}
@@ -64,12 +108,15 @@ export default function Home() {
 
       {/* ===== Hero Section ===== */}
       <section className="relative mx-auto max-w-7xl px-8 pt-28 pb-16">
-        {/* Large rounded hero container */}
-        <div className="relative rounded-3xl border border-surface-800 bg-surface-950 overflow-hidden min-h-[75vh] flex items-center">
+        {/* Large rounded hero container — enhanced panel */}
+        <div className="relative rounded-3xl border border-white/[0.07] bg-surface-950 overflow-hidden min-h-[75vh] flex items-center shadow-[inset_0_0_80px_rgba(6,245,183,0.03)]">
+          {/* Panel seam — subtle vertical division between text and tech areas */}
+          <div className="absolute left-[52%] top-[10%] bottom-[10%] w-px bg-gradient-to-b from-transparent via-white/[0.03] to-transparent z-[3] pointer-events-none" />
+
           {/* Background layers */}
           <div className="absolute inset-0">
             {/* Pixel grid — radial faded, lower opacity */}
-            <div className="absolute inset-0 opacity-40" style={{
+            <div className="absolute inset-0 opacity-35" style={{
               maskImage: 'radial-gradient(ellipse at 30% 50%, black 20%, transparent 70%)',
               WebkitMaskImage: 'radial-gradient(ellipse at 30% 50%, black 20%, transparent 70%)',
             }}>
@@ -78,6 +125,8 @@ export default function Home() {
 
             {/* Right-side signal/data matrix — richer, more layered */}
             <div className="absolute top-0 right-0 w-[48%] h-full opacity-30 pointer-events-none overflow-hidden">
+              {/* Right-side dark tech panel overlay */}
+              <div className="absolute inset-0 bg-gradient-to-l from-surface-950/40 via-surface-950/10 to-transparent" />
               {/* Faint dot matrix / signal field — right side */}
               <div className="absolute inset-0" style={{
                 backgroundImage: 'radial-gradient(circle at 1px 1px, rgba(6,245,183,0.06) 1px, transparent 1px)',
@@ -123,8 +172,24 @@ export default function Home() {
                   />
                 ))}
               </div>
+              {/* Tech annotation lines — faint crosshair marks */}
+              <div className="absolute top-[18%] right-[22%] w-3 h-3 opacity-20">
+                <div className="absolute top-1/2 left-0 right-0 h-px bg-brand-500/40" />
+                <div className="absolute left-1/2 top-0 bottom-0 w-px bg-brand-500/40" />
+              </div>
+              <div className="absolute bottom-[30%] right-[35%] w-2 h-2 opacity-15">
+                <div className="absolute top-1/2 left-0 right-0 h-px bg-white/30" />
+                <div className="absolute left-1/2 top-0 bottom-0 w-px bg-white/30" />
+              </div>
             </div>
 
+            {/* Large ambient glow fields */}
+            {/* 1. Ribbon-area glow — mid-right */}
+            <div className="absolute top-[35%] right-[20%] w-[40%] h-[40%] bg-brand-500/5 rounded-full blur-[120px] pointer-events-none" />
+            {/* 2. Bottom-right energy field */}
+            <div className="absolute bottom-[5%] right-[10%] w-[30%] h-[30%] bg-brand-500/4 rounded-full blur-[100px] pointer-events-none" />
+            {/* 3. Top-right ambient */}
+            <div className="absolute top-[5%] right-[5%] w-[25%] h-[25%] bg-brand-500/3 rounded-full blur-[80px] pointer-events-none" />
 
             {/* Readability mask — dark radial gradient behind headline area */}
             <div
@@ -233,6 +298,7 @@ export default function Home() {
             {/* Subtle brand gradient glow — bottom left */}
             <div className="absolute -bottom-32 -left-32 w-96 h-96 bg-brand-500/4 rounded-full blur-3xl" />
           </div>
+
 
           {/* Content — left-center composition */}
           <div className="relative z-10 px-12 md:px-20 py-24 w-full md:w-[88%] md:ml-[6%]">
