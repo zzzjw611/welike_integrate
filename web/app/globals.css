@@ -232,8 +232,73 @@ body {
   100% { transform: translateX(240px) translateY(5px); opacity: 0.1; }
 }
 
+/* ===== Big flowing ribbon system — larger presence ===== */
+.big-ribbon-glow {
+  animation: bigRibbonGlowMove 18s ease-in-out infinite alternate;
+}
+.big-ribbon-band {
+  animation: bigRibbonBandMove 14s ease-in-out infinite alternate;
+}
+.big-ribbon-signal {
+  animation: bigRibbonSignalMove 20s ease-in-out infinite alternate;
+}
+
+@keyframes bigRibbonGlowMove {
+  0% {
+    transform: translateX(0px) translateY(0px) scaleY(1);
+    opacity: 0.12;
+  }
+  33% {
+    transform: translateX(-40px) translateY(15px) scaleY(1.04);
+    opacity: 0.16;
+  }
+  66% {
+    transform: translateX(30px) translateY(-10px) scaleY(0.97);
+    opacity: 0.14;
+  }
+  100% {
+    transform: translateX(-20px) translateY(8px) scaleY(1.02);
+    opacity: 0.11;
+  }
+}
+
+@keyframes bigRibbonBandMove {
+  0% {
+    transform: translateX(0px) translateY(0px);
+    opacity: 0.18;
+  }
+  50% {
+    transform: translateX(25px) translateY(-8px);
+    opacity: 0.24;
+  }
+  100% {
+    transform: translateX(-15px) translateY(6px);
+    opacity: 0.16;
+  }
+}
+
+@keyframes bigRibbonSignalMove {
+  0% {
+    transform: translateX(0px) translateY(0px);
+    opacity: 0.35;
+  }
+  33% {
+    transform: translateX(-30px) translateY(12px);
+    opacity: 0.50;
+  }
+  66% {
+    transform: translateX(20px) translateY(-6px);
+    opacity: 0.40;
+  }
+  100% {
+    transform: translateX(-10px) translateY(4px);
+    opacity: 0.30;
+  }
+}
+
 /* ===== Custom mint cursor ===== */
 .custom-cursor {
+
   position: fixed;
   pointer-events: none;
   z-index: 9999;

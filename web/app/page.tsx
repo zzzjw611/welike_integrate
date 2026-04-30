@@ -199,7 +199,88 @@ export default function Home() {
               }}
             />
 
-            {/* Enhanced 3-layer animated wave system with particles */}
+            {/* ===== NEW: Large flowing ribbon system — bigger presence ===== */}
+            <div className="absolute inset-0 overflow-hidden pointer-events-none z-[0]">
+              <svg
+                className="absolute inset-0 h-full w-full"
+                viewBox="0 0 1600 900"
+                preserveAspectRatio="none"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <defs>
+                  <filter id="bigRibbonGlow" x="-30%" y="-30%" width="160%" height="160%">
+                    <feGaussianBlur stdDeviation="28" result="blur" />
+                    <feMerge>
+                      <feMergeNode in="blur" />
+                      <feMergeNode in="SourceGraphic" />
+                    </feMerge>
+                  </filter>
+                  <filter id="bigRibbonBlur" x="-20%" y="-20%" width="140%" height="140%">
+                    <feGaussianBlur stdDeviation="18" />
+                  </filter>
+                  {/* Big glow body — edge-faded mint */}
+                  <linearGradient id="bigGlowBody" x1="0%" y1="0%" x2="100%" y2="0%">
+                    <stop offset="0%" stopColor="rgba(6,245,183,0.01)" />
+                    <stop offset="20%" stopColor="rgba(6,245,183,0.04)" />
+                    <stop offset="40%" stopColor="rgba(6,245,183,0.10)" />
+                    <stop offset="55%" stopColor="rgba(6,245,183,0.14)" />
+                    <stop offset="70%" stopColor="rgba(6,245,183,0.08)" />
+                    <stop offset="100%" stopColor="rgba(6,245,183,0.01)" />
+                  </linearGradient>
+                  {/* Main ribbon band */}
+                  <linearGradient id="bigRibbonBand" x1="0%" y1="0%" x2="100%" y2="0%">
+                    <stop offset="0%" stopColor="rgba(6,245,183,0.01)" />
+                    <stop offset="25%" stopColor="rgba(6,245,183,0.08)" />
+                    <stop offset="45%" stopColor="rgba(6,245,183,0.18)" />
+                    <stop offset="55%" stopColor="rgba(6,245,183,0.22)" />
+                    <stop offset="70%" stopColor="rgba(6,245,183,0.10)" />
+                    <stop offset="100%" stopColor="rgba(6,245,183,0.01)" />
+                  </linearGradient>
+                  {/* Sharp signal line */}
+                  <linearGradient id="bigSignalLine" x1="0%" y1="0%" x2="100%" y2="0%">
+                    <stop offset="0%" stopColor="rgba(6,245,183,0.01)" />
+                    <stop offset="30%" stopColor="rgba(6,245,183,0.30)" />
+                    <stop offset="50%" stopColor="rgba(6,245,183,0.55)" />
+                    <stop offset="70%" stopColor="rgba(6,245,183,0.30)" />
+                    <stop offset="100%" stopColor="rgba(6,245,183,0.01)" />
+                  </linearGradient>
+                </defs>
+
+                {/* Layer 1: Big glow body — wide, soft, ambient energy field */}
+                <path
+                  className="big-ribbon-glow"
+                  d="M -300 650 C 50 420, 200 780, 500 620 S 900 380, 1200 580 S 1500 720, 1900 550"
+                  fill="none"
+                  stroke="url(#bigGlowBody)"
+                  strokeWidth="120"
+                  filter="url(#bigRibbonBlur)"
+                  strokeLinecap="round"
+                />
+
+                {/* Layer 2: Main ribbon band — structured flow */}
+                <path
+                  className="big-ribbon-band"
+                  d="M -300 650 C 50 420, 200 780, 500 620 S 900 380, 1200 580 S 1500 720, 1900 550"
+                  fill="none"
+                  stroke="url(#bigRibbonBand)"
+                  strokeWidth="18"
+                  filter="url(#bigRibbonGlow)"
+                  strokeLinecap="round"
+                />
+
+                {/* Layer 3: Sharp signal line — precision trace */}
+                <path
+                  className="big-ribbon-signal"
+                  d="M -300 650 C 50 420, 200 780, 500 620 S 900 380, 1200 580 S 1500 720, 1900 550"
+                  fill="none"
+                  stroke="url(#bigSignalLine)"
+                  strokeWidth="1.8"
+                  strokeLinecap="round"
+                />
+              </svg>
+            </div>
+
+            {/* ===== EXISTING: 3-layer animated wave system with particles ===== */}
             <div className="absolute inset-0 overflow-hidden pointer-events-none z-[1]">
               <svg
                 className="absolute inset-0 h-full w-full"
@@ -290,6 +371,7 @@ export default function Home() {
                 <circle className="wave-particle-5" cx="1400" cy="520" r="2" fill="#06f5b7" opacity="0.35" />
               </svg>
             </div>
+
 
             {/* Neural dot cluster — top right */}
             <div className="absolute top-0 right-0 w-96 h-96 opacity-25">
