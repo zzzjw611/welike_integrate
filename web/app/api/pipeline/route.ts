@@ -1,6 +1,6 @@
 import { NextRequest } from "next/server";
-import { GTMCommander } from "@gtm/agents/commander.js";
-import type { ProductInput } from "@gtm/types/context.js";
+import { GTMCommander } from "../../../../src/agents/commander";
+import type { ProductInput } from "../../../../src/types/context";
 
 export const maxDuration = 300; // 5 minutes max for long pipeline runs
 
