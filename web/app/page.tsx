@@ -68,8 +68,19 @@ export default function Home() {
         <div className="relative rounded-3xl border border-surface-800 bg-surface-950 overflow-hidden min-h-[70vh] flex items-center">
           {/* Background — pixel grid + signal wave */}
           <div className="absolute inset-0">
-            <div className="pixel-grid" />
-            <div className="signal-wave" />
+            {/* Pixel grid — reduced opacity */}
+            <div className="absolute inset-0 opacity-60">
+              <div className="pixel-grid" />
+            </div>
+            <div className="signal-wave opacity-40" />
+
+            {/* Readability mask — dark radial gradient behind headline area */}
+            <div
+              className="absolute inset-0 z-[2] pointer-events-none"
+              style={{
+                background: 'radial-gradient(circle at 28% 45%, rgba(0,0,0,0.78) 0%, rgba(0,0,0,0.48) 34%, rgba(0,0,0,0.08) 62%, rgba(0,0,0,0) 78%)',
+              }}
+            />
 
             {/* Enhanced 3-layer animated wave system */}
             <div className="absolute inset-0 overflow-hidden pointer-events-none z-[1]">
@@ -88,17 +99,18 @@ export default function Home() {
                     </feMerge>
                   </filter>
                   <linearGradient id="waveGradient" x1="0%" y1="0%" x2="100%" y2="0%">
-                    <stop offset="0%" stopColor="rgba(6,245,183,0.05)" />
-                    <stop offset="35%" stopColor="rgba(6,245,183,0.22)" />
-                    <stop offset="50%" stopColor="rgba(6,245,183,0.38)" />
-                    <stop offset="70%" stopColor="rgba(6,245,183,0.18)" />
-                    <stop offset="100%" stopColor="rgba(6,245,183,0.04)" />
+                    <stop offset="0%" stopColor="rgba(6,245,183,0.03)" />
+                    <stop offset="35%" stopColor="rgba(6,245,183,0.14)" />
+                    <stop offset="50%" stopColor="rgba(6,245,183,0.22)" />
+                    <stop offset="70%" stopColor="rgba(6,245,183,0.12)" />
+                    <stop offset="100%" stopColor="rgba(6,245,183,0.02)" />
                   </linearGradient>
                   <linearGradient id="thinWave" x1="0%" y1="0%" x2="100%" y2="0%">
-                    <stop offset="0%" stopColor="rgba(255,255,255,0.02)" />
-                    <stop offset="50%" stopColor="rgba(6,245,183,0.18)" />
-                    <stop offset="100%" stopColor="rgba(255,255,255,0.02)" />
+                    <stop offset="0%" stopColor="rgba(255,255,255,0.01)" />
+                    <stop offset="50%" stopColor="rgba(6,245,183,0.12)" />
+                    <stop offset="100%" stopColor="rgba(255,255,255,0.01)" />
                   </linearGradient>
+
                 </defs>
 
                 {/* Layer 1: Main blurred wave band — thick, glowing, atmospheric */}

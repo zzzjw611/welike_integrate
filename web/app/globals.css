@@ -116,7 +116,7 @@ body {
   -webkit-mask-image: radial-gradient(ellipse at 50% 50%, black 30%, transparent 70%);
 }
 
-/* ===== Enhanced 3-layer wave system ===== */
+/* ===== Refined 3-layer wave system — lower opacity, shifted right/down ===== */
 .wave-band {
   animation: waveBandMove 14s ease-in-out infinite alternate;
 }
@@ -132,63 +132,64 @@ body {
 
 @keyframes waveBandMove {
   0% {
-    transform: translateX(0px) translateY(0px) scaleY(1);
-    opacity: 0.75;
+    transform: translateX(90px) translateY(80px) scaleY(1);
+    opacity: 0.18;
   }
   50% {
-    transform: translateX(-35px) translateY(12px) scaleY(1.06);
-    opacity: 0.95;
+    transform: translateX(55px) translateY(92px) scaleY(1.06);
+    opacity: 0.24;
   }
   100% {
-    transform: translateX(28px) translateY(-10px) scaleY(0.98);
-    opacity: 0.72;
+    transform: translateX(118px) translateY(70px) scaleY(0.98);
+    opacity: 0.16;
   }
 }
 
 @keyframes waveMainMove {
   0% {
-    transform: translateX(0px) translateY(0px);
-    opacity: 0.52;
+    transform: translateX(90px) translateY(80px);
+    opacity: 0.45;
   }
   50% {
-    transform: translateX(30px) translateY(-8px);
-    opacity: 0.82;
+    transform: translateX(120px) translateY(72px);
+    opacity: 0.65;
   }
   100% {
-    transform: translateX(-24px) translateY(6px);
-    opacity: 0.58;
+    transform: translateX(66px) translateY(86px);
+    opacity: 0.48;
   }
 }
 
 @keyframes waveSecondary1 {
   0% {
-    transform: translateX(0px) translateY(0px);
-    opacity: 0.18;
+    transform: translateX(90px) translateY(80px);
+    opacity: 0.12;
   }
   50% {
-    transform: translateX(-28px) translateY(10px);
-    opacity: 0.28;
+    transform: translateX(62px) translateY(90px);
+    opacity: 0.18;
   }
   100% {
-    transform: translateX(16px) translateY(-8px);
-    opacity: 0.16;
+    transform: translateX(106px) translateY(72px);
+    opacity: 0.10;
   }
 }
 
 @keyframes waveSecondary2 {
   0% {
-    transform: translateX(0px) translateY(0px);
-    opacity: 0.08;
+    transform: translateX(90px) translateY(80px);
+    opacity: 0.06;
   }
   50% {
-    transform: translateX(36px) translateY(-12px);
-    opacity: 0.12;
+    transform: translateX(126px) translateY(68px);
+    opacity: 0.10;
   }
   100% {
-    transform: translateX(-20px) translateY(8px);
-    opacity: 0.07;
+    transform: translateX(70px) translateY(88px);
+    opacity: 0.05;
   }
 }
+
 
 
 
