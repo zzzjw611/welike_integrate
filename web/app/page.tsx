@@ -1,7 +1,7 @@
 "use client";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
-import { useEffect } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 
 import { ArrowRight, Radio, BarChart3, Newspaper, Code, BookOpen, Users } from "lucide-react";
 import Link from "next/link";
@@ -12,6 +12,38 @@ export default function Home() {
   const { user, productContext, isLoading } = useAuth();
   const router = useRouter();
   const lang = useLang();
+  const heroRef = useRef<HTMLDivElement>(null);
+
+  // Mouse-driven rendered spotlight — large, soft, no visible cursor object
+  const [spotlight, setSpotlight] = useState({ x: 50, y: 50, active: false });
+  const spotlightRef = useRef<{ x: number; y: number; active: boolean }>({ x: 50, y: 50, active: false });
+  const rafRef = useRef<number | null>(null);
+
+  const handleHeroMouseMove = useCallback((e: React.MouseEvent) => {
+    if (!heroRef.current) return;
+    const rect = heroRef.current.getBoundingClientRect();
+    const x = ((e.clientX - rect.left) / rect.width) * 100;
+    const y = ((e.clientY - rect.top) / rect.height) * 100;
+    spotlightRef.current = { x, y, active: true };
+    if (!rafRef.current) {
+      rafRef.current = requestAnimationFrame(() => {
+        setSpotlight({ ...spotlightRef.current });
+        rafRef.current = null;
+      });
+    }
+  }, []);
+
+  const handleHeroMouseLeave = useCallback(() => {
+    spotlightRef.current.active = false;
+    setSpotlight({ x: spotlightRef.current.x, y: spotlightRef.current.y, active: false });
+  }, []);
+
+
+  useEffect(() => {
+    return () => {
+      if (rafRef.current) cancelAnimationFrame(rafRef.current);
+    };
+  }, []);
 
   useEffect(() => {
 
@@ -23,6 +55,7 @@ export default function Home() {
       }
     }
   }, [user, productContext, isLoading, router]);
+
 
   if (isLoading) {
     return (
@@ -68,7 +101,13 @@ export default function Home() {
       {/* ===== Hero Section ===== */}
       <section className="relative mx-auto max-w-7xl px-8 pt-28 pb-16">
         {/* Large rounded hero container — enhanced panel */}
-        <div className="relative rounded-3xl border border-white/[0.07] bg-surface-950 overflow-hidden min-h-[75vh] flex items-center shadow-[inset_0_0_80px_rgba(6,245,183,0.03)]">
+        <div
+          ref={heroRef}
+          onMouseMove={handleHeroMouseMove}
+          onMouseLeave={handleHeroMouseLeave}
+          className="relative rounded-3xl border border-white/[0.07] bg-surface-950 overflow-hidden min-h-[75vh] flex items-center shadow-[inset_0_0_80px_rgba(6,245,183,0.03)]"
+        >
+
           {/* Panel seam — subtle vertical division between text and tech areas */}
           <div className="absolute left-[52%] top-[10%] bottom-[10%] w-px bg-gradient-to-b from-transparent via-white/[0.03] to-transparent z-[3] pointer-events-none" />
 
@@ -157,6 +196,16 @@ export default function Home() {
                 background: 'radial-gradient(circle at 28% 45%, rgba(0,0,0,0.82) 0%, rgba(0,0,0,0.48) 34%, rgba(0,0,0,0.06) 62%, rgba(0,0,0,0) 78%)',
               }}
             />
+
+            {/* Mouse-driven rendered spotlight — large, soft, no visible cursor object */}
+            <div
+              className="absolute inset-0 z-[3] pointer-events-none transition-opacity duration-500 ease-out"
+              style={{
+                opacity: spotlight.active ? 1 : 0,
+                background: `radial-gradient(circle at ${spotlight.x}% ${spotlight.y}%, rgba(6,245,183,0.08) 0%, rgba(6,245,183,0.03) 25%, transparent 55%)`,
+              }}
+            />
+
 
             {/* ===== NEW: Large flowing ribbon system — bigger presence ===== */}
             <div className="absolute inset-0 overflow-hidden pointer-events-none z-[0]">
@@ -338,7 +387,23 @@ export default function Home() {
             </div>
             {/* Subtle brand gradient glow — bottom left */}
             <div className="absolute -bottom-32 -left-32 w-96 h-96 bg-brand-500/4 rounded-full blur-3xl" />
+
+            {/* Scanning sweep — ultra-slow vertical light sweep across right area */}
+            <div className="absolute top-0 right-0 w-[30%] h-full overflow-hidden pointer-events-none z-[1]">
+              <div className="scanning-sweep absolute inset-0 bg-gradient-to-r from-transparent via-brand-500/[0.04] to-transparent" />
+            </div>
+
+            {/* Drifting particles — slow floating dots near ribbon area */}
+            <div className="absolute inset-0 pointer-events-none z-[1] overflow-hidden">
+              <div className="drift-particle-1 absolute top-[30%] right-[25%] w-1 h-1 rounded-full bg-brand-500/30" />
+              <div className="drift-particle-2 absolute top-[50%] right-[35%] w-[3px] h-[3px] rounded-full bg-white/20" />
+              <div className="drift-particle-3 absolute top-[65%] right-[20%] w-[2px] h-[2px] rounded-full bg-brand-500/25" />
+              <div className="drift-particle-4 absolute top-[40%] right-[40%] w-[2px] h-[2px] rounded-full bg-brand-500/20" />
+              <div className="drift-particle-5 absolute top-[55%] right-[15%] w-1 h-1 rounded-full bg-white/15" />
+              <div className="drift-particle-6 absolute top-[70%] right-[30%] w-[2px] h-[2px] rounded-full bg-brand-500/20" />
+            </div>
           </div>
+
 
 
           {/* Content — left-center composition */}
