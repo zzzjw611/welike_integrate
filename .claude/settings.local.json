@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(rm -rf .next)",
+      "Bash(npm run *)",
+      "Bash(vercel --version)",
+      "Bash(ls -la web/.vercel)",
+      "Bash(python3 -c \"import json,sys; d=json.load\\(sys.stdin\\); print\\('rewrites:', d.get\\('rewrites'\\)\\); print\\('redirects:', d.get\\('redirects'\\)\\); print\\('headers:', d.get\\('headers'\\)\\)\")",
+      "Bash(python3 -m json.tool)"
+    ]
+  }
+}
