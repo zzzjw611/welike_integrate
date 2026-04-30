@@ -296,15 +296,20 @@ export default function Home() {
           ].map((f) => (
             <div
               key={f.title}
-              className="group rounded-2xl border border-surface-800 bg-surface-900/50 p-8 hover:border-brand-500/20 hover:bg-surface-900 transition-all duration-300"
+              className="group relative cursor-pointer rounded-2xl border border-surface-800 bg-surface-900/50 p-8 transition-all duration-300 ease-out hover:-translate-y-2 hover:border-brand-500/60 hover:bg-surface-900 hover:shadow-[0_0_0_1px_rgba(6,245,183,0.15),0_24px_80px_rgba(6,245,183,0.12)]"
             >
-              <div className="h-10 w-10 rounded-xl border border-surface-700 bg-surface-800/50 flex items-center justify-center mb-5 group-hover:border-brand-500/30 group-hover:bg-brand-500/5 transition-colors">
-                <f.icon className="h-5 w-5 text-brand-500" />
+              {/* Hover radial highlight */}
+              <div className="pointer-events-none absolute inset-0 rounded-2xl opacity-0 transition-opacity duration-300 group-hover:opacity-100 bg-[radial-gradient(circle_at_70%_20%,rgba(6,245,183,0.12),transparent_38%)]" />
+              <div className="relative z-10">
+                <div className="h-10 w-10 rounded-xl border border-surface-700 bg-surface-800/50 flex items-center justify-center mb-5 transition-all duration-300 ease-out group-hover:border-brand-500/50 group-hover:bg-brand-500/10 group-hover:shadow-[0_0_24px_rgba(6,245,183,0.2)]">
+                  <f.icon className="h-5 w-5 text-brand-500 transition-all duration-300 group-hover:drop-shadow-[0_0_8px_rgba(6,245,183,0.75)]" />
+                </div>
+                <h3 className="text-base font-semibold mb-3 leading-snug text-white">{f.title}</h3>
+                <p className="text-sm text-surface-500 leading-relaxed font-light">{f.desc}</p>
               </div>
-              <h3 className="text-base font-semibold mb-3 leading-snug text-white">{f.title}</h3>
-              <p className="text-sm text-surface-500 leading-relaxed font-light">{f.desc}</p>
             </div>
           ))}
+
         </div>
       </section>
 
@@ -338,15 +343,20 @@ export default function Home() {
           ].map((f) => (
             <div
               key={f.title}
-              className="group rounded-2xl border border-surface-800 bg-surface-900/30 p-7 hover:border-surface-700 hover:bg-surface-900/60 transition-all duration-300"
+              className="group relative cursor-pointer rounded-2xl border border-surface-800 bg-surface-900/30 p-7 transition-all duration-300 ease-out hover:-translate-y-2 hover:border-brand-500/60 hover:bg-surface-900/60 hover:shadow-[0_0_0_1px_rgba(6,245,183,0.15),0_24px_80px_rgba(6,245,183,0.12)]"
             >
-              <div className="h-10 w-10 rounded-xl border border-surface-700 bg-surface-800/30 flex items-center justify-center mb-4 group-hover:border-brand-500/30 group-hover:bg-brand-500/5 transition-colors">
-                <f.icon className="h-5 w-5 text-brand-500" />
+              {/* Hover radial highlight */}
+              <div className="pointer-events-none absolute inset-0 rounded-2xl opacity-0 transition-opacity duration-300 group-hover:opacity-100 bg-[radial-gradient(circle_at_70%_20%,rgba(6,245,183,0.12),transparent_38%)]" />
+              <div className="relative z-10">
+                <div className="h-10 w-10 rounded-xl border border-surface-700 bg-surface-800/30 flex items-center justify-center mb-4 transition-all duration-300 ease-out group-hover:border-brand-500/50 group-hover:bg-brand-500/10 group-hover:shadow-[0_0_24px_rgba(6,245,183,0.2)]">
+                  <f.icon className="h-5 w-5 text-brand-500 transition-all duration-300 group-hover:drop-shadow-[0_0_8px_rgba(6,245,183,0.75)]" />
+                </div>
+                <h3 className="text-sm font-semibold mb-2 text-white">{f.title}</h3>
+                <p className="text-sm text-surface-500 font-light leading-relaxed">{f.desc}</p>
               </div>
-              <h3 className="text-sm font-semibold mb-2 text-white">{f.title}</h3>
-              <p className="text-sm text-surface-500 font-light leading-relaxed">{f.desc}</p>
             </div>
           ))}
+
         </div>
       </section>
 
