@@ -1,8 +1,13 @@
 import { Pool } from 'pg';
 import type { Article, ContentCandidate, DailyContent } from '@/lib/types';
 
+// Force IPv4 to avoid ENETUNREACH on Vercel (IPv6 not supported)
+const DATABASE_URL = process.env.DATABASE_URL 
+  ? process.env.DATABASE_URL + (process.env.DATABASE_URL.includes('?') ? '&' : '?') + 'family=4'
+  : undefined;
+
 const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
+  connectionString: DATABASE_URL,
   max: 20,
   idleTimeoutMillis: 30000,
   connectionTimeoutMillis: 2000,
