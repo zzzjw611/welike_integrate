@@ -116,30 +116,67 @@ body {
   -webkit-mask-image: radial-gradient(ellipse at 50% 50%, black 30%, transparent 70%);
 }
 
-/* Animated signal wave lines */
-@keyframes wave-drift-1 {
-  0%   { transform: translateX(0); }
-  50%  { transform: translateX(-60px); }
-  100% { transform: translateX(0); }
-}
-@keyframes wave-drift-2 {
-  0%   { transform: translateX(0); }
-  50%  { transform: translateX(40px); }
-  100% { transform: translateX(0); }
-}
-@keyframes wave-drift-3 {
-  0%   { transform: translateX(0); }
-  50%  { transform: translateX(-80px); }
-  100% { transform: translateX(0); }
+/* Animated signal wave lines — premium ambient drift */
+.wave {
+  transform-box: fill-box;
+  transform-origin: center;
 }
 
-.animate-wave-1 {
-  animation: wave-drift-1 12s ease-in-out infinite;
+.wave-1 {
+  animation: driftWave1 14s ease-in-out infinite alternate;
 }
-.animate-wave-2 {
-  animation: wave-drift-2 16s ease-in-out infinite;
+
+.wave-2 {
+  animation: driftWave2 18s ease-in-out infinite alternate;
 }
-.animate-wave-3 {
-  animation: wave-drift-3 20s ease-in-out infinite;
+
+.wave-3 {
+  animation: driftWave3 22s ease-in-out infinite alternate;
 }
+
+@keyframes driftWave1 {
+  0% {
+    transform: translateX(0px) translateY(0px);
+    opacity: 0.18;
+  }
+  50% {
+    transform: translateX(-30px) translateY(8px);
+    opacity: 0.28;
+  }
+  100% {
+    transform: translateX(20px) translateY(-6px);
+    opacity: 0.16;
+  }
+}
+
+@keyframes driftWave2 {
+  0% {
+    transform: translateX(0px) translateY(0px);
+    opacity: 0.1;
+  }
+  50% {
+    transform: translateX(40px) translateY(-10px);
+    opacity: 0.16;
+  }
+  100% {
+    transform: translateX(-20px) translateY(6px);
+    opacity: 0.08;
+  }
+}
+
+@keyframes driftWave3 {
+  0% {
+    transform: translateX(0px) translateY(0px);
+    opacity: 0.05;
+  }
+  50% {
+    transform: translateX(-24px) translateY(10px);
+    opacity: 0.09;
+  }
+  100% {
+    transform: translateX(18px) translateY(-8px);
+    opacity: 0.04;
+  }
+}
+
 

@@ -72,45 +72,53 @@ export default function Home() {
             <div className="signal-wave" />
 
             {/* Animated SVG wave lines — live neural signal */}
-            <div className="absolute inset-0 overflow-hidden pointer-events-none">
+            <div className="absolute inset-0 overflow-hidden pointer-events-none z-[1]">
               <svg
                 className="absolute inset-0 w-full h-full"
-                viewBox="0 0 1200 600"
+                viewBox="0 0 1600 700"
                 preserveAspectRatio="none"
                 xmlns="http://www.w3.org/2000/svg"
               >
-                {/* Wave 1 — teal, slow, wider amplitude */}
+                <defs>
+                  <filter id="softGlow">
+                    <feGaussianBlur stdDeviation="3" result="blur" />
+                    <feMerge>
+                      <feMergeNode in="blur" />
+                      <feMergeNode in="SourceGraphic" />
+                    </feMerge>
+                  </filter>
+                </defs>
+
+                {/* Wave 1 — teal, mid-section, strongest */}
                 <path
-                  className="animate-wave-1"
-                  d="M-100 300 Q 50 180, 200 300 T 500 300 T 800 300 T 1100 300 T 1400 300"
+                  className="wave wave-1"
+                  d="M -200 420 C 50 300, 250 520, 500 420 S 950 300, 1200 430 S 1500 520, 1800 390"
                   fill="none"
-                  stroke="#06f5b7"
+                  stroke="rgba(6, 245, 183, 0.22)"
+                  strokeWidth="2"
+                  filter="url(#softGlow)"
+                />
+
+                {/* Wave 2 — teal, lower, softer */}
+                <path
+                  className="wave wave-2"
+                  d="M -200 470 C 80 380, 250 560, 520 470 S 950 360, 1220 470 S 1500 560, 1800 430"
+                  fill="none"
+                  stroke="rgba(6, 245, 183, 0.12)"
                   strokeWidth="1.5"
-                  opacity="0.08"
-                  style={{ filter: 'blur(3px)' }}
                 />
-                {/* Wave 2 — white, even slower, different phase */}
+
+                {/* Wave 3 — white, bottom, faintest */}
                 <path
-                  className="animate-wave-2"
-                  d="M-100 350 Q 100 240, 300 350 T 700 350 T 1100 350 T 1500 350"
+                  className="wave wave-3"
+                  d="M -200 520 C 100 440, 260 600, 540 520 S 980 430, 1240 540 S 1520 620, 1820 500"
                   fill="none"
-                  stroke="#ffffff"
-                  strokeWidth="1"
-                  opacity="0.05"
-                  style={{ filter: 'blur(4px)' }}
-                />
-                {/* Wave 3 — teal, slowest, offset position */}
-                <path
-                  className="animate-wave-3"
-                  d="M-100 250 Q 150 160, 400 250 T 900 250 T 1400 250"
-                  fill="none"
-                  stroke="#06f5b7"
-                  strokeWidth="1"
-                  opacity="0.06"
-                  style={{ filter: 'blur(2px)' }}
+                  stroke="rgba(255, 255, 255, 0.06)"
+                  strokeWidth="1.2"
                 />
               </svg>
             </div>
+
 
             {/* Neural dot cluster — top right */}
             <div className="absolute top-0 right-0 w-96 h-96 opacity-30">
