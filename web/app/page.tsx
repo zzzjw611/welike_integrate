@@ -288,10 +288,8 @@ export default function Home() {
                   {lang === 'zh' ? '开始' : 'Start'}
                   <ArrowRight className="h-3 w-3" />
                 </Link>
-                <span className="text-[11px] text-surface-600 font-light tracking-wide">
-                  {lang === 'zh' ? '为 AI 团队打造' : 'Built for AI teams'}
-                </span>
               </div>
+
 
             </div>
           </div>
