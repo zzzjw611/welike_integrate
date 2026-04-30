@@ -1,51 +1,22 @@
 "use client";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
-import { useEffect, useState, useCallback, useRef } from "react";
+import { useEffect } from "react";
+
 
 import { ArrowRight, Radio, BarChart3, Newspaper, Code, BookOpen, Users } from "lucide-react";
 import Link from "next/link";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
+import CursorGlow from "@/components/CursorGlow";
 import { useLang } from "@/lib/use-lang";
 
 export default function Home() {
   const { user, productContext, isLoading } = useAuth();
   const router = useRouter();
   const lang = useLang();
-  const heroRef = useRef<HTMLDivElement>(null);
-
-  // Mouse-driven rendered spotlight — large, soft, no visible cursor object
-  const [spotlight, setSpotlight] = useState({ x: 50, y: 50, active: false });
-  const spotlightRef = useRef<{ x: number; y: number; active: boolean }>({ x: 50, y: 50, active: false });
-  const rafRef = useRef<number | null>(null);
-
-  const handleHeroMouseMove = useCallback((e: React.MouseEvent) => {
-    if (!heroRef.current) return;
-    const rect = heroRef.current.getBoundingClientRect();
-    const x = ((e.clientX - rect.left) / rect.width) * 100;
-    const y = ((e.clientY - rect.top) / rect.height) * 100;
-    spotlightRef.current = { x, y, active: true };
-    if (!rafRef.current) {
-      rafRef.current = requestAnimationFrame(() => {
-        setSpotlight({ ...spotlightRef.current });
-        rafRef.current = null;
-      });
-    }
-  }, []);
-
-  const handleHeroMouseLeave = useCallback(() => {
-    spotlightRef.current.active = false;
-    setSpotlight({ x: spotlightRef.current.x, y: spotlightRef.current.y, active: false });
-  }, []);
-
 
   useEffect(() => {
-    return () => {
-      if (rafRef.current) cancelAnimationFrame(rafRef.current);
-    };
-  }, []);
 
-  useEffect(() => {
 
     if (!isLoading && user) {
       if (productContext) {
@@ -67,7 +38,11 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-surface-950 text-white overflow-x-hidden">
+      {/* Cursor glow — refined, small, only on hover-target elements */}
+      <CursorGlow />
+
       {/* ===== Navigation ===== */}
+
       <nav className="fixed top-0 left-0 right-0 z-50 bg-surface-950/80 backdrop-blur-sm">
 
         <div className="mx-auto max-w-7xl px-8 py-4 flex items-center justify-between">
@@ -101,12 +76,8 @@ export default function Home() {
       {/* ===== Hero Section ===== */}
       <section className="relative mx-auto max-w-7xl px-8 pt-28 pb-16">
         {/* Large rounded hero container — enhanced panel */}
-        <div
-          ref={heroRef}
-          onMouseMove={handleHeroMouseMove}
-          onMouseLeave={handleHeroMouseLeave}
-          className="relative rounded-3xl border border-white/[0.07] bg-surface-950 overflow-hidden min-h-[75vh] flex items-center shadow-[inset_0_0_80px_rgba(6,245,183,0.03)]"
-        >
+        <div className="hover-target relative rounded-3xl border border-white/[0.07] bg-surface-950 overflow-hidden min-h-[75vh] flex items-center shadow-[inset_0_0_80px_rgba(6,245,183,0.03)]">
+
 
           {/* Panel seam — subtle vertical division between text and tech areas */}
           <div className="absolute left-[52%] top-[10%] bottom-[10%] w-px bg-gradient-to-b from-transparent via-white/[0.03] to-transparent z-[3] pointer-events-none" />
@@ -197,17 +168,8 @@ export default function Home() {
               }}
             />
 
-            {/* Mouse-driven rendered spotlight — large, soft, no visible cursor object */}
-            <div
-              className="absolute inset-0 z-[3] pointer-events-none transition-opacity duration-500 ease-out"
-              style={{
-                opacity: spotlight.active ? 1 : 0,
-                background: `radial-gradient(circle at ${spotlight.x}% ${spotlight.y}%, rgba(6,245,183,0.08) 0%, rgba(6,245,183,0.03) 25%, transparent 55%)`,
-              }}
-            />
-
-
             {/* ===== NEW: Large flowing ribbon system — bigger presence ===== */}
+
             <div className="absolute inset-0 overflow-hidden pointer-events-none z-[0]">
               <svg
                 className="absolute inset-0 h-full w-full"
@@ -496,8 +458,9 @@ export default function Home() {
           ].map((f) => (
             <div
               key={f.title}
-              className="group relative cursor-pointer rounded-2xl border border-surface-800 bg-surface-900/50 p-8 transition-all duration-300 ease-out hover:-translate-y-2 hover:border-brand-500/60 hover:bg-surface-900 hover:shadow-[0_0_0_1px_rgba(6,245,183,0.15),0_24px_80px_rgba(6,245,183,0.12)]"
+              className="hover-target group relative cursor-pointer rounded-2xl border border-surface-800 bg-surface-900/50 p-8 transition-all duration-300 ease-out hover:-translate-y-2 hover:border-brand-500/60 hover:bg-surface-900 hover:shadow-[0_0_0_1px_rgba(6,245,183,0.15),0_24px_80px_rgba(6,245,183,0.12)]"
             >
+
               {/* Hover radial highlight */}
               <div className="pointer-events-none absolute inset-0 rounded-2xl opacity-0 transition-opacity duration-300 group-hover:opacity-100 bg-[radial-gradient(circle_at_70%_20%,rgba(6,245,183,0.12),transparent_38%)]" />
               <div className="relative z-10">
@@ -543,8 +506,9 @@ export default function Home() {
           ].map((f) => (
             <div
               key={f.title}
-              className="group relative cursor-pointer rounded-2xl border border-surface-800 bg-surface-900/30 p-7 transition-all duration-300 ease-out hover:-translate-y-2 hover:border-brand-500/60 hover:bg-surface-900/60 hover:shadow-[0_0_0_1px_rgba(6,245,183,0.15),0_24px_80px_rgba(6,245,183,0.12)]"
+              className="hover-target group relative cursor-pointer rounded-2xl border border-surface-800 bg-surface-900/30 p-7 transition-all duration-300 ease-out hover:-translate-y-2 hover:border-brand-500/60 hover:bg-surface-900/60 hover:shadow-[0_0_0_1px_rgba(6,245,183,0.15),0_24px_80px_rgba(6,245,183,0.12)]"
             >
+
               {/* Hover radial highlight */}
               <div className="pointer-events-none absolute inset-0 rounded-2xl opacity-0 transition-opacity duration-300 group-hover:opacity-100 bg-[radial-gradient(circle_at_70%_20%,rgba(6,245,183,0.12),transparent_38%)]" />
               <div className="relative z-10">
