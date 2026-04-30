@@ -71,53 +71,79 @@ export default function Home() {
             <div className="pixel-grid" />
             <div className="signal-wave" />
 
-            {/* Animated SVG wave lines — live neural signal */}
+            {/* Enhanced 3-layer animated wave system */}
             <div className="absolute inset-0 overflow-hidden pointer-events-none z-[1]">
               <svg
-                className="absolute inset-0 w-full h-full"
-                viewBox="0 0 1600 700"
+                className="absolute inset-0 h-full w-full"
+                viewBox="0 0 1600 900"
                 preserveAspectRatio="none"
                 xmlns="http://www.w3.org/2000/svg"
               >
                 <defs>
-                  <filter id="softGlow">
-                    <feGaussianBlur stdDeviation="3" result="blur" />
+                  <filter id="waveGlow" x="-20%" y="-20%" width="140%" height="140%">
+                    <feGaussianBlur stdDeviation="14" result="blur" />
                     <feMerge>
                       <feMergeNode in="blur" />
                       <feMergeNode in="SourceGraphic" />
                     </feMerge>
                   </filter>
+                  <linearGradient id="waveGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                    <stop offset="0%" stopColor="rgba(6,245,183,0.05)" />
+                    <stop offset="35%" stopColor="rgba(6,245,183,0.22)" />
+                    <stop offset="50%" stopColor="rgba(6,245,183,0.38)" />
+                    <stop offset="70%" stopColor="rgba(6,245,183,0.18)" />
+                    <stop offset="100%" stopColor="rgba(6,245,183,0.04)" />
+                  </linearGradient>
+                  <linearGradient id="thinWave" x1="0%" y1="0%" x2="100%" y2="0%">
+                    <stop offset="0%" stopColor="rgba(255,255,255,0.02)" />
+                    <stop offset="50%" stopColor="rgba(6,245,183,0.18)" />
+                    <stop offset="100%" stopColor="rgba(255,255,255,0.02)" />
+                  </linearGradient>
                 </defs>
 
-                {/* Wave 1 — teal, mid-section, strongest */}
+                {/* Layer 1: Main blurred wave band — thick, glowing, atmospheric */}
                 <path
-                  className="wave wave-1"
-                  d="M -200 420 C 50 300, 250 520, 500 420 S 950 300, 1200 430 S 1500 520, 1800 390"
+                  className="wave-band"
+                  d="M -200 560 C 100 380, 320 720, 620 560 S 1080 390, 1380 560 S 1680 700, 1900 520"
                   fill="none"
-                  stroke="rgba(6, 245, 183, 0.22)"
-                  strokeWidth="2"
-                  filter="url(#softGlow)"
+                  stroke="url(#waveGradient)"
+                  strokeWidth="54"
+                  filter="url(#waveGlow)"
+                  strokeLinecap="round"
                 />
 
-                {/* Wave 2 — teal, lower, softer */}
+                {/* Layer 2: Sharp main stroke — clear teal signal line */}
                 <path
-                  className="wave wave-2"
-                  d="M -200 470 C 80 380, 250 560, 520 470 S 950 360, 1220 470 S 1500 560, 1800 430"
+                  className="wave-main"
+                  d="M -200 560 C 100 380, 320 720, 620 560 S 1080 390, 1380 560 S 1680 700, 1900 520"
                   fill="none"
-                  stroke="rgba(6, 245, 183, 0.12)"
+                  stroke="rgba(6,245,183,0.62)"
+                  strokeWidth="4"
+                  strokeLinecap="round"
+                />
+
+                {/* Layer 3a: Secondary wave — upper, thinner, gradient */}
+                <path
+                  className="wave-secondary-1"
+                  d="M -200 500 C 80 420, 320 620, 610 500 S 1060 420, 1360 520 S 1660 640, 1880 510"
+                  fill="none"
+                  stroke="url(#thinWave)"
+                  strokeWidth="2.2"
+                  strokeLinecap="round"
+                />
+
+                {/* Layer 3b: Secondary wave — lower, faint white */}
+                <path
+                  className="wave-secondary-2"
+                  d="M -200 640 C 90 560, 300 760, 620 650 S 1080 520, 1400 660 S 1680 760, 1910 620"
+                  fill="none"
+                  stroke="rgba(255,255,255,0.09)"
                   strokeWidth="1.5"
-                />
-
-                {/* Wave 3 — white, bottom, faintest */}
-                <path
-                  className="wave wave-3"
-                  d="M -200 520 C 100 440, 260 600, 540 520 S 980 430, 1240 540 S 1520 620, 1820 500"
-                  fill="none"
-                  stroke="rgba(255, 255, 255, 0.06)"
-                  strokeWidth="1.2"
+                  strokeLinecap="round"
                 />
               </svg>
             </div>
+
 
 
             {/* Neural dot cluster — top right */}

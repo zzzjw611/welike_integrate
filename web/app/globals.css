@@ -116,67 +116,79 @@ body {
   -webkit-mask-image: radial-gradient(ellipse at 50% 50%, black 30%, transparent 70%);
 }
 
-/* Animated signal wave lines — premium ambient drift */
-.wave {
-  transform-box: fill-box;
-  transform-origin: center;
+/* ===== Enhanced 3-layer wave system ===== */
+.wave-band {
+  animation: waveBandMove 14s ease-in-out infinite alternate;
+}
+.wave-main {
+  animation: waveMainMove 11s ease-in-out infinite alternate;
+}
+.wave-secondary-1 {
+  animation: waveSecondary1 16s ease-in-out infinite alternate;
+}
+.wave-secondary-2 {
+  animation: waveSecondary2 20s ease-in-out infinite alternate;
 }
 
-.wave-1 {
-  animation: driftWave1 14s ease-in-out infinite alternate;
+@keyframes waveBandMove {
+  0% {
+    transform: translateX(0px) translateY(0px) scaleY(1);
+    opacity: 0.75;
+  }
+  50% {
+    transform: translateX(-35px) translateY(12px) scaleY(1.06);
+    opacity: 0.95;
+  }
+  100% {
+    transform: translateX(28px) translateY(-10px) scaleY(0.98);
+    opacity: 0.72;
+  }
 }
 
-.wave-2 {
-  animation: driftWave2 18s ease-in-out infinite alternate;
+@keyframes waveMainMove {
+  0% {
+    transform: translateX(0px) translateY(0px);
+    opacity: 0.52;
+  }
+  50% {
+    transform: translateX(30px) translateY(-8px);
+    opacity: 0.82;
+  }
+  100% {
+    transform: translateX(-24px) translateY(6px);
+    opacity: 0.58;
+  }
 }
 
-.wave-3 {
-  animation: driftWave3 22s ease-in-out infinite alternate;
-}
-
-@keyframes driftWave1 {
+@keyframes waveSecondary1 {
   0% {
     transform: translateX(0px) translateY(0px);
     opacity: 0.18;
   }
   50% {
-    transform: translateX(-30px) translateY(8px);
+    transform: translateX(-28px) translateY(10px);
     opacity: 0.28;
   }
   100% {
-    transform: translateX(20px) translateY(-6px);
+    transform: translateX(16px) translateY(-8px);
     opacity: 0.16;
   }
 }
 
-@keyframes driftWave2 {
+@keyframes waveSecondary2 {
   0% {
     transform: translateX(0px) translateY(0px);
-    opacity: 0.1;
-  }
-  50% {
-    transform: translateX(40px) translateY(-10px);
-    opacity: 0.16;
-  }
-  100% {
-    transform: translateX(-20px) translateY(6px);
     opacity: 0.08;
   }
-}
-
-@keyframes driftWave3 {
-  0% {
-    transform: translateX(0px) translateY(0px);
-    opacity: 0.05;
-  }
   50% {
-    transform: translateX(-24px) translateY(10px);
-    opacity: 0.09;
+    transform: translateX(36px) translateY(-12px);
+    opacity: 0.12;
   }
   100% {
-    transform: translateX(18px) translateY(-8px);
-    opacity: 0.04;
+    transform: translateX(-20px) translateY(8px);
+    opacity: 0.07;
   }
 }
+
 
 
