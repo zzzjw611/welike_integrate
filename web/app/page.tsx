@@ -1,7 +1,8 @@
 "use client";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
-import { useEffect, useState, useCallback } from "react";
+import { useEffect } from "react";
+
 import { ArrowRight, Radio, BarChart3, Newspaper, Code, BookOpen, Users } from "lucide-react";
 import Link from "next/link";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
@@ -12,41 +13,8 @@ export default function Home() {
   const router = useRouter();
   const lang = useLang();
 
-  // Custom mint cursor
-  const [cursorPos, setCursorPos] = useState({ x: 0, y: 0 });
-  const [cursorHovering, setCursorHovering] = useState(false);
-
-  const handleMouseMove = useCallback((e: MouseEvent) => {
-    setCursorPos({ x: e.clientX, y: e.clientY });
-  }, []);
-
-  const handleMouseOver = useCallback((e: MouseEvent) => {
-    const target = e.target as HTMLElement;
-    if (
-      target.tagName === 'A' ||
-      target.tagName === 'BUTTON' ||
-      target.closest('a') ||
-      target.closest('button') ||
-      target.closest('[role="button"]') ||
-      target.closest('.cursor-pointer')
-    ) {
-      setCursorHovering(true);
-    } else {
-      setCursorHovering(false);
-    }
-  }, []);
-
   useEffect(() => {
-    window.addEventListener('mousemove', handleMouseMove);
-    window.addEventListener('mouseover', handleMouseOver);
-    return () => {
-      window.removeEventListener('mousemove', handleMouseMove);
-      window.removeEventListener('mouseover', handleMouseOver);
-    };
-  }, [handleMouseMove, handleMouseOver]);
 
-
-  useEffect(() => {
     if (!isLoading && user) {
       if (productContext) {
         router.push("/workspace");
@@ -65,19 +33,10 @@ export default function Home() {
   }
 
   return (
-    <div className="min-h-screen bg-surface-950 text-white overflow-x-hidden" style={{ cursor: 'none' }}>
-      {/* Custom mint cursor */}
-      <div
-        className={`custom-cursor${cursorHovering ? ' hovering' : ''}`}
-        style={{ left: cursorPos.x, top: cursorPos.y }}
-      >
-        <div className="custom-cursor-dot" />
-        <div className="custom-cursor-halo" />
-      </div>
-
+    <div className="min-h-screen bg-surface-950 text-white overflow-x-hidden">
       {/* ===== Navigation ===== */}
-
       <nav className="fixed top-0 left-0 right-0 z-50 bg-surface-950/80 backdrop-blur-sm">
+
         <div className="mx-auto max-w-7xl px-8 py-4 flex items-center justify-between">
           {/* Logo */}
           <div className="flex items-center gap-3">
