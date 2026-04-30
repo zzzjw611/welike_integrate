@@ -1,0 +1,22 @@
+{
+  "name": "ai-marketer-daily-bot",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "tsx src/index.ts",
+    "build": "tsc",
+    "start": "node dist/index.js"
+  },
+  "dependencies": {
+    "dotenv": "^17.3.1",
+    "ioredis": "^5.6.1",
+    "pg": "^8.13.3",
+    "telegraf": "^4.16.3"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "@types/pg": "^8.11.14",
+    "tsx": "^4.21.0",
+    "typescript": "^5.8.3"
+  }
+}
