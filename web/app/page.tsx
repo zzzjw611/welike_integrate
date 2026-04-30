@@ -48,13 +48,13 @@ export default function Home() {
             <LanguageSwitcher current={lang} />
             <Link
               href="/login"
-              className="rounded-full border border-surface-700 bg-surface-900/60 px-5 py-2 text-sm text-surface-400 hover:text-white hover:border-surface-600 transition-colors"
+              className="rounded-full border border-surface-700 bg-surface-900/60 px-4 py-1.5 text-xs text-surface-400 hover:text-white hover:border-surface-600 transition-colors"
             >
               {lang === 'zh' ? '登录' : 'Sign in'}
             </Link>
             <Link
               href="/register"
-              className="rounded-full bg-brand-500 px-5 py-2 text-sm font-semibold text-black hover:bg-brand-400 transition-colors"
+              className="rounded-full bg-brand-500 px-4 py-1.5 text-xs font-semibold text-black hover:bg-brand-400 transition-colors"
             >
               {lang === 'zh' ? '开始' : 'Get started'}
             </Link>
@@ -65,24 +65,60 @@ export default function Home() {
       {/* ===== Hero Section ===== */}
       <section className="relative mx-auto max-w-7xl px-8 pt-28 pb-16">
         {/* Large rounded hero container */}
-        <div className="relative rounded-3xl border border-surface-800 bg-surface-950 overflow-hidden min-h-[70vh] flex items-center">
-          {/* Background — pixel grid + signal wave */}
+        <div className="relative rounded-3xl border border-surface-800 bg-surface-950 overflow-hidden min-h-[75vh] flex items-center">
+          {/* Background layers */}
           <div className="absolute inset-0">
-            {/* Pixel grid — reduced opacity */}
-            <div className="absolute inset-0 opacity-60">
+            {/* Pixel grid — radial faded, lower opacity */}
+            <div className="absolute inset-0 opacity-40" style={{
+              maskImage: 'radial-gradient(ellipse at 30% 50%, black 20%, transparent 70%)',
+              WebkitMaskImage: 'radial-gradient(ellipse at 30% 50%, black 20%, transparent 70%)',
+            }}>
               <div className="pixel-grid" />
             </div>
-            <div className="signal-wave opacity-40" />
+
+            {/* Right-side signal/data matrix — abstract technical visual */}
+            <div className="absolute top-0 right-0 w-[45%] h-full opacity-25 pointer-events-none overflow-hidden">
+              {/* Vertical signal bars */}
+              <div className="absolute inset-0 flex items-end justify-around pb-[15%]" style={{ gap: '2px' }}>
+                {[12, 28, 8, 35, 18, 42, 22, 52, 15, 30, 10, 38, 20, 45, 25, 55, 14, 32, 18, 40].map((h, i) => (
+                  <div
+                    key={i}
+                    className="w-[3px] bg-brand-500/30 rounded-t-sm"
+                    style={{
+                      height: `${h}%`,
+                      animation: `signalBar ${2 + (i % 3) * 0.5}s ease-in-out infinite alternate`,
+                      animationDelay: `${i * 0.12}s`,
+                    }}
+                  />
+                ))}
+              </div>
+              {/* Horizontal scan line */}
+              <div className="absolute top-1/3 left-0 right-0 h-px bg-gradient-to-r from-transparent via-brand-500/20 to-transparent animate-pulse" style={{ animationDuration: '4s' }} />
+              <div className="absolute top-2/3 left-0 right-0 h-px bg-gradient-to-r from-transparent via-white/10 to-transparent animate-pulse" style={{ animationDuration: '6s' }} />
+              {/* Small data dots grid */}
+              <div className="absolute bottom-[20%] right-[10%] grid grid-cols-6 gap-2 opacity-40">
+                {Array.from({ length: 18 }).map((_, i) => (
+                  <div
+                    key={i}
+                    className="h-1 w-1 rounded-full bg-brand-500/40"
+                    style={{
+                      animation: `dotPulse ${1.5 + (i % 4) * 0.3}s ease-in-out infinite alternate`,
+                      animationDelay: `${i * 0.15}s`,
+                    }}
+                  />
+                ))}
+              </div>
+            </div>
 
             {/* Readability mask — dark radial gradient behind headline area */}
             <div
               className="absolute inset-0 z-[2] pointer-events-none"
               style={{
-                background: 'radial-gradient(circle at 28% 45%, rgba(0,0,0,0.78) 0%, rgba(0,0,0,0.48) 34%, rgba(0,0,0,0.08) 62%, rgba(0,0,0,0) 78%)',
+                background: 'radial-gradient(circle at 28% 45%, rgba(0,0,0,0.82) 0%, rgba(0,0,0,0.48) 34%, rgba(0,0,0,0.06) 62%, rgba(0,0,0,0) 78%)',
               }}
             />
 
-            {/* Enhanced 3-layer animated wave system */}
+            {/* Enhanced 3-layer animated wave system with particles */}
             <div className="absolute inset-0 overflow-hidden pointer-events-none z-[1]">
               <svg
                 className="absolute inset-0 h-full w-full"
@@ -99,87 +135,91 @@ export default function Home() {
                     </feMerge>
                   </filter>
                   <linearGradient id="waveGradient" x1="0%" y1="0%" x2="100%" y2="0%">
-                    <stop offset="0%" stopColor="rgba(6,245,183,0.03)" />
-                    <stop offset="35%" stopColor="rgba(6,245,183,0.14)" />
-                    <stop offset="50%" stopColor="rgba(6,245,183,0.22)" />
-                    <stop offset="70%" stopColor="rgba(6,245,183,0.12)" />
-                    <stop offset="100%" stopColor="rgba(6,245,183,0.02)" />
+                    <stop offset="0%" stopColor="rgba(6,245,183,0.02)" />
+                    <stop offset="35%" stopColor="rgba(6,245,183,0.12)" />
+                    <stop offset="50%" stopColor="rgba(6,245,183,0.20)" />
+                    <stop offset="70%" stopColor="rgba(6,245,183,0.10)" />
+                    <stop offset="100%" stopColor="rgba(6,245,183,0.01)" />
                   </linearGradient>
                   <linearGradient id="thinWave" x1="0%" y1="0%" x2="100%" y2="0%">
                     <stop offset="0%" stopColor="rgba(255,255,255,0.01)" />
-                    <stop offset="50%" stopColor="rgba(6,245,183,0.12)" />
+                    <stop offset="50%" stopColor="rgba(6,245,183,0.10)" />
                     <stop offset="100%" stopColor="rgba(255,255,255,0.01)" />
                   </linearGradient>
-
                 </defs>
 
-                {/* Layer 1: Main blurred wave band — thick, glowing, atmospheric */}
+                {/* Layer 1: Main blurred wave band */}
                 <path
                   className="wave-band"
                   d="M -200 560 C 100 380, 320 720, 620 560 S 1080 390, 1380 560 S 1680 700, 1900 520"
                   fill="none"
                   stroke="url(#waveGradient)"
-                  strokeWidth="54"
+                  strokeWidth="48"
                   filter="url(#waveGlow)"
                   strokeLinecap="round"
                 />
 
-                {/* Layer 2: Sharp main stroke — clear teal signal line */}
+                {/* Layer 2: Sharp main stroke */}
                 <path
                   className="wave-main"
                   d="M -200 560 C 100 380, 320 720, 620 560 S 1080 390, 1380 560 S 1680 700, 1900 520"
                   fill="none"
-                  stroke="rgba(6,245,183,0.62)"
-                  strokeWidth="4"
+                  stroke="rgba(6,245,183,0.55)"
+                  strokeWidth="3"
                   strokeLinecap="round"
                 />
 
-                {/* Layer 3a: Secondary wave — upper, thinner, gradient */}
+                {/* Layer 3a: Secondary wave — upper */}
                 <path
                   className="wave-secondary-1"
                   d="M -200 500 C 80 420, 320 620, 610 500 S 1060 420, 1360 520 S 1660 640, 1880 510"
                   fill="none"
                   stroke="url(#thinWave)"
-                  strokeWidth="2.2"
+                  strokeWidth="2"
                   strokeLinecap="round"
                 />
 
-                {/* Layer 3b: Secondary wave — lower, faint white */}
+                {/* Layer 3b: Secondary wave — lower */}
                 <path
                   className="wave-secondary-2"
                   d="M -200 640 C 90 560, 300 760, 620 650 S 1080 520, 1400 660 S 1680 760, 1910 620"
                   fill="none"
-                  stroke="rgba(255,255,255,0.09)"
-                  strokeWidth="1.5"
+                  stroke="rgba(255,255,255,0.07)"
+                  strokeWidth="1.2"
                   strokeLinecap="round"
                 />
+
+                {/* Animated particles along wave path — live data transmission dots */}
+                <circle className="wave-particle-1" cx="200" cy="480" r="2" fill="#06f5b7" opacity="0.6" />
+                <circle className="wave-particle-2" cx="500" cy="560" r="1.5" fill="#06f5b7" opacity="0.5" />
+                <circle className="wave-particle-3" cx="800" cy="480" r="2.5" fill="#06f5b7" opacity="0.4" />
+                <circle className="wave-particle-4" cx="1100" cy="560" r="1.8" fill="#ffffff" opacity="0.3" />
+                <circle className="wave-particle-5" cx="1400" cy="520" r="2" fill="#06f5b7" opacity="0.35" />
               </svg>
             </div>
 
-
-
             {/* Neural dot cluster — top right */}
-            <div className="absolute top-0 right-0 w-96 h-96 opacity-30">
+            <div className="absolute top-0 right-0 w-96 h-96 opacity-25">
               <div className="bg-neural w-full h-full" />
             </div>
             {/* Subtle brand gradient glow — bottom left */}
-            <div className="absolute -bottom-32 -left-32 w-96 h-96 bg-brand-500/5 rounded-full blur-3xl" />
+            <div className="absolute -bottom-32 -left-32 w-96 h-96 bg-brand-500/4 rounded-full blur-3xl" />
           </div>
 
-
           {/* Content */}
-          <div className="relative z-10 px-12 md:px-20 py-20 w-full">
+          <div className="relative z-10 px-12 md:px-20 py-24 w-full">
             <div className="max-w-3xl">
-              {/* Badge */}
-              <div className="inline-flex items-center gap-2 border border-surface-700/60 rounded-full px-4 py-1.5 mb-8">
-                <span className="h-1.5 w-1.5 rounded-full bg-brand-500" />
-                <span className="text-xs text-surface-500 tracking-wide uppercase">
+              {/* Badge — more technical */}
+              <div className="inline-flex items-center gap-2 border border-surface-700/50 rounded-full px-3.5 py-1 mb-8">
+                <span className="h-1.5 w-1.5 rounded-full bg-brand-500 animate-pulse" style={{ animationDuration: '2s' }} />
+                <span className="text-[11px] text-surface-500 tracking-widest uppercase font-medium">
                   {lang === 'zh' ? 'AI 产品的 GTM 工作台' : 'GTM Workspace for AI Products'}
                 </span>
+                <span className="text-[10px] text-surface-600 ml-1 font-mono">v0.1</span>
               </div>
 
               {/* Headline — oversized editorial */}
-              <h1 className="text-6xl md:text-7xl lg:text-8xl font-bold leading-[0.95] tracking-tight mb-8">
+              <h1 className="text-6xl md:text-7xl lg:text-8xl font-bold leading-[0.92] tracking-[-0.055em] mb-8">
                 {lang === 'zh' ? (
                   <>
                     你的 AI 产品
@@ -204,7 +244,7 @@ export default function Home() {
               </h1>
 
               {/* Subtitle */}
-              <p className="text-base md:text-lg text-surface-500 font-light leading-relaxed max-w-xl mb-12">
+              <p className="text-base md:text-lg text-surface-500 font-light leading-relaxed max-w-xl mb-10">
                 {lang === 'zh'
                   ? 'WeLike — AI 产品的 GTM 工作台。源自 100+ 次产品发布实战打磨的策略与工具。'
                   : 'WeLike is the GTM workspace for AI products. Battle-tested playbooks and tools from 100+ launches.'}
@@ -214,12 +254,12 @@ export default function Home() {
               <div className="flex items-center gap-4">
                 <Link
                   href="/register"
-                  className="inline-flex items-center gap-2 rounded-full bg-brand-500 px-6 py-3 text-sm font-semibold text-black hover:bg-brand-400 transition-colors glow-brand"
+                  className="inline-flex items-center gap-2 rounded-full bg-brand-500 px-5 py-2.5 text-xs font-semibold text-black hover:bg-brand-400 transition-colors glow-brand"
                 >
                   {lang === 'zh' ? '开始' : 'Start'}
-                  <ArrowRight className="h-3.5 w-3.5" />
+                  <ArrowRight className="h-3 w-3" />
                 </Link>
-                <span className="text-xs text-surface-600">
+                <span className="text-[11px] text-surface-600 font-mono tracking-wide">
                   {lang === 'zh' ? '无需信用卡' : 'No credit card required'}
                 </span>
               </div>
