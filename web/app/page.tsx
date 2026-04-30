@@ -76,39 +76,55 @@ export default function Home() {
               <div className="pixel-grid" />
             </div>
 
-            {/* Right-side signal/data matrix — abstract technical visual */}
-            <div className="absolute top-0 right-0 w-[45%] h-full opacity-25 pointer-events-none overflow-hidden">
-              {/* Vertical signal bars */}
-              <div className="absolute inset-0 flex items-end justify-around pb-[15%]" style={{ gap: '2px' }}>
-                {[12, 28, 8, 35, 18, 42, 22, 52, 15, 30, 10, 38, 20, 45, 25, 55, 14, 32, 18, 40].map((h, i) => (
+            {/* Right-side signal/data matrix — richer, more layered */}
+            <div className="absolute top-0 right-0 w-[48%] h-full opacity-30 pointer-events-none overflow-hidden">
+              {/* Faint dot matrix / signal field — right side */}
+              <div className="absolute inset-0" style={{
+                backgroundImage: 'radial-gradient(circle at 1px 1px, rgba(6,245,183,0.06) 1px, transparent 1px)',
+                backgroundSize: '28px 28px',
+                maskImage: 'radial-gradient(ellipse at 70% 50%, black 30%, transparent 70%)',
+                WebkitMaskImage: 'radial-gradient(ellipse at 70% 50%, black 30%, transparent 70%)',
+              }} />
+              {/* Vertical signal bars — varied widths and opacities */}
+              <div className="absolute inset-0 flex items-end justify-around pb-[12%]" style={{ gap: '1px' }}>
+                {[8, 32, 12, 42, 15, 48, 20, 58, 10, 35, 8, 45, 18, 52, 22, 62, 12, 38, 14, 48].map((h, i) => (
                   <div
                     key={i}
-                    className="w-[3px] bg-brand-500/30 rounded-t-sm"
+                    className="rounded-t-sm"
                     style={{
+                      width: i % 3 === 0 ? '4px' : i % 3 === 1 ? '2px' : '3px',
                       height: `${h}%`,
-                      animation: `signalBar ${2 + (i % 3) * 0.5}s ease-in-out infinite alternate`,
-                      animationDelay: `${i * 0.12}s`,
+                      background: i % 2 === 0
+                        ? `linear-gradient(to top, rgba(6,245,183,0.08), rgba(6,245,183,${0.15 + (h / 200)}))`
+                        : `linear-gradient(to top, rgba(255,255,255,0.04), rgba(255,255,255,${0.06 + (h / 300)}))`,
+                      animation: `signalBar ${1.8 + (i % 4) * 0.4}s ease-in-out infinite alternate`,
+                      animationDelay: `${i * 0.1}s`,
                     }}
                   />
                 ))}
               </div>
-              {/* Horizontal scan line */}
-              <div className="absolute top-1/3 left-0 right-0 h-px bg-gradient-to-r from-transparent via-brand-500/20 to-transparent animate-pulse" style={{ animationDuration: '4s' }} />
-              <div className="absolute top-2/3 left-0 right-0 h-px bg-gradient-to-r from-transparent via-white/10 to-transparent animate-pulse" style={{ animationDuration: '6s' }} />
-              {/* Small data dots grid */}
-              <div className="absolute bottom-[20%] right-[10%] grid grid-cols-6 gap-2 opacity-40">
-                {Array.from({ length: 18 }).map((_, i) => (
+              {/* Horizontal scan lines */}
+              <div className="absolute top-1/4 left-0 right-0 h-px bg-gradient-to-r from-transparent via-brand-500/15 to-transparent animate-pulse" style={{ animationDuration: '3.5s' }} />
+              <div className="absolute top-1/2 left-0 right-0 h-px bg-gradient-to-r from-transparent via-white/8 to-transparent animate-pulse" style={{ animationDuration: '5s' }} />
+              <div className="absolute top-3/4 left-0 right-0 h-px bg-gradient-to-r from-transparent via-brand-500/10 to-transparent animate-pulse" style={{ animationDuration: '4.2s' }} />
+              {/* Data dots grid — bottom right */}
+              <div className="absolute bottom-[15%] right-[8%] grid grid-cols-8 gap-1.5 opacity-35">
+                {Array.from({ length: 32 }).map((_, i) => (
                   <div
                     key={i}
-                    className="h-1 w-1 rounded-full bg-brand-500/40"
+                    className="rounded-full"
                     style={{
-                      animation: `dotPulse ${1.5 + (i % 4) * 0.3}s ease-in-out infinite alternate`,
-                      animationDelay: `${i * 0.15}s`,
+                      width: i % 3 === 0 ? '2px' : '1.5px',
+                      height: i % 3 === 0 ? '2px' : '1.5px',
+                      background: i % 2 === 0 ? 'rgba(6,245,183,0.5)' : 'rgba(255,255,255,0.3)',
+                      animation: `dotPulse ${1.2 + (i % 5) * 0.25}s ease-in-out infinite alternate`,
+                      animationDelay: `${i * 0.1}s`,
                     }}
                   />
                 ))}
               </div>
             </div>
+
 
             {/* Readability mask — dark radial gradient behind headline area */}
             <div
@@ -134,60 +150,72 @@ export default function Home() {
                       <feMergeNode in="SourceGraphic" />
                     </feMerge>
                   </filter>
-                  <linearGradient id="waveGradient" x1="0%" y1="0%" x2="100%" y2="0%">
-                    <stop offset="0%" stopColor="rgba(6,245,183,0.02)" />
-                    <stop offset="35%" stopColor="rgba(6,245,183,0.12)" />
-                    <stop offset="50%" stopColor="rgba(6,245,183,0.20)" />
-                    <stop offset="70%" stopColor="rgba(6,245,183,0.10)" />
+                  <linearGradient id="ribbonGlow" x1="0%" y1="0%" x2="100%" y2="0%">
+                    <stop offset="0%" stopColor="rgba(6,245,183,0.01)" />
+                    <stop offset="25%" stopColor="rgba(6,245,183,0.08)" />
+                    <stop offset="45%" stopColor="rgba(6,245,183,0.18)" />
+                    <stop offset="55%" stopColor="rgba(6,245,183,0.22)" />
+                    <stop offset="70%" stopColor="rgba(6,245,183,0.12)" />
                     <stop offset="100%" stopColor="rgba(6,245,183,0.01)" />
                   </linearGradient>
-                  <linearGradient id="thinWave" x1="0%" y1="0%" x2="100%" y2="0%">
-                    <stop offset="0%" stopColor="rgba(255,255,255,0.01)" />
-                    <stop offset="50%" stopColor="rgba(6,245,183,0.10)" />
-                    <stop offset="100%" stopColor="rgba(255,255,255,0.01)" />
+                  <linearGradient id="ribbonBand" x1="0%" y1="0%" x2="100%" y2="0%">
+                    <stop offset="0%" stopColor="rgba(6,245,183,0.02)" />
+                    <stop offset="30%" stopColor="rgba(6,245,183,0.15)" />
+                    <stop offset="50%" stopColor="rgba(6,245,183,0.28)" />
+                    <stop offset="70%" stopColor="rgba(6,245,183,0.15)" />
+                    <stop offset="100%" stopColor="rgba(6,245,183,0.02)" />
                   </linearGradient>
+                  <linearGradient id="signalLine" x1="0%" y1="0%" x2="100%" y2="0%">
+                    <stop offset="0%" stopColor="rgba(6,245,183,0.02)" />
+                    <stop offset="35%" stopColor="rgba(6,245,183,0.50)" />
+                    <stop offset="50%" stopColor="rgba(6,245,183,0.75)" />
+                    <stop offset="65%" stopColor="rgba(6,245,183,0.50)" />
+                    <stop offset="100%" stopColor="rgba(6,245,183,0.02)" />
+                  </linearGradient>
+
                 </defs>
 
-                {/* Layer 1: Main blurred wave band */}
+                {/* Layer 1: Soft glow ribbon — wide, blurred, edge-faded */}
                 <path
                   className="wave-band"
                   d="M -200 560 C 100 380, 320 720, 620 560 S 1080 390, 1380 560 S 1680 700, 1900 520"
                   fill="none"
-                  stroke="url(#waveGradient)"
-                  strokeWidth="48"
+                  stroke="url(#ribbonGlow)"
+                  strokeWidth="56"
                   filter="url(#waveGlow)"
                   strokeLinecap="round"
                 />
 
-                {/* Layer 2: Sharp main stroke */}
+                {/* Layer 2: Main ribbon band — more visible, edge-faded */}
                 <path
                   className="wave-main"
                   d="M -200 560 C 100 380, 320 720, 620 560 S 1080 390, 1380 560 S 1680 700, 1900 520"
                   fill="none"
-                  stroke="rgba(6,245,183,0.55)"
-                  strokeWidth="3"
+                  stroke="url(#ribbonBand)"
+                  strokeWidth="6"
                   strokeLinecap="round"
                 />
 
-                {/* Layer 3a: Secondary wave — upper */}
+                {/* Layer 3: Sharp signal line — thin, bright, edge-faded */}
                 <path
                   className="wave-secondary-1"
-                  d="M -200 500 C 80 420, 320 620, 610 500 S 1060 420, 1360 520 S 1660 640, 1880 510"
+                  d="M -200 560 C 100 380, 320 720, 620 560 S 1080 390, 1380 560 S 1680 700, 1900 520"
                   fill="none"
-                  stroke="url(#thinWave)"
-                  strokeWidth="2"
+                  stroke="url(#signalLine)"
+                  strokeWidth="1.5"
                   strokeLinecap="round"
                 />
 
-                {/* Layer 3b: Secondary wave — lower */}
+                {/* Secondary wave — upper, subtle */}
                 <path
                   className="wave-secondary-2"
-                  d="M -200 640 C 90 560, 300 760, 620 650 S 1080 520, 1400 660 S 1680 760, 1910 620"
+                  d="M -200 500 C 80 420, 320 620, 610 500 S 1060 420, 1360 520 S 1660 640, 1880 510"
                   fill="none"
-                  stroke="rgba(255,255,255,0.07)"
+                  stroke="rgba(255,255,255,0.06)"
                   strokeWidth="1.2"
                   strokeLinecap="round"
                 />
+
 
                 {/* Animated particles along wave path — live data transmission dots */}
                 <circle className="wave-particle-1" cx="200" cy="480" r="2" fill="#06f5b7" opacity="0.6" />
@@ -206,9 +234,10 @@ export default function Home() {
             <div className="absolute -bottom-32 -left-32 w-96 h-96 bg-brand-500/4 rounded-full blur-3xl" />
           </div>
 
-          {/* Content */}
-          <div className="relative z-10 px-12 md:px-20 py-24 w-full">
+          {/* Content — left-center composition */}
+          <div className="relative z-10 px-12 md:px-20 py-24 w-full md:w-[88%] md:ml-[6%]">
             <div className="max-w-3xl">
+
               {/* Badge — more technical */}
               <div className="inline-flex items-center gap-2 border border-surface-700/50 rounded-full px-3.5 py-1 mb-8">
                 <span className="h-1.5 w-1.5 rounded-full bg-brand-500 animate-pulse" style={{ animationDuration: '2s' }} />
@@ -250,7 +279,7 @@ export default function Home() {
                   : 'WeLike is the GTM workspace for AI products. Battle-tested playbooks and tools from 100+ launches.'}
               </p>
 
-              {/* CTA — compact technical */}
+              {/* CTA — clean, no microcopy */}
               <div className="flex items-center gap-4">
                 <Link
                   href="/register"
@@ -259,10 +288,11 @@ export default function Home() {
                   {lang === 'zh' ? '开始' : 'Start'}
                   <ArrowRight className="h-3 w-3" />
                 </Link>
-                <span className="text-[11px] text-surface-600 font-mono tracking-wide">
-                  {lang === 'zh' ? '无需信用卡' : 'No credit card required'}
+                <span className="text-[11px] text-surface-600 font-light tracking-wide">
+                  {lang === 'zh' ? '为 AI 团队打造' : 'Built for AI teams'}
                 </span>
               </div>
+
             </div>
           </div>
         </div>
