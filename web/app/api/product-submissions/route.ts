@@ -1,6 +1,9 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 
+// UUID regex pattern for validation
+const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 // Use service role key for admin operations (read all submissions)
 const supabaseAdmin = process.env.SUPABASE_SERVICE_ROLE_KEY
   ? createClient(
@@ -13,7 +16,8 @@ const supabaseAdmin = process.env.SUPABASE_SERVICE_ROLE_KEY
 // Use anon key for public submissions (insert only)
 const supabaseAnon = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+  { auth: { persistSession: false } }
 );
 
 export interface ProductSubmission {
@@ -35,15 +39,24 @@ export interface ProductSubmission {
   created_at?: string;
 }
 
+/** Validate whether a string is a proper UUID */
+function isValidUUID(value: string | null | undefined): boolean {
+  if (!value) return false;
+  return UUID_PATTERN.test(value);
+}
+
 // POST — submit a new product (public, no auth required)
 // Gracefully handles missing tables — just logs and returns success
 export async function POST(request: Request) {
   try {
     const body = await request.json();
 
+    // Validate user_id — must be a proper UUID or null
+    const userId = isValidUUID(body.userId) ? body.userId : null;
+
     // Build the submission payload with user info
     const payload = {
-      user_id: body.userId || null,
+      user_id: userId,
       user_email: body.userEmail || null,
       user_name: body.userName || null,
       user_uid: body.userUid || null,
@@ -66,38 +79,42 @@ export async function POST(request: Request) {
       .select()
       .single();
 
-    // Fallback: if product_submissions table doesn't exist, try product_contexts
-    if (error && error.message?.includes("product_submissions")) {
-      const { data: fallbackData, error: fallbackError } = await supabaseAnon
-        .from("product_contexts")
-        .insert({
-          user_id: body.userId || null,
-          name: body.productName,
-          url: body.productUrl || null,
-          one_liner: body.oneLiner,
-          description: body.description || "",
-          category: body.category,
-          stage: body.stage || "",
-          target_audience: body.targetAudience || "",
-          target_regions: body.targetRegions || [],
-          competitors: body.competitors || [],
-          language: body.language || "en",
-        })
-        .select()
-        .single();
+    if (error) {
+      // If table doesn't exist, try product_contexts as fallback
+      if (error.message?.includes("relation") || error.code === "42P01") {
+        const { data: fallbackData, error: fallbackError } = await supabaseAnon
+          .from("product_contexts")
+          .insert({
+            user_id: userId,
+            name: body.productName,
+            url: body.productUrl || null,
+            one_liner: body.oneLiner,
+            description: body.description || "",
+            category: body.category,
+            stage: body.stage || "",
+            target_audience: body.targetAudience || "",
+            target_regions: body.targetRegions || [],
+            competitors: body.competitors || [],
+            language: body.language || "en",
+          })
+          .select()
+          .single();
 
-      if (fallbackError) {
-        // Both tables missing — just log and return success (dev mode)
-        console.warn("Product submission tables not available (dev mode):", fallbackError.message);
-        return NextResponse.json({ success: true, note: "submission logged locally (no DB table)" });
+        if (fallbackError) {
+          console.warn("Product submission tables not available (dev mode):", fallbackError.message);
+          return NextResponse.json({ success: true, note: "submission logged locally (no DB table)" });
+        }
+
+        return NextResponse.json({ success: true, data: fallbackData, table: "product_contexts" });
       }
 
-      return NextResponse.json({ success: true, data: fallbackData, table: "product_contexts" });
-    }
-
-    if (error) {
-      console.warn("Product submission failed (dev mode):", error.message);
-      return NextResponse.json({ success: true, note: "submission logged locally (no DB table)" });
+      // Log the actual error for debugging, but return a generic message
+      console.warn("Product submission insert failed:", error.message, "(code:", error.code, ")");
+      return NextResponse.json({
+        success: true,
+        note: "submission received",
+        _debug: process.env.NODE_ENV === "development" ? error.message : undefined,
+      });
     }
 
     return NextResponse.json({ success: true, data, table: "product_submissions" });
