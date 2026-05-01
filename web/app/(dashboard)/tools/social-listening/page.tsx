@@ -1,16 +1,39 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
 import { useLang } from "@/lib/use-lang";
 import SocialListening from "@/components/SocialListening";
 import SmartAlerts from "@/components/social-listening/SmartAlerts";
 import { t } from "@/components/social-listening/i18n";
 import { Radio, Bell, Activity, Globe } from "lucide-react";
 
+// ===== Staggered entrance animation hook =====
+function useStaggeredEntrance(staggerDelay = 0.06) {
+  const ref = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const children = el.querySelectorAll("[data-stagger]");
+    children.forEach((child, i) => {
+      const htmlChild = child as HTMLElement;
+      htmlChild.style.opacity = "0";
+      htmlChild.style.transform = "translateY(24px)";
+      htmlChild.style.transition = "opacity 0.55s ease-out, transform 0.55s ease-out";
+      htmlChild.style.transitionDelay = `${i * staggerDelay}s`;
+      requestAnimationFrame(() => {
+        htmlChild.style.opacity = "1";
+        htmlChild.style.transform = "translateY(0)";
+      });
+    });
+  }, [staggerDelay]);
+  return ref;
+}
+
 export default function SocialListeningPage() {
   const lang = useLang();
   const [view, setView] = useState<"analyze" | "alerts">("analyze");
   const [alertQuery, setAlertQuery] = useState<string | undefined>(undefined);
+  const staggerRef = useStaggeredEntrance(0.06);
 
   const switchToAlerts = useCallback((query: string) => {
     setAlertQuery(query);

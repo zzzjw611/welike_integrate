@@ -1,6 +1,30 @@
 "use client";
+import { useRef, useEffect } from "react";
 import Link from "next/link";
 import { useLang } from "@/lib/use-lang";
+import { DollarSign } from "lucide-react";
+
+// ===== Staggered entrance animation hook =====
+function useStaggeredEntrance(staggerDelay = 0.06) {
+  const ref = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const children = el.querySelectorAll("[data-stagger]");
+    children.forEach((child, i) => {
+      const htmlChild = child as HTMLElement;
+      htmlChild.style.opacity = "0";
+      htmlChild.style.transform = "translateY(24px)";
+      htmlChild.style.transition = "opacity 0.55s ease-out, transform 0.55s ease-out";
+      htmlChild.style.transitionDelay = `${i * staggerDelay}s`;
+      requestAnimationFrame(() => {
+        htmlChild.style.opacity = "1";
+        htmlChild.style.transform = "translateY(0)";
+      });
+    });
+  }, [staggerDelay]);
+  return ref;
+}
 
 const FEATURES_EN = [
   {
@@ -95,27 +119,48 @@ const FEATURES_ZH = [
 export default function KolPricerHome() {
   const lang = useLang();
   const features = lang === 'zh' ? FEATURES_ZH : FEATURES_EN;
+  const staggerRef = useStaggeredEntrance(0.06);
 
   return (
-    <div>
-      {/* Hero */}
-      <section className="py-12 text-center sm:py-16">
-        <div className="inline-block rounded-full border border-brand-500/20 bg-brand-500/5 px-4 py-1.5 text-sm font-medium text-brand-500">
-          {lang === 'zh' ? '介绍' : 'Intro'}
+    <div ref={staggerRef}>
+      {/* ===== Unified Page Hero ===== */}
+      <div className="max-w-[1100px] mx-auto pt-20 pb-14 text-center">
+        {/* 1. Product identity row */}
+        <div data-stagger className="flex items-center justify-center gap-2 mb-6">
+          <span className="text-sm text-white/90 font-semibold">WeLike</span>
+          <span className="text-sm text-white/45">/</span>
+          <span className="text-sm text-white/45">{lang === 'zh' ? 'KOL Pricer' : 'KOL Pricer'}</span>
         </div>
-        <h2 className="mt-6 text-4xl font-extrabold leading-tight text-white sm:text-5xl">
+
+        {/* 2. Eyebrow badge */}
+        <div data-stagger className="inline-flex items-center gap-2 rounded-full border border-brand-500/25 bg-brand-500/5 px-4 py-1.5 mb-6">
+          <DollarSign className="h-3.5 w-3.5 text-brand-500" />
+          <span className="text-[14px] font-mono tracking-[0.18em] text-brand-500 uppercase">AI-POWERED KOL PRICING</span>
+        </div>
+
+        {/* 3. Main title */}
+        <h1 data-stagger className="text-[40px] sm:text-[56px] font-semibold leading-[1.02] tracking-[-0.04em] text-white mb-5">
+          {lang === 'zh' ? 'KOL Pricer' : 'KOL Pricer'}
+        </h1>
+
+        {/* 4. Benefit line */}
+        <h2 data-stagger className="text-[22px] sm:text-[28px] font-semibold leading-[1.2] text-surface-200 mb-6">
           {lang === 'zh' ? (
-            <>了解每条 <span className="text-brand-500">KOL 推文</span><br />的真实价值</>
+            <>了解每条 <span className="text-brand-500">KOL 推文</span>的真实价值</>
           ) : (
-            <>Know the True Value<br />of Every <span className="text-brand-500">KOL Tweet</span></>
+            <>Know the True Value of Every <span className="text-brand-500">KOL Tweet</span></>
           )}
         </h2>
-        <p className="mx-auto mt-6 max-w-2xl text-base leading-relaxed text-surface-400">
+
+        {/* 5. Description */}
+        <p data-stagger className="text-[16px] sm:text-[18px] text-white/60 leading-[1.65] max-w-[820px] mx-auto mb-8">
           {lang === 'zh'
             ? '使用实时 X 数据、多维评分和 AI 领域分析，计算公允的赞助推文定价。停止猜测，用数据定价。'
             : 'Calculate fair sponsored tweet pricing using real-time X data, multi-dimensional scoring, and AI domain analysis. Stop guessing, start pricing with data.'}
         </p>
-        <div className="mt-10 flex items-center justify-center gap-4">
+
+        {/* 6. Action area */}
+        <div data-stagger className="flex items-center justify-center gap-4">
           <Link
             href="/tools/kol-pricer/tool"
             className="rounded-xl bg-brand-500 px-8 py-3 text-base font-semibold text-black transition-all active:scale-[0.97] hover:bg-brand-400 hover:shadow-lg hover:shadow-brand-500/20"
@@ -129,13 +174,15 @@ export default function KolPricerHome() {
             {lang === 'zh' ? '工作原理' : 'How It Works'}
           </Link>
         </div>
-      </section>
+      </div>
 
       {/* Features */}
       <section className="pb-12">
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {features.map((f) => (
-            <FeatureCard key={f.title} title={f.title} description={f.description} icon={f.icon} />
+          {features.map((f, i) => (
+            <div key={f.title} data-stagger>
+              <FeatureCard title={f.title} description={f.description} icon={f.icon} />
+            </div>
           ))}
         </div>
       </section>
@@ -186,4 +233,3 @@ function FeatureCard({
     </div>
   );
 }
- 

@@ -198,16 +198,36 @@ export default function SocialListening({ onSwitchToAlerts }: SocialListeningPro
         </div>
       </div>
 
-      {/* Hero */}
-      <div className="text-center mb-8">
-        <div className="inline-flex items-center gap-2 rounded-full border border-brand-500/20 bg-brand-500/5 px-4 py-1.5 mb-4">
-          <Radio className="h-3.5 w-3.5 text-brand-500" />
-          <span className="text-[11px] font-mono tracking-wider text-brand-500 uppercase">{t("subtitle", lang)}</span>
+      {/* ===== Unified Page Hero ===== */}
+      <div className="max-w-[1100px] mx-auto pt-20 pb-14 text-center">
+        {/* 1. Product identity row */}
+        <div data-stagger className="flex items-center justify-center gap-2 mb-6">
+          <span className="text-sm text-white/90 font-semibold">WeLike</span>
+          <span className="text-sm text-white/45">/</span>
+          <span className="text-sm text-white/45">{t("title", lang)}</span>
         </div>
-        <h1 className="text-2xl font-bold text-white mb-3">{t("title", lang)}</h1>
-        <h2 className="text-lg font-semibold text-surface-200 mb-3" dangerouslySetInnerHTML={{ __html: t("hero_tagline", lang) }} />
-        <p className="text-surface-400 text-sm max-w-2xl mx-auto mb-6">{t("desc", lang)}</p>
-        <div className="max-w-2xl mx-auto">
+
+        {/* 2. Eyebrow badge */}
+        <div data-stagger className="inline-flex items-center gap-2 rounded-full border border-brand-500/25 bg-brand-500/5 px-4 py-1.5 mb-6">
+          <Radio className="h-3.5 w-3.5 text-brand-500" />
+          <span className="text-[14px] font-mono tracking-[0.18em] text-brand-500 uppercase">AI-POWERED SOCIAL LISTENING</span>
+        </div>
+
+        {/* 3. Main title */}
+        <h1 data-stagger className="text-[40px] sm:text-[56px] font-semibold leading-[1.02] tracking-[-0.04em] text-white mb-5">
+          {t("title", lang)}
+        </h1>
+
+        {/* 4. Benefit line */}
+        <h2 data-stagger className="text-[22px] sm:text-[28px] font-semibold leading-[1.2] text-surface-200 mb-6" dangerouslySetInnerHTML={{ __html: t("hero_tagline", lang) }} />
+
+        {/* 5. Description */}
+        <p data-stagger className="text-[16px] sm:text-[18px] text-white/60 leading-[1.65] max-w-[820px] mx-auto mb-8">
+          {t("desc", lang)}
+        </p>
+
+        {/* 6. Action area */}
+        <div data-stagger className="max-w-2xl mx-auto">
           {/* Input panel */}
           <div className="rounded-xl border border-surface-800 bg-surface-900/80 overflow-hidden">
             <div className="flex items-center gap-2 p-2">
