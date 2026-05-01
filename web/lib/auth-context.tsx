@@ -216,27 +216,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             const user = buildUserFromSession(session);
             ls.saveUser(user);
 
-            // Try Supabase first, fall back to localStorage
+            // Fetch product context via API route (bypasses RLS)
             let productContext = ls.getProductContext();
             try {
-              const { data } = await supabase
-                .from("product_contexts")
-                .select("*")
-                .eq("user_id", user.id)
-                .order("created_at", { ascending: false })
-                .limit(1)
-                .maybeSingle();
-
-              if (data) {
-                productContext = mapProductContext(data);
-                ls.saveProductContext(productContext);
+              const res = await fetch(`/api/product-context?userId=${user.id}`);
+              if (res.ok) {
+                const { data } = await res.json();
+                if (data) {
+                  productContext = mapProductContext(data);
+                  ls.saveProductContext(productContext);
+                }
               }
-              // If data is null (RLS blocks read), keep localStorage value
             } catch (err) {
-              console.warn("Supabase read error (SIGNED_IN):", err);
+              console.warn("API read error (SIGNED_IN):", err);
             }
 
             setState({ user, productContext, isLoading: false });
+
 
           } else if (event === "SIGNED_OUT") {
             // Clear user data but keep product context in localStorage
@@ -310,6 +306,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             console.warn("Failed to set Supabase session:", err);
           });
         });
+
+        // Fetch product context from API route (bypasses RLS) in the background
+        // This ensures cross-device data is loaded
+        fetch(`/api/product-context?userId=${user.id}`)
+          .then((res) => res.ok ? res.json() : null)
+          .then((result) => {
+            if (result?.data) {
+              const ctx = mapProductContext(result.data);
+              localStorageAuth().saveProductContext(ctx);
+              setState((s) => ({ ...s, productContext: ctx }));
+            }
+          })
+          .catch((err) => {
+            console.warn("Failed to fetch product context after login:", err);
+          });
+
 
 
       } else {
