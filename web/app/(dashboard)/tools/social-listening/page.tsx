@@ -45,9 +45,9 @@ export default function SocialListeningPage() {
   }, []);
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen -mt-8">
       {/* Header */}
-      <header className="flex items-center justify-between mb-8">
+      <header className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
           <svg className="h-7 w-7" viewBox="0 0 40 40" aria-hidden="true">
             <g fill="#06F5B7">
