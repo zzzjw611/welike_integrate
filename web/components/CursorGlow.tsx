@@ -1,13 +1,21 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 
 export default function CursorGlow() {
   const [pos, setPos] = useState({ x: 0, y: 0 });
   const [visible, setVisible] = useState(false);
+  const rafRef = useRef<number | null>(null);
+  const posRef = useRef({ x: 0, y: 0 });
 
   useEffect(() => {
     const move = (e: MouseEvent) => {
-      setPos({ x: e.clientX, y: e.clientY });
+      posRef.current = { x: e.clientX, y: e.clientY };
+      if (!rafRef.current) {
+        rafRef.current = requestAnimationFrame(() => {
+          setPos({ ...posRef.current });
+          rafRef.current = null;
+        });
+      }
     };
 
     const enter = () => setVisible(true);
@@ -15,26 +23,24 @@ export default function CursorGlow() {
 
     window.addEventListener("mousemove", move);
 
-    const targets = document.querySelectorAll(".hover-target");
-    targets.forEach((el) => {
-      el.addEventListener("mouseenter", enter);
-      el.addEventListener("mouseleave", leave);
-    });
-
-    // Observe for dynamically added .hover-target elements
-    const observer = new MutationObserver(() => {
-      const newTargets = document.querySelectorAll(".hover-target");
-      newTargets.forEach((el) => {
+    const attach = () => {
+      const targets = document.querySelectorAll(".hover-target");
+      targets.forEach((el) => {
         el.removeEventListener("mouseenter", enter);
         el.removeEventListener("mouseleave", leave);
         el.addEventListener("mouseenter", enter);
         el.addEventListener("mouseleave", leave);
       });
-    });
+    };
+    attach();
+
+    const observer = new MutationObserver(attach);
     observer.observe(document.body, { childList: true, subtree: true });
 
     return () => {
       window.removeEventListener("mousemove", move);
+      if (rafRef.current) cancelAnimationFrame(rafRef.current);
+      const targets = document.querySelectorAll(".hover-target");
       targets.forEach((el) => {
         el.removeEventListener("mouseenter", enter);
         el.removeEventListener("mouseleave", leave);

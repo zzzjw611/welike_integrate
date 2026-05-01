@@ -59,16 +59,17 @@ export default function Home() {
             <LanguageSwitcher current={lang} />
             <Link
               href="/login"
-              className="rounded-full border border-surface-700 bg-surface-900/60 px-4 py-1.5 text-xs text-surface-400 hover:text-white hover:border-surface-600 transition-colors"
+              className="hover-target rounded-full border border-surface-700 bg-surface-900/60 px-4 py-1.5 text-xs text-surface-400 hover:text-white hover:border-surface-600 transition-colors"
             >
               {lang === 'zh' ? '登录' : 'Sign in'}
             </Link>
             <Link
               href="/register"
-              className="rounded-full bg-brand-500 px-4 py-1.5 text-xs font-semibold text-black hover:bg-brand-400 transition-colors"
+              className="hover-target rounded-full bg-brand-500 px-4 py-1.5 text-xs font-semibold text-black hover:bg-brand-400 transition-colors"
             >
               {lang === 'zh' ? '开始' : 'Get started'}
             </Link>
+
           </div>
         </div>
       </nav>
@@ -83,14 +84,18 @@ export default function Home() {
           <div className="absolute left-[52%] top-[10%] bottom-[10%] w-px bg-gradient-to-b from-transparent via-white/[0.03] to-transparent z-[3] pointer-events-none" />
 
           {/* Background layers */}
-          <div className="absolute inset-0">
-            {/* Pixel grid — radial faded, lower opacity */}
-            <div className="absolute inset-0 opacity-35" style={{
+          <div className="absolute inset-0 entrance-background">
+            {/* Noise grain overlay */}
+            <div className="noise-overlay absolute inset-0" />
+
+            {/* Pixel grid — radial faded, lower opacity, with breathing */}
+            <div className="absolute inset-0 grid-breathe" style={{
               maskImage: 'radial-gradient(ellipse at 30% 50%, black 20%, transparent 70%)',
               WebkitMaskImage: 'radial-gradient(ellipse at 30% 50%, black 20%, transparent 70%)',
             }}>
               <div className="pixel-grid" />
             </div>
+
 
             {/* Right-side signal/data matrix — richer, more layered */}
             <div className="absolute top-0 right-0 w-[48%] h-full opacity-30 pointer-events-none overflow-hidden">
@@ -372,22 +377,24 @@ export default function Home() {
           <div className="relative z-10 px-12 md:px-20 py-24 w-full md:w-[88%] md:ml-[6%]">
             <div className="max-w-3xl">
 
-              {/* Badge — more technical */}
-              <div className="inline-flex items-center gap-2 border border-surface-700/50 rounded-full px-3.5 py-1 mb-8">
-                <span className="h-1.5 w-1.5 rounded-full bg-brand-500 animate-pulse" style={{ animationDuration: '2s' }} />
-                <span className="text-[11px] text-surface-500 tracking-widest uppercase font-medium">
+              {/* Badge — more technical, with scanning light */}
+              <div className="entrance-badge hover-target inline-flex items-center gap-2 border border-surface-700/50 rounded-full px-3.5 py-1 mb-8 relative overflow-hidden transition-all duration-300 hover:border-brand-500/40">
+                {/* Scanning light across badge */}
+                <div className="badge-scan absolute inset-0 bg-gradient-to-r from-transparent via-brand-500/20 to-transparent pointer-events-none" />
+                <span className="relative h-1.5 w-1.5 rounded-full bg-brand-500 animate-pulse" style={{ animationDuration: '2s' }} />
+                <span className="relative text-[11px] text-surface-500 tracking-widest uppercase font-medium">
                   {lang === 'zh' ? 'AI 产品的 GTM 工作台' : 'GTM Workspace for AI Products'}
                 </span>
-                <span className="text-[10px] text-surface-600 ml-1 font-mono">v0.1</span>
+                <span className="relative text-[10px] text-surface-600 ml-1 font-mono">v0.1</span>
               </div>
 
               {/* Headline — oversized editorial */}
-              <h1 className="text-6xl md:text-7xl lg:text-8xl font-bold leading-[0.92] tracking-[-0.055em] mb-8">
+              <h1 className="entrance-headline text-6xl md:text-7xl lg:text-8xl font-bold leading-[0.92] tracking-[-0.055em] mb-8">
                 {lang === 'zh' ? (
                   <>
                     你的 AI 产品
                     <br />
-                    <span className="text-gradient">颠覆性</span>
+                    <span className="text-gradient gradient-shift">颠覆性</span>
                     <br />
                     你的 GTM 也
                     <br />
@@ -397,7 +404,7 @@ export default function Home() {
                   <>
                     Your AI is
                     <br />
-                    <span className="text-gradient">groundbreaking</span>
+                    <span className="text-gradient gradient-shift">groundbreaking</span>
                     <br />
                     Your GTM
                     <br />
@@ -407,22 +414,23 @@ export default function Home() {
               </h1>
 
               {/* Subtitle */}
-              <p className="text-base md:text-lg text-surface-500 font-light leading-relaxed max-w-xl mb-10">
+              <p className="entrance-subtitle text-base md:text-lg text-surface-500 font-light leading-relaxed max-w-xl mb-10">
                 {lang === 'zh'
                   ? 'WeLike — AI 产品的 GTM 工作台。源自 100+ 次产品发布实战打磨的策略与工具。'
                   : 'WeLike is the GTM workspace for AI products. Battle-tested playbooks and tools from 100+ launches.'}
               </p>
 
-              {/* CTA — clean, no microcopy */}
-              <div className="flex items-center gap-4">
+              {/* CTA — clean, with micro-interactions */}
+              <div className="entrance-cta flex items-center gap-4">
                 <Link
                   href="/register"
-                  className="inline-flex items-center gap-2 rounded-full bg-brand-500 px-5 py-2.5 text-xs font-semibold text-black hover:bg-brand-400 transition-colors glow-brand"
+                  className="hover-target group inline-flex items-center gap-2 rounded-full bg-brand-500 px-5 py-2.5 text-xs font-semibold text-black transition-all duration-300 ease-out hover:bg-brand-400 hover:scale-[1.02] hover:shadow-[0_0_24px_rgba(6,245,183,0.35)]"
                 >
                   {lang === 'zh' ? '开始' : 'Start'}
-                  <ArrowRight className="h-3 w-3" />
+                  <ArrowRight className="h-3 w-3 transition-all duration-300 ease-out group-hover:translate-x-[3px]" />
                 </Link>
               </div>
+
 
 
             </div>
