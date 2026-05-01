@@ -618,7 +618,7 @@ export default function OnboardingPage() {
             <button
               type="submit"
               disabled={!isValid}
-              className="w-full flex items-center justify-center gap-2 rounded-lg bg-brand-500 px-6 py-3 text-sm font-semibold text-black hover:bg-brand-400 disabled:opacity-40 disabled:cursor-not-allowed transition-colors glow-brand"
+              className="w-full flex items-center justify-center gap-2 rounded-lg bg-brand-500 px-6 py-3 text-sm font-semibold text-black hover:bg-brand-400 active:scale-[0.97] disabled:opacity-40 disabled:cursor-not-allowed transition-colors glow-brand"
             >
               {isEditing
                 ? (lang === 'zh' ? '保存更改' : 'Save changes')

@@ -115,7 +115,7 @@ export default function KolPricerPage() {
       <form onSubmit={analyze} className="mb-8 w-full max-w-xl">
         <div className="flex gap-3">
           <div className="relative flex-1">
-            <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500">
+            <span className="absolute left-4 top-1/2 -translate-y-1/2 text-surface-500">
               @
             </span>
             <input
@@ -123,14 +123,14 @@ export default function KolPricerPage() {
               value={handle}
               onChange={(e) => setHandle(e.target.value)}
               placeholder={lang === 'zh' ? '用户名 或 x.com/用户名' : 'username or x.com/username'}
-              className="w-full rounded-xl border border-gray-700 bg-gray-900 py-3 pl-9 pr-4 font-mono text-white placeholder-gray-600 outline-none transition-colors focus:border-brand"
+              className="w-full rounded-xl border border-surface-700 bg-surface-900 py-3 pl-9 pr-4 font-mono text-white placeholder-surface-600 outline-none transition-colors focus-brand"
               disabled={loading}
             />
           </div>
           <button
             type="submit"
             disabled={loading || !handle.trim()}
-            className="rounded-xl bg-brand px-6 py-3 font-medium text-gray-900 transition-all hover:bg-brand-dark disabled:cursor-not-allowed disabled:opacity-50"
+            className="rounded-xl bg-brand-500 px-6 py-3 font-medium text-black transition-all active:scale-[0.97] hover:bg-brand-400 disabled:cursor-not-allowed disabled:opacity-50"
           >
             {loading ? (
               <span className="flex items-center gap-2">
@@ -165,7 +165,7 @@ export default function KolPricerPage() {
 
       {/* Error */}
       {error && (
-        <div className="mb-6 w-full max-w-xl rounded-xl border border-red-800/50 bg-red-950/50 px-4 py-3 text-sm text-red-400">
+        <div className="mb-6 w-full max-w-xl rounded-xl border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm text-red-400">
           {error}
         </div>
       )}

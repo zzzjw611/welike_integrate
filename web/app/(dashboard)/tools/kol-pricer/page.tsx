@@ -118,7 +118,7 @@ export default function KolPricerHome() {
         <div className="mt-10 flex items-center justify-center gap-4">
           <Link
             href="/tools/kol-pricer/tool"
-            className="rounded-xl bg-brand-500 px-8 py-3 text-base font-semibold text-gray-900 transition-all hover:bg-brand-600 hover:shadow-lg hover:shadow-brand-500/20"
+            className="rounded-xl bg-brand-500 px-8 py-3 text-base font-semibold text-black transition-all active:scale-[0.97] hover:bg-brand-400 hover:shadow-lg hover:shadow-brand-500/20"
           >
             {lang === 'zh' ? '使用' : 'Try'}
           </Link>

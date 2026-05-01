@@ -240,7 +240,7 @@ export default function SocialListening({ onSwitchToAlerts }: SocialListeningPro
               { label: t("stat_tweets", lang), value: result.tweet_count, color: "text-white" },
               { label: t("stat_pos", lang), value: Math.round((result.sentiment_counts.positive || 0) / Math.max(result.tweet_count, 1) * 100), color: "text-brand-500", suffix: "%" },
               { label: t("stat_neg", lang), value: Math.round((result.sentiment_counts.negative || 0) / Math.max(result.tweet_count, 1) * 100), color: "text-red-400", suffix: "%" },
-              { label: t("stat_neu", lang), value: Math.round((result.sentiment_counts.neutral || 0) / Math.max(result.tweet_count, 1) * 100), color: "text-indigo-400", suffix: "%" },
+              { label: t("stat_neu", lang), value: Math.round((result.sentiment_counts.neutral || 0) / Math.max(result.tweet_count, 1) * 100), color: "text-surface-400", suffix: "%" },
               { label: t("stat_urgent", lang), value: result.urgency_counts.high || 0, color: "text-yellow-400" },
             ].map((stat, i) => (
               <div key={i} className="rounded-xl border border-surface-800 bg-surface-900 p-4 relative overflow-hidden hover:border-surface-700 transition-colors">

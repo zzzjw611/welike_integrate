@@ -15,13 +15,13 @@ export default function PriceCard({ pricing, domain }: Props) {
   return (
     <Card className="border-brand/30 bg-gradient-to-br from-brand/5 to-transparent">
       <div className="text-center">
-        <p className="text-sm font-medium text-gray-400">
+        <p className="text-sm font-medium text-surface-400">
           {lang === 'zh' ? '预估推文价格' : 'Estimated Tweet Price'}
         </p>
         <p className="mt-2 font-mono text-5xl font-bold text-brand">
           ${pricing.price.toLocaleString()}
         </p>
-        <p className="mt-1 font-mono text-sm text-gray-500">
+        <p className="mt-1 font-mono text-sm text-surface-500">
           {lang === 'zh' ? '范围' : 'Range'}: ${pricing.priceMin.toLocaleString()} &mdash; $
           {pricing.priceMax.toLocaleString()}
         </p>
@@ -49,7 +49,7 @@ export default function PriceCard({ pricing, domain }: Props) {
 function Stat({ label, value }: { label: string; value: string }) {
   return (
     <div>
-      <p className="text-xs text-gray-500">{label}</p>
+      <p className="text-xs text-surface-500">{label}</p>
       <p className="font-mono text-sm font-medium text-white">{value}</p>
     </div>
   );

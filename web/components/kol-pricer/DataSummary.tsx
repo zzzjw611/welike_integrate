@@ -12,11 +12,11 @@ export default function DataSummary({ result }: Props) {
   const { user, scores, pricing } = result;
 
   return (
-    <div className="rounded-2xl border border-gray-800 bg-gray-900/50 p-6">
+    <div className="rounded-xl border border-surface-800 bg-surface-900 p-6">
       <div className="flex flex-wrap items-start justify-between gap-4">
         {/* Profile */}
         <div className="flex items-center gap-4">
-          <div className="h-14 w-14 overflow-hidden rounded-full bg-gray-800">
+          <div className="h-14 w-14 overflow-hidden rounded-full bg-surface-800">
             {user.profile_image_url ? (
               <img
                 src={user.profile_image_url}
@@ -24,14 +24,14 @@ export default function DataSummary({ result }: Props) {
                 className="h-full w-full object-cover"
               />
             ) : (
-              <div className="flex h-full w-full items-center justify-center text-xl font-bold text-gray-500">
+              <div className="flex h-full w-full items-center justify-center text-xl font-bold text-surface-500">
                 {user.name?.charAt(0) || "?"}
               </div>
             )}
           </div>
           <div>
             <h2 className="text-xl font-bold text-white">{user.name}</h2>
-            <p className="text-sm text-gray-500">@{user.username}</p>
+            <p className="text-sm text-surface-500">@{user.username}</p>
           </div>
         </div>
 
@@ -103,9 +103,9 @@ function Stat({
 }) {
   return (
     <div>
-      <p className="text-xs text-gray-500">{label}</p>
+      <p className="text-xs text-surface-500">{label}</p>
       <p className="font-mono text-sm font-medium text-white">{value}</p>
-      {note && <p className="text-[10px] text-gray-600">{note}</p>}
+      {note && <p className="text-[10px] text-surface-600">{note}</p>}
     </div>
   );
 }

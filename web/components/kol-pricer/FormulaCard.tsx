@@ -29,12 +29,12 @@ export default function FormulaCard({ pricing, domain, claudeAnalysis }: Props) 
         {lang === 'zh' ? '定价公式' : 'Pricing Formula'}
       </h3>
       <div className="space-y-2 font-mono text-sm">
-        <div className="flex justify-between text-gray-400">
+        <div className="flex justify-between text-surface-400">
           <span>CPM = $5 + ({pricing.overallScore}/100) × $55</span>
           <span className="text-white">${pricing.cpm}</span>
         </div>
 
-        <div className="flex justify-between text-gray-400">
+        <div className="flex justify-between text-surface-400">
           <span>{lang === 'zh' ? '加权展示 / 千' : 'Weighted Imp / 1000'}</span>
           <span className="text-white">
             {pricing.weightedImpressions.toLocaleString()} →{" "}
@@ -42,14 +42,14 @@ export default function FormulaCard({ pricing, domain, claudeAnalysis }: Props) 
           </span>
         </div>
 
-        <div className="mt-1 rounded-lg border border-gray-700/50 bg-gray-800/30 px-3 py-2">
-          <div className="mb-2 flex justify-between text-gray-300">
+        <div className="mt-1 rounded-lg border border-surface-700/50 bg-surface-800/30 px-3 py-2">
+          <div className="mb-2 flex justify-between text-surface-300">
             <span className="font-semibold">{lang === 'zh' ? '修正系数' : 'Modifiers'}</span>
             <span className="font-semibold text-white">
               {pricing.combinedModifiers}x
             </span>
           </div>
-          <div className="space-y-1 text-xs text-gray-500">
+          <div className="space-y-1 text-xs text-surface-500">
             <div className="flex justify-between">
               <span>
                 {lang === 'zh' ? '领域' : 'Domain'} ({DOMAIN_LABELS[domain]} / {pricing.subDomain})
@@ -78,7 +78,7 @@ export default function FormulaCard({ pricing, domain, claudeAnalysis }: Props) 
                     ? "text-green-400"
                     : pricing.scarcityFactor <= 0.85
                       ? "text-red-400"
-                      : "text-gray-400"
+                      : "text-surface-400"
                 }
               >
                 {pricing.scarcityFactor}x
@@ -87,16 +87,16 @@ export default function FormulaCard({ pricing, domain, claudeAnalysis }: Props) 
           </div>
         </div>
 
-        <div className="border-t border-gray-700 pt-2">
+        <div className="border-t border-surface-700 pt-2">
           <div className="flex justify-between font-semibold">
-            <span className="text-gray-300">
+            <span className="text-surface-300">
               {lang === 'zh' ? '价格' : 'Price'} = CPM × Eff.Imp × {pricing.combinedModifiers}x
             </span>
             <span className="text-brand">
               ${pricing.price.toLocaleString()}
             </span>
           </div>
-          <div className="mt-1 flex justify-between text-xs text-gray-500">
+          <div className="mt-1 flex justify-between text-xs text-surface-500">
             <span>{lang === 'zh' ? '范围 (±20%)' : 'Range (±20%)'}</span>
             <span>
               ${pricing.priceMin.toLocaleString()} ~{" "}

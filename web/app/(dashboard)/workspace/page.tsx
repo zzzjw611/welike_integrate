@@ -186,7 +186,7 @@ export default function WorkspacePage() {
               <button
                 type="button"
                 onClick={() => router.push("/onboarding")}
-                className="flex-1 rounded-xl bg-brand-500 px-5 py-2.5 text-sm font-semibold text-gray-900 transition-all hover:bg-brand-600"
+                className="flex-1 rounded-xl bg-brand-500 px-5 py-2.5 text-sm font-semibold text-black transition-all active:scale-[0.97] hover:bg-brand-400"
               >
                 {lang === 'zh' ? '添加产品' : 'Add Product'}
               </button>

@@ -71,17 +71,17 @@ export default function ClaudeInsightCard({ analysis }: Props) {
 
       <div className="mb-4 space-y-2 text-sm">
         <div>
-          <p className="text-xs text-gray-500">{lang === 'zh' ? '可信度' : 'Credibility'}</p>
-          <p className="text-gray-300">{analysis.credibilityReason}</p>
+          <p className="text-xs text-surface-500">{lang === 'zh' ? '可信度' : 'Credibility'}</p>
+          <p className="text-surface-300">{analysis.credibilityReason}</p>
         </div>
         <div>
-          <p className="text-xs text-gray-500">{lang === 'zh' ? '相关性' : 'Relevance'}</p>
-          <p className="text-gray-300">{analysis.relevanceReason}</p>
+          <p className="text-xs text-surface-500">{lang === 'zh' ? '相关性' : 'Relevance'}</p>
+          <p className="text-surface-300">{analysis.relevanceReason}</p>
         </div>
       </div>
 
       <div className="mb-4">
-        <p className="mb-2 text-xs text-gray-500">{lang === 'zh' ? '标签' : 'Tags'}</p>
+        <p className="mb-2 text-xs text-surface-500">{lang === 'zh' ? '标签' : 'Tags'}</p>
         <div className="flex flex-wrap gap-2">
           {analysis.identityTags.map((tag) => (
             <Tag key={tag} label={lang === 'zh' ? IDENTITY_TAG_ZH[tag] : tag} variant="identity" />
@@ -92,9 +92,9 @@ export default function ClaudeInsightCard({ analysis }: Props) {
         </div>
       </div>
 
-      <div className="rounded-lg border border-gray-700 bg-gray-800/50 p-3">
-        <p className="text-xs text-gray-500">{lang === 'zh' ? '建议' : 'Recommendation'}</p>
-        <p className="mt-1 text-sm text-gray-300">{analysis.recommendation}</p>
+      <div className="rounded-lg border border-surface-700 bg-surface-800/50 p-3">
+        <p className="text-xs text-surface-500">{lang === 'zh' ? '建议' : 'Recommendation'}</p>
+        <p className="mt-1 text-sm text-surface-300">{analysis.recommendation}</p>
       </div>
     </Card>
   );

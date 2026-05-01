@@ -362,6 +362,16 @@ body {
   animation: gradientShift 8s ease-in-out infinite;
 }
 
+/* ===== Sidebar active indicator slide-in ===== */
+@keyframes sidebarIndicatorIn {
+  0%   { opacity: 0; transform: translateX(-4px); }
+  100% { opacity: 1; transform: translateX(0); }
+}
+
+.sidebar-indicator {
+  animation: sidebarIndicatorIn 0.25s ease-out both;
+}
+
 /* ===== Entrance animations ===== */
 @keyframes fadeSlideUp {
   0%   { opacity: 0; transform: translateY(12px); }

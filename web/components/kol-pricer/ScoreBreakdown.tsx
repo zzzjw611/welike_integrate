@@ -21,7 +21,7 @@ export default function ScoreBreakdown({ scores }: Props) {
           <span className="font-mono text-3xl font-bold text-brand">
             {scores.overall.toFixed(1)}
           </span>
-          <span className="text-sm text-gray-500">/100</span>
+          <span className="text-sm text-surface-500">/100</span>
         </div>
       </div>
 
@@ -61,9 +61,9 @@ export default function ScoreBreakdown({ scores }: Props) {
 
 function SubItem({ label, score }: { label: string; score: number }) {
   return (
-    <div className="rounded-md bg-gray-800/40 px-2 py-1 text-center">
-      <p className="text-[10px] text-gray-500">{label}</p>
-      <p className="font-mono text-xs font-semibold text-gray-300">{score}</p>
+    <div className="rounded-md bg-surface-800/40 px-2 py-1 text-center">
+      <p className="text-[10px] text-surface-500">{label}</p>
+      <p className="font-mono text-xs font-semibold text-surface-300">{score}</p>
     </div>
   );
 }
