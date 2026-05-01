@@ -4,8 +4,8 @@ import Link from "next/link";
 import { useLang } from "@/lib/use-lang";
 import { DollarSign } from "lucide-react";
 
-// ===== Staggered entrance animation hook (page load) =====
-function useStaggeredEntrance(staggerDelay = 0.06) {
+// ===== Staggered entrance animation hook (page load) — bolder =====
+function useStaggeredEntrance(staggerDelay = 0.08) {
   const ref = useRef<HTMLDivElement>(null);
   useEffect(() => {
     const el = ref.current;
@@ -14,20 +14,21 @@ function useStaggeredEntrance(staggerDelay = 0.06) {
     children.forEach((child, i) => {
       const htmlChild = child as HTMLElement;
       htmlChild.style.opacity = "0";
-      htmlChild.style.transform = "translateY(24px)";
-      htmlChild.style.transition = "opacity 0.55s ease-out, transform 0.55s ease-out";
+      htmlChild.style.transform = "translateY(40px) scale(0.95)";
+      htmlChild.style.transition = "opacity 0.7s cubic-bezier(0.22, 1, 0.36, 1), transform 0.7s cubic-bezier(0.22, 1, 0.36, 1)";
       htmlChild.style.transitionDelay = `${i * staggerDelay}s`;
       requestAnimationFrame(() => {
         htmlChild.style.opacity = "1";
-        htmlChild.style.transform = "translateY(0)";
+        htmlChild.style.transform = "translateY(0) scale(1)";
       });
     });
   }, [staggerDelay]);
   return ref;
 }
 
-// ===== Scroll-triggered staggered entrance hook =====
-function useScrollReveal(staggerDelay = 0.06) {
+
+// ===== Scroll-triggered staggered entrance hook — bolder =====
+function useScrollReveal(staggerDelay = 0.08) {
   const ref = useRef<HTMLDivElement>(null);
   useEffect(() => {
     const el = ref.current;
@@ -42,8 +43,8 @@ function useScrollReveal(staggerDelay = 0.06) {
             revealed.forEach((child, i) => {
               const htmlChild = child as HTMLElement;
               htmlChild.style.opacity = "0";
-              htmlChild.style.transform = "translateY(24px) scale(0.98)";
-              htmlChild.style.transition = "opacity 0.55s ease-out, transform 0.55s ease-out";
+              htmlChild.style.transform = "translateY(40px) scale(0.93)";
+              htmlChild.style.transition = "opacity 0.7s cubic-bezier(0.22, 1, 0.36, 1), transform 0.7s cubic-bezier(0.22, 1, 0.36, 1)";
               htmlChild.style.transitionDelay = `${i * staggerDelay}s`;
               requestAnimationFrame(() => {
                 htmlChild.style.opacity = "1";
@@ -54,13 +55,14 @@ function useScrollReveal(staggerDelay = 0.06) {
           }
         });
       },
-      { threshold: 0.1 }
+      { threshold: 0.08 }
     );
     children.forEach((child) => observer.observe(child));
     return () => observer.disconnect();
   }, [staggerDelay]);
   return ref;
 }
+
 
 const FEATURES_EN = [
   {
@@ -168,7 +170,7 @@ export default function KolPricerHome() {
         <div
           className="big-ribbon-glow absolute -left-32 -top-20 h-[500px] w-[800px] rounded-full"
           style={{
-            background: "radial-gradient(ellipse at 30% 50%, rgba(6,245,183,0.12), transparent 70%)",
+            background: "radial-gradient(ellipse at 30% 50%, rgba(6,245,183,0.18), transparent 70%)",
             filter: "blur(80px)",
           }}
         />
@@ -176,7 +178,7 @@ export default function KolPricerHome() {
         <div
           className="big-ribbon-band absolute -right-40 top-40 h-[400px] w-[700px] rounded-full"
           style={{
-            background: "radial-gradient(ellipse at 70% 50%, rgba(255,255,255,0.04), transparent 70%)",
+            background: "radial-gradient(ellipse at 70% 50%, rgba(255,255,255,0.06), transparent 70%)",
             filter: "blur(60px)",
           }}
         />
@@ -184,19 +186,20 @@ export default function KolPricerHome() {
         <div
           className="big-ribbon-signal absolute left-1/3 -bottom-20 h-[350px] w-[600px] rounded-full"
           style={{
-            background: "radial-gradient(ellipse at 50% 50%, rgba(6,245,183,0.06), transparent 70%)",
+            background: "radial-gradient(ellipse at 50% 50%, rgba(6,245,183,0.10), transparent 70%)",
             filter: "blur(100px)",
           }}
         />
         {/* Drifting particles */}
-        <div className="drift-particle-1 absolute left-[15%] top-[20%] h-1.5 w-1.5 rounded-full bg-brand-500/30" />
-        <div className="drift-particle-2 absolute right-[20%] top-[30%] h-1 w-1 rounded-full bg-white/20" />
-        <div className="drift-particle-3 absolute left-[30%] bottom-[25%] h-2 w-2 rounded-full bg-brand-500/20" />
-        <div className="drift-particle-4 absolute right-[35%] bottom-[15%] h-1 w-1 rounded-full bg-white/15" />
-        <div className="drift-particle-5 absolute left-[60%] top-[15%] h-1.5 w-1.5 rounded-full bg-brand-500/25" />
-        <div className="drift-particle-6 absolute right-[10%] top-[60%] h-1 w-1 rounded-full bg-white/10" />
+        <div className="drift-particle-1 absolute left-[15%] top-[20%] h-1.5 w-1.5 rounded-full bg-brand-500/40" />
+        <div className="drift-particle-2 absolute right-[20%] top-[30%] h-1 w-1 rounded-full bg-white/30" />
+        <div className="drift-particle-3 absolute left-[30%] bottom-[25%] h-2 w-2 rounded-full bg-brand-500/30" />
+        <div className="drift-particle-4 absolute right-[35%] bottom-[15%] h-1 w-1 rounded-full bg-white/25" />
+        <div className="drift-particle-5 absolute left-[60%] top-[15%] h-1.5 w-1.5 rounded-full bg-brand-500/35" />
+        <div className="drift-particle-6 absolute right-[10%] top-[60%] h-1 w-1 rounded-full bg-white/20" />
         {/* Scanning sweep */}
-        <div className="scanning-sweep absolute inset-y-0 left-0 w-[60%] bg-gradient-to-r from-transparent via-brand-500/5 to-transparent pointer-events-none" />
+        <div className="scanning-sweep absolute inset-y-0 left-0 w-[60%] bg-gradient-to-r from-transparent via-brand-500/8 to-transparent pointer-events-none" />
+
       </div>
 
       {/* ===== Unified Page Hero (vertically balanced) ===== */}
