@@ -400,7 +400,7 @@ export default function WorkspacePage() {
       </div>
 
       {/* Tool Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 overflow-visible">
         {TOOLS.map((tool) => {
           const colors = COLOR_MAP[tool.color];
           const Icon = tool.icon;
@@ -419,27 +419,61 @@ export default function WorkspacePage() {
             },
           };
           const meta = moduleMeta[tool.id];
+          const glowColor = tool.color === "brand"
+            ? "20,240,200"
+            : tool.color === "purple"
+              ? "168,85,247"
+              : "34,211,238";
           return (
             <Link
               key={tool.id}
               href={tool.href}
-              className={`block rounded-xl border ${colors.border} ${colors.bg} ${colors.hoverBorder} ${colors.hoverBg} ${colors.hoverShadow} p-6 transition-all duration-300 ease-out group relative overflow-hidden hover:-translate-y-1`}
+              className={`group relative cursor-pointer rounded-xl border ${colors.border} ${colors.bg} p-6 transition-all duration-300 ease-out hover:-translate-y-2 hover:scale-[1.015] ${colors.hoverBorder} ${colors.hoverBg}`}
+              style={{
+                boxShadow: `0 0 0 1px rgba(${glowColor},0)`,
+                transition: "all 300ms ease-out",
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.boxShadow = `0 0 0 1px rgba(${glowColor},0.28), 0 0 36px rgba(${glowColor},0.22), 0 24px 80px rgba(${glowColor},0.16)`;
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.boxShadow = `0 0 0 1px rgba(${glowColor},0)`;
+              }}
             >
-              {/* Outer glow layer */}
-              <div className="pointer-events-none absolute -inset-[1px] rounded-xl opacity-0 transition-opacity duration-300 group-hover:opacity-100 bg-gradient-to-br from-transparent via-transparent to-transparent" style={{ boxShadow: tool.color === "brand" ? "0 0 0 1px rgba(6,245,183,0.18), 0 0 40px rgba(6,245,183,0.14), 0 18px 50px rgba(6,245,183,0.10)" : tool.color === "purple" ? "0 0 0 1px rgba(168,85,247,0.18), 0 0 40px rgba(168,85,247,0.14), 0 18px 50px rgba(168,85,247,0.10)" : "0 0 0 1px rgba(34,211,238,0.18), 0 0 40px rgba(34,211,238,0.14), 0 18px 50px rgba(34,211,238,0.10)" }} />
               {/* Radial highlight inside card */}
-              <div className="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-300 group-hover:opacity-100 bg-[radial-gradient(circle_at_65%_20%,rgba(6,245,183,0.12),transparent_38%)]" />
+              <div
+                className="pointer-events-none absolute inset-0 rounded-xl opacity-0 transition-opacity duration-300 group-hover:opacity-100"
+                style={{
+                  background: `radial-gradient(circle at 65% 20%, rgba(${glowColor},0.18), transparent 38%)`,
+                }}
+              />
               {/* Top gradient highlight */}
-              <div className="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-300 group-hover:opacity-100 bg-[linear-gradient(180deg,rgba(6,245,183,0.04),transparent_35%)]" />
+              <div
+                className="pointer-events-none absolute inset-0 rounded-xl opacity-0 transition-opacity duration-300 group-hover:opacity-100"
+                style={{
+                  background: `linear-gradient(180deg, rgba(${glowColor},0.06), transparent 35%)`,
+                }}
+              />
               <div className="relative">
                 <div className="flex items-start justify-between mb-4">
-                  <div className={`h-12 w-12 rounded-xl border border-white/5 ${colors.icon} ${colors.iconHoverBg} ${colors.iconHoverBorder} ${colors.iconHoverShadow} flex items-center justify-center transition-all duration-300`}>
-                    <Icon className={`h-6 w-6 transition-all duration-300 ${colors.iconGlow}`} />
+                  <div
+                    className={`h-12 w-12 rounded-xl border border-white/5 ${colors.icon} flex items-center justify-center transition-all duration-300 ${colors.iconHoverBg} ${colors.iconHoverBorder}`}
+                    style={{
+                      boxShadow: `0 0 0px rgba(${glowColor},0)`,
+                      transition: "all 300ms ease-out",
+                    }}
+                    onMouseEnter={(e) => {
+                      // Parent hover handles this via group, but we also set inline for the icon container
+                    }}
+                  >
+                    <Icon
+                      className={`h-6 w-6 transition-all duration-300 ${colors.iconGlow}`}
+                    />
                   </div>
-                  <ArrowRight className="h-5 w-5 text-surface-600 group-hover:text-surface-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all duration-300" />
+                  <ArrowRight className="h-5 w-5 text-surface-600 transition-all duration-300 group-hover:text-surface-300 group-hover:translate-x-1 group-hover:-translate-y-1" />
                 </div>
 
-                <h3 className="text-lg font-semibold mb-2 group-hover:text-white transition-colors duration-300">
+                <h3 className="text-lg font-semibold mb-2 transition-colors duration-300 group-hover:text-white">
                   {tool.name}
                 </h3>
                 <p className="text-sm text-surface-400 leading-relaxed mb-4">
