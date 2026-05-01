@@ -208,15 +208,8 @@ export default function SocialListening({ onSwitchToAlerts }: SocialListeningPro
         <h2 className="text-lg font-semibold text-surface-200 mb-3" dangerouslySetInnerHTML={{ __html: t("hero_tagline", lang) }} />
         <p className="text-surface-400 text-sm max-w-2xl mx-auto mb-6">{t("desc", lang)}</p>
         <div className="max-w-2xl mx-auto">
-          {/* Input panel with system labels */}
+          {/* Input panel */}
           <div className="rounded-xl border border-surface-800 bg-surface-900/80 overflow-hidden">
-            {/* Panel header */}
-            <div className="flex items-center gap-3 px-4 py-2 border-b border-surface-800 bg-surface-900/50">
-              <span className="text-[10px] font-mono tracking-wider text-surface-500 uppercase">SOURCE INPUT</span>
-              <span className="text-surface-700">|</span>
-              <span className="text-[10px] font-mono tracking-wider text-surface-500 uppercase">MONITORING WINDOW</span>
-            </div>
-            {/* Input row */}
             <div className="flex items-center gap-2 p-2">
               <input value={query} onChange={(e) => setQuery(e.target.value)} onKeyDown={(e) => e.key === "Enter" && startAnalysis()}
                 placeholder={t("search_placeholder", lang)} className="flex-1 bg-transparent border-none px-3 py-2.5 text-sm text-white placeholder:text-surface-500 outline-none" />
@@ -235,7 +228,9 @@ export default function SocialListening({ onSwitchToAlerts }: SocialListeningPro
               </button>
             </div>
           </div>
-          {/* Try chips — now prepend x.com/ */}
+          {/* Helper text */}
+          <p className="text-[11px] text-surface-500 text-center mt-2">{t("search_hint", lang)}</p>
+          {/* Example X profiles */}
           <div className="flex items-center justify-center gap-2 mt-3 flex-wrap">
             <span className="text-[10px] font-mono text-surface-500 uppercase tracking-wider">{t("examples", lang)}</span>
             {EXAMPLES.map((ex) => (
