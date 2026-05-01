@@ -102,24 +102,45 @@ const TOOLS_ZH = [
   },
 ];
 
-const COLOR_MAP: Record<string, { bg: string; border: string; icon: string; badge: string }> = {
+const COLOR_MAP: Record<string, { bg: string; border: string; icon: string; badge: string; hoverBorder: string; hoverBg: string; hoverShadow: string; iconHoverBg: string; iconHoverBorder: string; iconHoverShadow: string; iconGlow: string }> = {
   purple: {
     bg: "bg-purple-500/5",
-    border: "border-purple-500/20 hover:border-purple-500/40",
+    border: "border-purple-500/20",
     icon: "bg-purple-500/10 text-purple-400",
     badge: "bg-purple-500/10 text-purple-400",
+    hoverBorder: "hover:border-purple-400/55",
+    hoverBg: "hover:bg-[#141414]",
+    hoverShadow: "hover:shadow-[0_0_0_1px_rgba(168,85,247,0.18),0_0_40px_rgba(168,85,247,0.14),0_18px_50px_rgba(168,85,247,0.10)]",
+    iconHoverBg: "group-hover:bg-[#1f1433]",
+    iconHoverBorder: "group-hover:border-purple-400/45",
+    iconHoverShadow: "group-hover:shadow-[0_0_24px_rgba(168,85,247,0.20)]",
+    iconGlow: "group-hover:drop-shadow-[0_0_10px_rgba(168,85,247,0.7)]",
   },
   brand: {
     bg: "bg-brand-500/5",
-    border: "border-brand-500/20 hover:border-brand-500/40",
+    border: "border-brand-500/20",
     icon: "bg-brand-500/10 text-brand-500",
     badge: "bg-brand-500/10 text-brand-500",
+    hoverBorder: "hover:border-brand-400/55",
+    hoverBg: "hover:bg-[#141414]",
+    hoverShadow: "hover:shadow-[0_0_0_1px_rgba(6,245,183,0.18),0_0_40px_rgba(6,245,183,0.14),0_18px_50px_rgba(6,245,183,0.10)]",
+    iconHoverBg: "group-hover:bg-[#0a3329]",
+    iconHoverBorder: "group-hover:border-brand-400/45",
+    iconHoverShadow: "group-hover:shadow-[0_0_24px_rgba(6,245,183,0.20)]",
+    iconGlow: "group-hover:drop-shadow-[0_0_10px_rgba(6,245,183,0.7)]",
   },
   cyan: {
     bg: "bg-cyan-500/5",
-    border: "border-cyan-500/20 hover:border-cyan-500/40",
+    border: "border-cyan-500/20",
     icon: "bg-cyan-500/10 text-cyan-400",
     badge: "bg-cyan-500/10 text-cyan-400",
+    hoverBorder: "hover:border-cyan-400/55",
+    hoverBg: "hover:bg-[#141414]",
+    hoverShadow: "hover:shadow-[0_0_0_1px_rgba(34,211,238,0.18),0_0_40px_rgba(34,211,238,0.14),0_18px_50px_rgba(34,211,238,0.10)]",
+    iconHoverBg: "group-hover:bg-[#0a2a33]",
+    iconHoverBorder: "group-hover:border-cyan-400/45",
+    iconHoverShadow: "group-hover:shadow-[0_0_24px_rgba(34,211,238,0.20)]",
+    iconGlow: "group-hover:drop-shadow-[0_0_10px_rgba(34,211,238,0.7)]",
   },
 };
 
@@ -402,19 +423,23 @@ export default function WorkspacePage() {
             <Link
               key={tool.id}
               href={tool.href}
-              className={`block rounded-xl border ${colors.border} ${colors.bg} p-6 transition-all group relative overflow-hidden`}
+              className={`block rounded-xl border ${colors.border} ${colors.bg} ${colors.hoverBorder} ${colors.hoverBg} ${colors.hoverShadow} p-6 transition-all duration-300 ease-out group relative overflow-hidden hover:-translate-y-1`}
             >
-              {/* Hover radial highlight */}
-              <div className="absolute inset-0 bg-gradient-to-br from-white/[0.02] to-transparent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
+              {/* Outer glow layer */}
+              <div className="pointer-events-none absolute -inset-[1px] rounded-xl opacity-0 transition-opacity duration-300 group-hover:opacity-100 bg-gradient-to-br from-transparent via-transparent to-transparent" style={{ boxShadow: tool.color === "brand" ? "0 0 0 1px rgba(6,245,183,0.18), 0 0 40px rgba(6,245,183,0.14), 0 18px 50px rgba(6,245,183,0.10)" : tool.color === "purple" ? "0 0 0 1px rgba(168,85,247,0.18), 0 0 40px rgba(168,85,247,0.14), 0 18px 50px rgba(168,85,247,0.10)" : "0 0 0 1px rgba(34,211,238,0.18), 0 0 40px rgba(34,211,238,0.14), 0 18px 50px rgba(34,211,238,0.10)" }} />
+              {/* Radial highlight inside card */}
+              <div className="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-300 group-hover:opacity-100 bg-[radial-gradient(circle_at_65%_20%,rgba(6,245,183,0.12),transparent_38%)]" />
+              {/* Top gradient highlight */}
+              <div className="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-300 group-hover:opacity-100 bg-[linear-gradient(180deg,rgba(6,245,183,0.04),transparent_35%)]" />
               <div className="relative">
                 <div className="flex items-start justify-between mb-4">
-                  <div className={`h-12 w-12 rounded-xl ${colors.icon} flex items-center justify-center group-hover:scale-105 transition-transform`}>
-                    <Icon className="h-6 w-6" />
+                  <div className={`h-12 w-12 rounded-xl border border-white/5 ${colors.icon} ${colors.iconHoverBg} ${colors.iconHoverBorder} ${colors.iconHoverShadow} flex items-center justify-center transition-all duration-300`}>
+                    <Icon className={`h-6 w-6 transition-all duration-300 ${colors.iconGlow}`} />
                   </div>
-                  <ArrowRight className="h-5 w-5 text-surface-600 group-hover:text-surface-300 group-hover:translate-x-0.5 transition-all" />
+                  <ArrowRight className="h-5 w-5 text-surface-600 group-hover:text-surface-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all duration-300" />
                 </div>
 
-                <h3 className="text-lg font-semibold mb-2 group-hover:text-white transition-colors">
+                <h3 className="text-lg font-semibold mb-2 group-hover:text-white transition-colors duration-300">
                   {tool.name}
                 </h3>
                 <p className="text-sm text-surface-400 leading-relaxed mb-4">
