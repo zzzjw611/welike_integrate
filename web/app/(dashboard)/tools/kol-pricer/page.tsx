@@ -160,8 +160,8 @@ export default function KolPricerHome() {
 
   return (
     <div ref={staggerRef}>
-      {/* ===== Unified Page Hero (fills viewport) ===== */}
-      <div className="max-w-[1100px] mx-auto min-h-[calc(100vh-120px)] flex flex-col justify-center text-center">
+      {/* ===== Unified Page Hero (vertically balanced) ===== */}
+      <div className="max-w-[1100px] mx-auto min-h-[calc(100vh-180px)] flex flex-col justify-center text-center -mt-8">
         {/* 1. Product identity row */}
         <div data-stagger className="flex items-center justify-center gap-2 mb-6">
           <span className="text-sm text-white/90 font-semibold">WeLike</span>
