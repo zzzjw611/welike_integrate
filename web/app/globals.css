@@ -272,32 +272,36 @@ body {
 .drift-particle-5 { animation: particleFloat2 20s ease-in-out infinite; animation-delay: -8s; }
 .drift-particle-6 { animation: particleFloat3 12s ease-in-out infinite; animation-delay: -3s; }
 
-/* ===== Big flowing ribbon system — larger presence ===== */
+/* ===== Big flowing ribbon system — larger presence, smoother motion ===== */
 .big-ribbon-glow {
-  animation: bigRibbonGlowMove 18s ease-in-out infinite alternate;
+  animation: bigRibbonGlowMove 22s cubic-bezier(0.45, 0.05, 0.25, 1) infinite alternate;
 }
 .big-ribbon-band {
-  animation: bigRibbonBandMove 14s ease-in-out infinite alternate;
+  animation: bigRibbonBandMove 18s cubic-bezier(0.45, 0.05, 0.25, 1) infinite alternate;
 }
 .big-ribbon-signal {
-  animation: bigRibbonSignalMove 20s ease-in-out infinite alternate;
+  animation: bigRibbonSignalMove 24s cubic-bezier(0.45, 0.05, 0.25, 1) infinite alternate;
 }
 
 @keyframes bigRibbonGlowMove {
   0% {
     transform: translateX(0px) translateY(0px) scaleY(1);
-    opacity: 0.12;
+    opacity: 0.10;
   }
-  33% {
-    transform: translateX(-40px) translateY(15px) scaleY(1.04);
+  25% {
+    transform: translateX(-35px) translateY(12px) scaleY(1.03);
+    opacity: 0.15;
+  }
+  50% {
+    transform: translateX(20px) translateY(-8px) scaleY(0.98);
+    opacity: 0.13;
+  }
+  75% {
+    transform: translateX(-15px) translateY(18px) scaleY(1.02);
     opacity: 0.16;
   }
-  66% {
-    transform: translateX(30px) translateY(-10px) scaleY(0.97);
-    opacity: 0.14;
-  }
   100% {
-    transform: translateX(-20px) translateY(8px) scaleY(1.02);
+    transform: translateX(30px) translateY(5px) scaleY(0.96);
     opacity: 0.11;
   }
 }
@@ -305,36 +309,45 @@ body {
 @keyframes bigRibbonBandMove {
   0% {
     transform: translateX(0px) translateY(0px);
+    opacity: 0.15;
+  }
+  33% {
+    transform: translateX(20px) translateY(-6px);
+    opacity: 0.22;
+  }
+  66% {
+    transform: translateX(-12px) translateY(10px);
     opacity: 0.18;
   }
-  50% {
-    transform: translateX(25px) translateY(-8px);
-    opacity: 0.24;
-  }
   100% {
-    transform: translateX(-15px) translateY(6px);
-    opacity: 0.16;
+    transform: translateX(8px) translateY(-4px);
+    opacity: 0.20;
   }
 }
 
 @keyframes bigRibbonSignalMove {
   0% {
     transform: translateX(0px) translateY(0px);
-    opacity: 0.35;
-  }
-  33% {
-    transform: translateX(-30px) translateY(12px);
-    opacity: 0.50;
-  }
-  66% {
-    transform: translateX(20px) translateY(-6px);
-    opacity: 0.40;
-  }
-  100% {
-    transform: translateX(-10px) translateY(4px);
     opacity: 0.30;
   }
+  25% {
+    transform: translateX(-25px) translateY(10px);
+    opacity: 0.45;
+  }
+  50% {
+    transform: translateX(15px) translateY(-5px);
+    opacity: 0.38;
+  }
+  75% {
+    transform: translateX(-8px) translateY(15px);
+    opacity: 0.48;
+  }
+  100% {
+    transform: translateX(20px) translateY(-8px);
+    opacity: 0.32;
+  }
 }
+
 
 /* ===== Badge scanning light ===== */
 @keyframes badgeScan {

@@ -155,13 +155,52 @@ const FEATURES_ZH = [
 export default function KolPricerHome() {
   const lang = useLang();
   const features = lang === 'zh' ? FEATURES_ZH : FEATURES_EN;
-  const staggerRef = useStaggeredEntrance(0.06);
-  const revealRef = useScrollReveal(0.06);
+  const staggerRef = useStaggeredEntrance(0.07);
+  const revealRef = useScrollReveal(0.07);
 
   return (
-    <div ref={staggerRef}>
+    <div ref={staggerRef} className="relative">
+      {/* ===== Ambient background layers ===== */}
+      <div className="pointer-events-none absolute inset-0 -z-10 overflow-hidden">
+        {/* Pixel grid */}
+        <div className="pixel-grid" />
+        {/* Big ribbon glow — mint */}
+        <div
+          className="big-ribbon-glow absolute -left-32 -top-20 h-[500px] w-[800px] rounded-full"
+          style={{
+            background: "radial-gradient(ellipse at 30% 50%, rgba(6,245,183,0.12), transparent 70%)",
+            filter: "blur(80px)",
+          }}
+        />
+        {/* Big ribbon band — white */}
+        <div
+          className="big-ribbon-band absolute -right-40 top-40 h-[400px] w-[700px] rounded-full"
+          style={{
+            background: "radial-gradient(ellipse at 70% 50%, rgba(255,255,255,0.04), transparent 70%)",
+            filter: "blur(60px)",
+          }}
+        />
+        {/* Big ribbon signal — mint accent */}
+        <div
+          className="big-ribbon-signal absolute left-1/3 -bottom-20 h-[350px] w-[600px] rounded-full"
+          style={{
+            background: "radial-gradient(ellipse at 50% 50%, rgba(6,245,183,0.06), transparent 70%)",
+            filter: "blur(100px)",
+          }}
+        />
+        {/* Drifting particles */}
+        <div className="drift-particle-1 absolute left-[15%] top-[20%] h-1.5 w-1.5 rounded-full bg-brand-500/30" />
+        <div className="drift-particle-2 absolute right-[20%] top-[30%] h-1 w-1 rounded-full bg-white/20" />
+        <div className="drift-particle-3 absolute left-[30%] bottom-[25%] h-2 w-2 rounded-full bg-brand-500/20" />
+        <div className="drift-particle-4 absolute right-[35%] bottom-[15%] h-1 w-1 rounded-full bg-white/15" />
+        <div className="drift-particle-5 absolute left-[60%] top-[15%] h-1.5 w-1.5 rounded-full bg-brand-500/25" />
+        <div className="drift-particle-6 absolute right-[10%] top-[60%] h-1 w-1 rounded-full bg-white/10" />
+        {/* Scanning sweep */}
+        <div className="scanning-sweep absolute inset-y-0 left-0 w-[60%] bg-gradient-to-r from-transparent via-brand-500/5 to-transparent pointer-events-none" />
+      </div>
+
       {/* ===== Unified Page Hero (vertically balanced) ===== */}
-      <div className="max-w-[1100px] mx-auto min-h-[calc(100vh-180px)] flex flex-col justify-center text-center -mt-8">
+      <div className="max-w-[1100px] mx-auto min-h-[calc(100vh-180px)] flex flex-col justify-center text-center -mt-8 relative z-10">
         {/* 1. Product identity row */}
         <div data-stagger className="flex items-center justify-center gap-2 mb-6">
           <span className="text-sm text-white/90 font-semibold">WeLike</span>
@@ -170,10 +209,10 @@ export default function KolPricerHome() {
         </div>
 
         {/* 2. Eyebrow badge */}
-        <div data-stagger className="inline-flex items-center gap-2 rounded-full border border-brand-500/25 bg-brand-500/5 px-4 py-1.5 mb-6 mx-auto">
-
-          <DollarSign className="h-3.5 w-3.5 text-brand-500" />
-          <span className="text-[14px] font-mono tracking-[0.18em] text-brand-500 uppercase">AI-POWERED KOL PRICING</span>
+        <div data-stagger className="inline-flex items-center gap-2 rounded-full border border-brand-500/25 bg-brand-500/5 px-4 py-1.5 mb-6 mx-auto relative overflow-hidden">
+          <div className="badge-scan absolute inset-0 bg-gradient-to-r from-transparent via-brand-500/20 to-transparent pointer-events-none" />
+          <DollarSign className="h-3.5 w-3.5 text-brand-500 relative z-10" />
+          <span className="text-[14px] font-mono tracking-[0.18em] text-brand-500 uppercase relative z-10">AI-POWERED KOL PRICING</span>
         </div>
 
         {/* 3. Main title */}
@@ -201,18 +240,19 @@ export default function KolPricerHome() {
         <div data-stagger className="flex items-center justify-center gap-4">
           <Link
             href="/tools/kol-pricer/tool"
-            className="rounded-xl bg-brand-500 px-8 py-3 text-base font-semibold text-black transition-all active:scale-[0.97] hover:bg-brand-400 hover:shadow-lg hover:shadow-brand-500/20"
+            className="rounded-xl bg-brand-500 px-8 py-3 text-base font-semibold text-black transition-all duration-300 active:scale-[0.97] hover:bg-brand-400 hover:shadow-lg hover:shadow-brand-500/20 hover:-translate-y-0.5"
           >
             {lang === 'zh' ? '使用' : 'Try'}
           </Link>
           <Link
             href="/tools/kol-pricer/how"
-            className="rounded-xl border border-surface-700 px-8 py-3 text-base font-medium text-surface-300 transition-colors hover:border-surface-500 hover:text-white"
+            className="rounded-xl border border-surface-700 px-8 py-3 text-base font-medium text-surface-300 transition-all duration-300 hover:border-surface-500 hover:text-white hover:-translate-y-0.5"
           >
             {lang === 'zh' ? '工作原理' : 'How It Works'}
           </Link>
         </div>
       </div>
+
 
       {/* Features (scroll-reveal) */}
       <section ref={revealRef} data-reveal-group className="pb-12">

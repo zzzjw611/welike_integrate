@@ -45,9 +45,38 @@ export default function SocialListeningPage() {
   }, []);
 
   return (
-    <div className="min-h-screen -mt-8">
+    <div className="min-h-screen -mt-8 relative">
+      {/* ===== Ambient background layers ===== */}
+      <div className="pointer-events-none absolute inset-0 -z-10 overflow-hidden">
+        <div className="pixel-grid" />
+        <div
+          className="big-ribbon-glow absolute -left-20 -top-10 h-[400px] w-[600px] rounded-full"
+          style={{
+            background: "radial-gradient(ellipse at 30% 50%, rgba(6,245,183,0.10), transparent 70%)",
+            filter: "blur(80px)",
+          }}
+        />
+        <div
+          className="big-ribbon-band absolute -right-32 top-20 h-[350px] w-[500px] rounded-full"
+          style={{
+            background: "radial-gradient(ellipse at 70% 50%, rgba(255,255,255,0.03), transparent 70%)",
+            filter: "blur(60px)",
+          }}
+        />
+        <div
+          className="big-ribbon-signal absolute left-1/4 bottom-10 h-[300px] w-[500px] rounded-full"
+          style={{
+            background: "radial-gradient(ellipse at 50% 50%, rgba(6,245,183,0.05), transparent 70%)",
+            filter: "blur(100px)",
+          }}
+        />
+        <div className="drift-particle-1 absolute left-[10%] top-[15%] h-1.5 w-1.5 rounded-full bg-brand-500/25" />
+        <div className="drift-particle-3 absolute right-[25%] top-[40%] h-1 w-1 rounded-full bg-white/15" />
+        <div className="drift-particle-5 absolute left-[50%] bottom-[20%] h-1.5 w-1.5 rounded-full bg-brand-500/20" />
+      </div>
+
       {/* Header */}
-      <header className="flex items-center justify-between mb-6">
+      <header className="flex items-center justify-between mb-6 relative z-10">
         <div className="flex items-center gap-3">
           <svg className="h-7 w-7" viewBox="0 0 40 40" aria-hidden="true">
             <g fill="#06F5B7">
@@ -76,6 +105,7 @@ export default function SocialListeningPage() {
           </button>
         </nav>
       </header>
+
 
       {/* Content */}
       {view === "analyze" ? (

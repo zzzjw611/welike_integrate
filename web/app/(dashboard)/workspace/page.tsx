@@ -176,7 +176,28 @@ export default function WorkspacePage() {
     : null;
 
   return (
-    <div>
+    <div className="relative">
+      {/* ===== Ambient background layers ===== */}
+      <div className="pointer-events-none absolute inset-0 -z-10 overflow-hidden">
+        <div className="pixel-grid" />
+        <div
+          className="big-ribbon-glow absolute -left-20 -top-10 h-[400px] w-[600px] rounded-full"
+          style={{
+            background: "radial-gradient(ellipse at 30% 50%, rgba(6,245,183,0.10), transparent 70%)",
+            filter: "blur(80px)",
+          }}
+        />
+        <div
+          className="big-ribbon-band absolute -right-32 top-20 h-[350px] w-[500px] rounded-full"
+          style={{
+            background: "radial-gradient(ellipse at 70% 50%, rgba(255,255,255,0.03), transparent 70%)",
+            filter: "blur(60px)",
+          }}
+        />
+        <div className="drift-particle-1 absolute left-[15%] top-[30%] h-1.5 w-1.5 rounded-full bg-brand-500/25" />
+        <div className="drift-particle-3 absolute right-[20%] top-[50%] h-1 w-1 rounded-full bg-white/15" />
+      </div>
+
       {/* Onboarding Modal */}
       {showOnboardingModal && !productContext && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
