@@ -2,7 +2,18 @@ import type { Metadata } from "next";
 import { cookies } from "next/headers";
 import { AuthProvider } from "@/lib/auth-context";
 import { parseLangParam } from "@/lib/i18n";
+import { Inter, Space_Grotesk } from "next/font/google";
 import "./globals.css";
+
+const inter = Inter({
+  subsets: ["latin"],
+  variable: "--font-inter",
+});
+
+const spaceGrotesk = Space_Grotesk({
+  subsets: ["latin"],
+  variable: "--font-space-grotesk",
+});
 
 export const metadata: Metadata = {
   title: "AI Marketer Daily",
@@ -20,7 +31,7 @@ export default function RootLayout({
   const lang = parseLangParam(cookieLang) ?? 'en';
 
   return (
-    <html lang={lang} className="dark">
+    <html lang={lang} className={`dark ${inter.variable} ${spaceGrotesk.variable}`}>
       <body className="min-h-screen bg-surface-950 text-white antialiased">
         <AuthProvider>{children}</AuthProvider>
       </body>
