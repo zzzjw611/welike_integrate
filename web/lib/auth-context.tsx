@@ -173,21 +173,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           const user = buildUserFromSession(session);
           ls.saveUser(user);
 
-          // Get latest product context via API route (bypasses RLS with service role key)
-          // Fall back to localStorage if the API call fails
+          // Get latest product context from Supabase (RLS will work since session is valid)
           let productContext = localCtx;
           try {
-            const res = await fetch(`/api/product-context?userId=${user.id}`);
-            if (res.ok) {
-              const { data } = await res.json();
-              if (data) {
-                productContext = mapProductContext(data);
-                ls.saveProductContext(productContext);
-              }
+            const { data } = await supabase
+              .from("product_contexts")
+              .select("*")
+              .eq("user_id", user.id)
+              .order("created_at", { ascending: false })
+              .limit(1)
+              .maybeSingle();
+
+            if (data) {
+              productContext = mapProductContext(data);
+              ls.saveProductContext(productContext);
             }
           } catch (err) {
-            console.warn("API product-context read error (using local data):", err);
+            console.warn("Supabase read error (using local data):", err);
           }
+
 
 
 
@@ -216,22 +220,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             const user = buildUserFromSession(session);
             ls.saveUser(user);
 
-            // Fetch product context via API route (bypasses RLS)
+            // Fetch product context from Supabase (RLS works since session is valid)
             let productContext = ls.getProductContext();
             try {
-              const res = await fetch(`/api/product-context?userId=${user.id}`);
-              if (res.ok) {
-                const { data } = await res.json();
-                if (data) {
-                  productContext = mapProductContext(data);
-                  ls.saveProductContext(productContext);
-                }
+              const { data } = await supabase
+                .from("product_contexts")
+                .select("*")
+                .eq("user_id", user.id)
+                .order("created_at", { ascending: false })
+                .limit(1)
+                .maybeSingle();
+
+              if (data) {
+                productContext = mapProductContext(data);
+                ls.saveProductContext(productContext);
               }
             } catch (err) {
-              console.warn("API read error (SIGNED_IN):", err);
+              console.warn("Supabase read error (SIGNED_IN):", err);
             }
 
             setState({ user, productContext, isLoading: false });
+
 
 
           } else if (event === "SIGNED_OUT") {
@@ -255,74 +264,44 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const login = useCallback(
     async (email: string, password: string) => {
       if (useSupabase) {
-        // Use fetch API directly to avoid Supabase JS client lock contention
-        const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-        const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+        const supabase = await getSupabaseClient();
+        const { data, error } = await supabase.auth.signInWithPassword({
+          email,
+          password,
+        });
+        if (error) throw new Error(error.message);
 
-        const res = await fetch(
-          `${supabaseUrl}/auth/v1/token?grant_type=password`,
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              apikey: supabaseAnonKey,
-            },
-            body: JSON.stringify({ email, password }),
-          }
-        );
-
-        if (!res.ok) {
-          const err = await res.json();
-          throw new Error(err.error_description || err.msg || "Login failed");
+        if (!data.session?.user) {
+          throw new Error("Login succeeded but no user returned");
         }
 
-        const data = await res.json();
-
-        // Store session in localStorage for the Supabase client to pick up
-        const session = {
-          access_token: data.access_token,
-          refresh_token: data.refresh_token,
-          expires_at: data.expires_at,
-          expires_in: data.expires_in,
-          token_type: data.token_type,
-          user: data.user,
-        };
-        localStorage.setItem("welike-supabase-auth", JSON.stringify(session));
-
-        // Build user and set state immediately — don't wait for setSession
-        const user = buildUserFromSession(session);
+        const user = buildUserFromSession(data.session);
         localStorageAuth().saveUser(user);
-        // Also restore product context from localStorage so it shows up immediately
+
+        // Set state immediately with localStorage product context (may be empty on new device)
         const savedCtx = localStorageAuth().getProductContext();
         setState((s) => ({ ...s, user, productContext: savedCtx, isLoading: false }));
 
+        // Now that supabase.auth.signInWithPassword() has completed,
+        // the Supabase client session is properly set and RLS will work.
+        // Fetch product context using the Supabase JS client (respects RLS).
+        try {
+          const { data: ctxData } = await supabase
+            .from("product_contexts")
+            .select("*")
+            .eq("user_id", user.id)
+            .order("created_at", { ascending: false })
+            .limit(1)
+            .maybeSingle();
 
-        // Set session on Supabase client in the background (don't await)
-        getSupabaseClient().then((supabase) => {
-          supabase.auth.setSession({
-            access_token: data.access_token,
-            refresh_token: data.refresh_token,
-          }).catch((err) => {
-            console.warn("Failed to set Supabase session:", err);
-          });
-        });
-
-        // Fetch product context from API route (bypasses RLS) in the background
-        // This ensures cross-device data is loaded
-        fetch(`/api/product-context?userId=${user.id}`)
-          .then((res) => res.ok ? res.json() : null)
-          .then((result) => {
-            if (result?.data) {
-              const ctx = mapProductContext(result.data);
-              localStorageAuth().saveProductContext(ctx);
-              setState((s) => ({ ...s, productContext: ctx }));
-            }
-          })
-          .catch((err) => {
-            console.warn("Failed to fetch product context after login:", err);
-          });
-
-
+          if (ctxData) {
+            const ctx = mapProductContext(ctxData);
+            localStorageAuth().saveProductContext(ctx);
+            setState((s) => ({ ...s, productContext: ctx }));
+          }
+        } catch (err) {
+          console.warn("Failed to fetch product context after login:", err);
+        }
 
       } else {
 
@@ -339,6 +318,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     },
     [useSupabase]
   );
+
 
   const register = useCallback(
     async (name: string, email: string, password: string) => {
