@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useLang } from "@/lib/use-lang";
 import { DollarSign } from "lucide-react";
 
-// ===== Staggered entrance animation hook =====
+// ===== Staggered entrance animation hook (page load) =====
 function useStaggeredEntrance(staggerDelay = 0.06) {
   const ref = useRef<HTMLDivElement>(null);
   useEffect(() => {
@@ -22,6 +22,42 @@ function useStaggeredEntrance(staggerDelay = 0.06) {
         htmlChild.style.transform = "translateY(0)";
       });
     });
+  }, [staggerDelay]);
+  return ref;
+}
+
+// ===== Scroll-triggered staggered entrance hook =====
+function useScrollReveal(staggerDelay = 0.06) {
+  const ref = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const children = el.querySelectorAll("[data-reveal]");
+    if (!children.length) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            const revealed = entry.target.closest("[data-reveal-group]")?.querySelectorAll("[data-reveal]") || [entry.target];
+            revealed.forEach((child, i) => {
+              const htmlChild = child as HTMLElement;
+              htmlChild.style.opacity = "0";
+              htmlChild.style.transform = "translateY(24px) scale(0.98)";
+              htmlChild.style.transition = "opacity 0.55s ease-out, transform 0.55s ease-out";
+              htmlChild.style.transitionDelay = `${i * staggerDelay}s`;
+              requestAnimationFrame(() => {
+                htmlChild.style.opacity = "1";
+                htmlChild.style.transform = "translateY(0) scale(1)";
+              });
+            });
+            observer.unobserve(entry.target);
+          }
+        });
+      },
+      { threshold: 0.1 }
+    );
+    children.forEach((child) => observer.observe(child));
+    return () => observer.disconnect();
   }, [staggerDelay]);
   return ref;
 }
@@ -120,11 +156,12 @@ export default function KolPricerHome() {
   const lang = useLang();
   const features = lang === 'zh' ? FEATURES_ZH : FEATURES_EN;
   const staggerRef = useStaggeredEntrance(0.06);
+  const revealRef = useScrollReveal(0.06);
 
   return (
     <div ref={staggerRef}>
-      {/* ===== Unified Page Hero ===== */}
-      <div className="max-w-[1100px] mx-auto pt-20 pb-14 text-center">
+      {/* ===== Unified Page Hero (fills viewport) ===== */}
+      <div className="max-w-[1100px] mx-auto min-h-[calc(100vh-120px)] flex flex-col justify-center text-center">
         {/* 1. Product identity row */}
         <div data-stagger className="flex items-center justify-center gap-2 mb-6">
           <span className="text-sm text-white/90 font-semibold">WeLike</span>
@@ -176,11 +213,11 @@ export default function KolPricerHome() {
         </div>
       </div>
 
-      {/* Features */}
-      <section className="pb-12">
+      {/* Features (scroll-reveal) */}
+      <section ref={revealRef} data-reveal-group className="pb-12">
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {features.map((f, i) => (
-            <div key={f.title} data-stagger>
+            <div key={f.title} data-reveal>
               <FeatureCard title={f.title} description={f.description} icon={f.icon} />
             </div>
           ))}

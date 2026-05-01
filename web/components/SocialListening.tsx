@@ -29,8 +29,68 @@ interface SocialListeningProps {
   onSwitchToAlerts?: (query: string) => void;
 }
 
+// ===== Staggered entrance animation hook =====
+function useStaggeredEntrance(staggerDelay = 0.06) {
+  const ref = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const children = el.querySelectorAll("[data-stagger]");
+    children.forEach((child, i) => {
+      const htmlChild = child as HTMLElement;
+      htmlChild.style.opacity = "0";
+      htmlChild.style.transform = "translateY(24px)";
+      htmlChild.style.transition = "opacity 0.55s ease-out, transform 0.55s ease-out";
+      htmlChild.style.transitionDelay = `${i * staggerDelay}s`;
+      requestAnimationFrame(() => {
+        htmlChild.style.opacity = "1";
+        htmlChild.style.transform = "translateY(0)";
+      });
+    });
+  }, [staggerDelay]);
+  return ref;
+}
+
+// ===== Scroll-triggered staggered entrance hook =====
+function useScrollReveal(staggerDelay = 0.06) {
+  const ref = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const children = el.querySelectorAll("[data-reveal]");
+    if (!children.length) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            const revealed = entry.target.closest("[data-reveal-group]")?.querySelectorAll("[data-reveal]") || [entry.target];
+            revealed.forEach((child, i) => {
+              const htmlChild = child as HTMLElement;
+              htmlChild.style.opacity = "0";
+              htmlChild.style.transform = "translateY(24px) scale(0.98)";
+              htmlChild.style.transition = "opacity 0.55s ease-out, transform 0.55s ease-out";
+              htmlChild.style.transitionDelay = `${i * staggerDelay}s`;
+              requestAnimationFrame(() => {
+                htmlChild.style.opacity = "1";
+                htmlChild.style.transform = "translateY(0) scale(1)";
+              });
+            });
+            observer.unobserve(entry.target);
+          }
+        });
+      },
+      { threshold: 0.1 }
+    );
+    children.forEach((child) => observer.observe(child));
+    return () => observer.disconnect();
+  }, [staggerDelay]);
+  return ref;
+}
+
 export default function SocialListening({ onSwitchToAlerts }: SocialListeningProps) {
   const lang = useLang();
+  const staggerRef = useStaggeredEntrance(0.06);
+  const revealRef = useScrollReveal(0.06);
   const [query, setQuery] = useState("");
   const [timeRange, setTimeRange] = useState("7d");
   const [taskId, setTaskId] = useState<string | null>(null);
@@ -172,9 +232,9 @@ export default function SocialListening({ onSwitchToAlerts }: SocialListeningPro
   }
 
   return (
-    <div className="space-y-6">
+    <div ref={staggerRef} className="space-y-6">
       {/* ===== System Status Bar ===== */}
-      <div className="flex items-center justify-between rounded-lg border border-surface-800 bg-surface-900/80 px-4 py-2">
+      <div data-stagger className="flex items-center justify-between rounded-lg border border-surface-800 bg-surface-900/80 px-4 py-2">
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-2">
             <span className="h-2 w-2 rounded-full bg-brand-500 shadow-[0_0_6px_rgba(6,245,183,0.5)]" />
