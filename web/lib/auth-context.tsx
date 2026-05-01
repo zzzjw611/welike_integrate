@@ -173,26 +173,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           const user = buildUserFromSession(session);
           ls.saveUser(user);
 
-          // Get latest product context (most recent version)
-          // Fall back to localStorage if Supabase read fails or returns nothing
+          // Get latest product context via API route (bypasses RLS with service role key)
+          // Fall back to localStorage if the API call fails
           let productContext = localCtx;
           try {
-            const { data } = await supabase
-              .from("product_contexts")
-              .select("*")
-              .eq("user_id", user.id)
-              .order("created_at", { ascending: false })
-              .limit(1)
-              .maybeSingle();
-
-            if (data) {
-              productContext = mapProductContext(data);
-              ls.saveProductContext(productContext);
+            const res = await fetch(`/api/product-context?userId=${user.id}`);
+            if (res.ok) {
+              const { data } = await res.json();
+              if (data) {
+                productContext = mapProductContext(data);
+                ls.saveProductContext(productContext);
+              }
             }
-            // If data is null (RLS blocks read), keep localCtx
           } catch (err) {
-            console.warn("Supabase read error (using local data):", err);
+            console.warn("API product-context read error (using local data):", err);
           }
+
 
 
           if (cancelled) return;
@@ -409,51 +405,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       localStorageAuth().saveProductContext(ctx);
       setState((s) => ({ ...s, productContext: ctx }));
 
-      // Save to Supabase as a NEW version (history)
+      // Save to Supabase via API route (uses service role key, bypasses RLS)
+      // This ensures the data is available across devices
       if (useSupabase && state.user) {
-        // Try the Supabase JS client first (uses the user's session for RLS)
-        getSupabaseClient().then(async (supabase) => {
-          const { error } = await supabase
-            .from("product_contexts")
-            .insert({
-              user_id: state.user!.id,
-              name: ctx.name,
-              url: ctx.url || null,
-              one_liner: ctx.oneLiner,
-              description: ctx.description,
-              category: ctx.category,
-              stage: ctx.stage,
-              target_audience: ctx.targetAudience,
-              target_regions: ctx.targetRegions,
-              competitors: ctx.competitors,
-              language: ctx.language,
-            });
-
-          if (error) {
-            console.warn("Supabase JS client save failed, trying API route:", error.message);
-            // Fallback: use the API route which handles auth differently
-            try {
-              await fetch("/api/product-context", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                  userId: state.user!.id,
-                  name: ctx.name,
-                  url: ctx.url,
-                  oneLiner: ctx.oneLiner,
-                  description: ctx.description,
-                  category: ctx.category,
-                  stage: ctx.stage,
-                  targetAudience: ctx.targetAudience,
-                  targetRegions: ctx.targetRegions,
-                  competitors: ctx.competitors,
-                  language: ctx.language,
-                }),
-              });
-            } catch (apiErr) {
-              console.warn("API route save also failed:", apiErr);
-            }
-          }
+        fetch("/api/product-context", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            userId: state.user!.id,
+            name: ctx.name,
+            url: ctx.url,
+            oneLiner: ctx.oneLiner,
+            description: ctx.description,
+            category: ctx.category,
+            stage: ctx.stage,
+            targetAudience: ctx.targetAudience,
+            targetRegions: ctx.targetRegions,
+            competitors: ctx.competitors,
+            language: ctx.language,
+          }),
+        }).catch((err) => {
+          console.warn("API route save failed:", err);
         });
       }
     },
@@ -461,6 +433,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   );
 
   const deleteProductContext = useCallback(async () => {
+
     localStorage.removeItem(LS_CTX_KEY);
     if (useSupabase && state.user) {
       const supabase = await getSupabaseClient();
