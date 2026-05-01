@@ -5,7 +5,7 @@ import { useLang } from "@/lib/use-lang";
 import SocialListening from "@/components/SocialListening";
 import SmartAlerts from "@/components/social-listening/SmartAlerts";
 import { t } from "@/components/social-listening/i18n";
-import { Radio, Bell } from "lucide-react";
+import { Radio, Bell, Activity, Globe } from "lucide-react";
 
 export default function SocialListeningPage() {
   const lang = useLang();

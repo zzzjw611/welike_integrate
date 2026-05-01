@@ -18,6 +18,8 @@ import {
   MessageSquare,
   Settings2,
   Zap,
+  Activity,
+  Globe,
 } from "lucide-react";
 
 // ===== Types =====
@@ -294,6 +296,37 @@ export default function SmartAlerts({ initialQuery, onCreated }: SmartAlertsProp
 
   return (
     <div className="space-y-6">
+      {/* ===== System Status Bar ===== */}
+      <div className="flex items-center justify-between rounded-lg border border-surface-800 bg-surface-900/80 px-4 py-2">
+        <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2">
+            <span className={`h-2 w-2 rounded-full ${chatId ? 'bg-brand-500 shadow-[0_0_6px_rgba(6,245,183,0.5)]' : 'bg-surface-600'} `} />
+            <span className="text-[10px] font-mono text-brand-500 uppercase tracking-wider">ALERT STATUS</span>
+          </div>
+          <div className="hidden sm:flex items-center gap-3 text-[10px] font-mono text-surface-500">
+            <span className="flex items-center gap-1">
+              <Activity className="h-3 w-3 text-surface-600" />
+              {chatId
+                ? (lang === "zh" ? "Telegram 已连接" : "Telegram connected")
+                : (lang === "zh" ? "等待连接" : "Awaiting connection")}
+            </span>
+            <span className="text-surface-700">|</span>
+            <span className="flex items-center gap-1">
+              <Globe className="h-3 w-3 text-surface-600" />
+              {lang === "zh" ? `${alerts.length} 个监听` : `${alerts.length} alerts`}
+            </span>
+          </div>
+        </div>
+        <div className="flex items-center gap-2">
+          <span className={`h-1.5 w-1.5 rounded-full ${chatId ? 'bg-brand-500 animate-pulse' : 'bg-surface-600'}`} />
+          <span className="text-[10px] font-mono text-surface-600">
+            {chatId
+              ? (lang === "zh" ? "监控运行中" : "Monitoring active")
+              : (lang === "zh" ? "离线" : "Offline")}
+          </span>
+        </div>
+      </div>
+
       {/* ===== Hero ===== */}
       <div className="text-center mb-8">
         <div className="inline-flex items-center gap-2 rounded-full border border-brand-500/20 bg-brand-500/5 px-4 py-1.5 mb-4">

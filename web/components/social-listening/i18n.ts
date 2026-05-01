@@ -5,8 +5,8 @@ export const I18N: Record<string, Record<string, string>> = {
     title: "社交聆听",
     subtitle: "AI 驱动的社交聆听",
     hero_tagline: "实时<span class='text-brand-500'>捕捉</span>，即刻<span class='text-brand-500'>决策</span>",
-    desc: "输入关键词或项目 X 主页链接，WeLike 社交聆听会在几十秒内抓取推文、识别叙事、判定紧急度，并生成可执行的市场策略报告",
-    search_placeholder: "例：Claude 或 https://x.com/AnthropicAI",
+    desc: "粘贴 X 人物链接或 Feed 链接。WeLike 社交聆听会在几十秒内抓取推文、识别叙事、判定紧急度，并生成可执行的市场策略报告",
+    search_placeholder: "粘贴 X 人物链接或 Feed 链接，例如 https://x.com/AnthropicAI",
     btn_analyze: "开始分析", btn_analyzing: "分析中...", btn_reanalyze: "重新分析",
     time_24h: "24 小时", time_7d: "近 7 天", time_14d: "近 14 天", examples: "快速示例：",
     stat_tweets: "推文总数", stat_pos: "积极占比", stat_neg: "消极占比", stat_neu: "中性占比", stat_urgent: "高紧急度",
@@ -89,8 +89,8 @@ export const I18N: Record<string, Record<string, string>> = {
     title: "Social Listening",
     subtitle: "AI-powered social listening",
     hero_tagline: "Capture in <span class='text-brand-500'>real time</span>, decide <span class='text-brand-500'>instantly</span>",
-    desc: "Paste a keyword or project X handle. WeLike Social Listening captures tweets, identifies narratives, scores urgency, and generates an executable market response report in seconds",
-    search_placeholder: "e.g., Claude or https://x.com/AnthropicAI",
+    desc: "Paste an X profile URL or feed link. WeLike Social Listening captures posts, identifies narratives, scores urgency, and generates an actionable market response report in seconds",
+    search_placeholder: "Paste an X profile URL or feed link, e.g. https://x.com/AnthropicAI",
     btn_analyze: "Analyze", btn_analyzing: "Analyzing...", btn_reanalyze: "Re-analyze",
     time_24h: "24 hours", time_7d: "Last 7 days", time_14d: "Last 14 days", examples: "Try:",
     stat_tweets: "TWEETS", stat_pos: "POSITIVE", stat_neg: "NEGATIVE", stat_neu: "NEUTRAL", stat_urgent: "HIGH URGENCY",
@@ -179,7 +179,7 @@ export const CATEGORY_COLORS: Record<string, string> = { key_voice: "#06f5b7", f
 export const URGENCY_LABELS: Record<string, [string, string]> = { high: ["🚨 高", "🚨 high"], medium: ["⚠️ 中", "⚠️ med"], low: ["· 低", "· low"] };
 export const ACTION_LABELS: Record<string, [string, string]> = { reply_now: ["立即回复", "Reply now"], log_product: ["产品记录", "Log to product"], monitor: ["监控跟踪", "Monitor"], share_amplify: ["扩散转发", "Amplify"], ignore: ["忽略", "Ignore"] };
 export const TYPE_LABELS: Record<string, [string, string]> = { tweet: ["推文", "Tweet"], quote: ["引用转发", "Quote RT"], reply: ["评论", "Comment"], thread: ["主题帖", "Thread"] };
-export const EXAMPLES = ["Claude", "OpenAI", "Gemini", "Perplexity"];
+export const EXAMPLES = ["AnthropicAI", "OpenAI", "GeminiApp", "perplexity_ai"];
 export const FILTERS = [
   { key: "all", zh: "全部", en: "All" }, { key: "cat:key_voice", zh: "关键声音", en: "Key Voices" },
   { key: "cat:feature_request", zh: "功能建议", en: "Feature Requests" }, { key: "cat:bug_issue", zh: "问题反馈", en: "Bugs / Issues" },

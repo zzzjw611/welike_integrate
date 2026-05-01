@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useLang } from "@/lib/use-lang";
-import { Search, Radio, Send, Loader2, MessageSquare, ChevronRight, Bell, Plus } from "lucide-react";
+import { Search, Radio, Send, Loader2, MessageSquare, ChevronRight, Bell, Plus, Activity, Zap, Globe } from "lucide-react";
 import { DoughnutChart, BarChart } from "@/components/social-listening/charts";
 import { TweetCard } from "@/components/social-listening/TweetCard";
 import {
@@ -173,6 +173,31 @@ export default function SocialListening({ onSwitchToAlerts }: SocialListeningPro
 
   return (
     <div className="space-y-6">
+      {/* ===== System Status Bar ===== */}
+      <div className="flex items-center justify-between rounded-lg border border-surface-800 bg-surface-900/80 px-4 py-2">
+        <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2">
+            <span className="h-2 w-2 rounded-full bg-brand-500 shadow-[0_0_6px_rgba(6,245,183,0.5)]" />
+            <span className="text-[10px] font-mono text-brand-500 uppercase tracking-wider">LIVE SIGNAL</span>
+          </div>
+          <div className="hidden sm:flex items-center gap-3 text-[10px] font-mono text-surface-500">
+            <span className="flex items-center gap-1">
+              <Activity className="h-3 w-3 text-surface-600" />
+              {lang === "zh" ? "数据流待命" : "Data stream idle"}
+            </span>
+            <span className="text-surface-700">|</span>
+            <span className="flex items-center gap-1">
+              <Globe className="h-3 w-3 text-surface-600" />
+              X API
+            </span>
+          </div>
+        </div>
+        <div className="flex items-center gap-2">
+          <span className="h-1.5 w-1.5 rounded-full bg-surface-600 animate-pulse" />
+          <span className="text-[10px] font-mono text-surface-600">{lang === "zh" ? "等待输入" : "Awaiting input"}</span>
+        </div>
+      </div>
+
       {/* Hero */}
       <div className="text-center mb-8">
         <div className="inline-flex items-center gap-2 rounded-full border border-brand-500/20 bg-brand-500/5 px-4 py-1.5 mb-4">
@@ -183,26 +208,39 @@ export default function SocialListening({ onSwitchToAlerts }: SocialListeningPro
         <h2 className="text-lg font-semibold text-surface-200 mb-3" dangerouslySetInnerHTML={{ __html: t("hero_tagline", lang) }} />
         <p className="text-surface-400 text-sm max-w-2xl mx-auto mb-6">{t("desc", lang)}</p>
         <div className="max-w-2xl mx-auto">
-          <div className="flex items-center gap-2 rounded-xl border border-surface-700 bg-surface-900 p-1.5 focus-within:border-brand-500/50 focus-within:shadow-[0_0_0_3px_rgba(6,245,183,0.1)] transition-all">
-            <input value={query} onChange={(e) => setQuery(e.target.value)} onKeyDown={(e) => e.key === "Enter" && startAnalysis()}
-              placeholder={t("search_placeholder", lang)} className="flex-1 bg-transparent border-none px-3 py-2.5 text-sm text-white placeholder:text-surface-500 outline-none" />
-            <select value={timeRange} onChange={(e) => setTimeRange(e.target.value)}
-              className="bg-transparent border-l border-surface-700 text-surface-400 text-xs font-mono px-3 py-2 outline-none appearance-none cursor-pointer">
-              <option value="24h">{t("time_24h", lang)}</option>
-              <option value="7d">{t("time_7d", lang)}</option>
-              <option value="14d">{t("time_14d", lang)}</option>
-            </select>
-            <button onClick={startAnalysis} disabled={loading || !query.trim()}
-              className="flex items-center gap-2 rounded-lg bg-brand-500 px-5 py-2.5 text-sm font-semibold text-black hover:bg-brand-400 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
-              {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
-              {loading ? t("btn_analyzing", lang) : result ? t("btn_reanalyze", lang) : t("btn_analyze", lang)}
-            </button>
+          {/* Input panel with system labels */}
+          <div className="rounded-xl border border-surface-800 bg-surface-900/80 overflow-hidden">
+            {/* Panel header */}
+            <div className="flex items-center gap-3 px-4 py-2 border-b border-surface-800 bg-surface-900/50">
+              <span className="text-[10px] font-mono tracking-wider text-surface-500 uppercase">SOURCE INPUT</span>
+              <span className="text-surface-700">|</span>
+              <span className="text-[10px] font-mono tracking-wider text-surface-500 uppercase">MONITORING WINDOW</span>
+            </div>
+            {/* Input row */}
+            <div className="flex items-center gap-2 p-2">
+              <input value={query} onChange={(e) => setQuery(e.target.value)} onKeyDown={(e) => e.key === "Enter" && startAnalysis()}
+                placeholder={t("search_placeholder", lang)} className="flex-1 bg-transparent border-none px-3 py-2.5 text-sm text-white placeholder:text-surface-500 outline-none" />
+              <select value={timeRange} onChange={(e) => setTimeRange(e.target.value)}
+                className="bg-transparent border-l border-surface-700 text-surface-400 text-xs font-mono px-3 py-2 outline-none appearance-none cursor-pointer">
+                <option value="24h">{t("time_24h", lang)}</option>
+                <option value="7d">{t("time_7d", lang)}</option>
+                <option value="14d">{t("time_14d", lang)}</option>
+              </select>
+              <button onClick={startAnalysis} disabled={loading || !query.trim()}
+                className="flex items-center gap-2 rounded-lg bg-brand-500 px-5 py-2.5 text-sm font-semibold text-black hover:bg-brand-400 active:scale-[0.97] disabled:opacity-50 disabled:cursor-not-allowed transition-all relative overflow-hidden group">
+                {/* Scan line effect on hover */}
+                <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700" />
+                {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Zap className="h-4 w-4" />}
+                {loading ? t("btn_analyzing", lang) : result ? t("btn_reanalyze", lang) : t("btn_analyze", lang)}
+              </button>
+            </div>
           </div>
+          {/* Try chips — now prepend x.com/ */}
           <div className="flex items-center justify-center gap-2 mt-3 flex-wrap">
-            <span className="text-[11px] font-mono text-surface-500">{t("examples", lang)}</span>
+            <span className="text-[10px] font-mono text-surface-500 uppercase tracking-wider">{t("examples", lang)}</span>
             {EXAMPLES.map((ex) => (
-              <button key={ex} onClick={() => setQuery(ex)}
-                className="rounded-full border border-surface-700 px-3 py-1 text-[11px] font-mono text-surface-400 hover:border-brand-500 hover:text-brand-500 transition-colors">{ex}</button>
+              <button key={ex} onClick={() => setQuery(`https://x.com/${ex}`)}
+                className="rounded-full border border-surface-700 px-3 py-1 text-[11px] font-mono text-surface-400 hover:border-brand-500 hover:text-brand-500 hover:bg-brand-500/5 active:scale-[0.95] transition-all">{ex}</button>
             ))}
           </div>
         </div>
