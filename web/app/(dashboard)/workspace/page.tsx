@@ -259,7 +259,7 @@ export default function WorkspacePage() {
               <p className="text-xs font-semibold uppercase tracking-widest text-brand-500 mb-3">
                 {lang === 'zh' ? 'GTM 工作台' : 'GTM Workspace'}
               </p>
-              <h1 className="text-3xl font-bold tracking-tight mb-3">
+              <h1 className="text-3xl font-bold tracking-tight mb-3 font-display">
                 {productContext?.name || (lang === 'zh' ? '你的产品' : 'Your Product')}
               </h1>
               {productContext?.oneLiner && (

@@ -177,12 +177,12 @@ export default function KolPricerHome() {
         </div>
 
         {/* 3. Main title */}
-        <h1 data-stagger className="text-[40px] sm:text-[56px] font-semibold leading-[1.02] tracking-[-0.04em] text-white mb-5">
+        <h1 data-stagger className="text-[40px] sm:text-[56px] font-semibold leading-[1.02] tracking-[-0.04em] text-white mb-5 font-display">
           {lang === 'zh' ? 'KOL Pricer' : 'KOL Pricer'}
         </h1>
 
         {/* 4. Benefit line */}
-        <h2 data-stagger className="text-[22px] sm:text-[28px] font-semibold leading-[1.2] text-surface-200 mb-6">
+        <h2 data-stagger className="text-[22px] sm:text-[28px] font-semibold leading-[1.2] text-surface-200 mb-6 font-display">
           {lang === 'zh' ? (
             <>了解每条 <span className="text-brand-500">KOL 推文</span>的真实价值</>
           ) : (
