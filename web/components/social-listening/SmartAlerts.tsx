@@ -20,6 +20,8 @@ import {
   Zap,
   Activity,
   Globe,
+  Signal,
+  Radio,
 } from "lucide-react";
 
 // ===== Types =====

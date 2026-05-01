@@ -1,21 +1,30 @@
-# WeLike UI Optimization Task List
+# UI/UX Optimization Progress
 
-## Phase 1: Fix KOL Pricer Components (gray-* → surface-*)
-- [ ] Fix `Card.tsx` — replace `gray-*` with `surface-*`
-- [ ] Fix `DataSummary.tsx` — replace `gray-*` with `surface-*`
-- [ ] Fix `PriceCard.tsx` — replace `gray-*` with `surface-*`, fix `bg-brand` → `bg-brand-500`
-- [ ] Fix `ScoreBreakdown.tsx` — replace `gray-*` with `surface-*`
-- [ ] Fix `PriceRange.tsx` — replace `gray-*` with `surface-*`, remove shadow
-- [ ] Fix `LogPanel.tsx` — replace `gray-*` with `surface-*`
-- [ ] Fix `HistoryPanel.tsx` — replace `gray-*` with `surface-*`
-- [ ] Fix `ClaudeInsightCard.tsx` — replace `gray-*` with `surface-*`, fix non-brand colors
-- [ ] Fix `FormulaCard.tsx` — replace `gray-*` with `surface-*`
-- [ ] Fix `ScoreBar.tsx` — replace `gray-*` with `surface-*`
+## Phase 1: Global CSS Enhancements
+- [ ] Add status pulse animations (connected, live, monitoring active)
+- [ ] Add radial highlight utility for hover effects
+- [ ] Add spotlight effect utility
+- [ ] Add dot matrix background utility
+- [ ] Add signal bars animation
 
-## Phase 2: Fix KOL Pricer Pages
-- [ ] Fix `tool/page.tsx` — replace `gray-*` with `surface-*`, fix `text-gray-900` → `text-black`
-- [ ] Fix `page.tsx` (landing) — fix `text-gray-900` → `text-black`, remove shadow
+## Phase 2: SmartAlerts.tsx — Live System Status & Panel Hierarchy
+- [ ] Add live status bar at top (Connected, Bot Online, Last sync)
+- [ ] Enhance Connected Telegram card with system metadata
+- [ ] Improve Create Alert form with better hierarchy
+- [ ] Enrich Active Alerts items with more status fields
+- [ ] Make Live Preview feel more alive
+- [ ] Add radial highlight hover effects on cards/buttons
 
-## Phase 3: Fix Other Pages
-- [ ] Fix `onboarding/page.tsx` — fix `text-gray-900` → `text-black`
-- [ ] Fix `SocialListening.tsx` — fix `text-indigo-400` → `text-surface-400`
+## Phase 3: SocialListening.tsx — Analyze Page Enhancements
+- [ ] Add status indicators to analysis results
+- [ ] Enhance Create Alert CTA section
+- [ ] Add subtle dynamic elements
+
+## Phase 4: Workspace Page — Control Surface Feel
+- [ ] Strengthen hero card with system status info
+- [ ] Add module metadata to tool cards
+- [ ] Add hover effects and status indicators
+
+## Phase 5: Build & Verify
+- [ ] Run next build to verify no errors
+- [ ] Push to GitHub

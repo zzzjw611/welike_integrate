@@ -4,7 +4,7 @@ import { useAuth } from "@/lib/auth-context";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useLang } from "@/lib/use-lang";
-import { Radio, DollarSign, Newspaper, ArrowRight, ChevronRight, Globe, RotateCcw } from "lucide-react";
+import { Radio, DollarSign, Newspaper, ArrowRight, ChevronRight, Globe, RotateCcw, Activity, Signal, Zap } from "lucide-react";
 
 const TOOLS_EN = [
   {
@@ -201,74 +201,105 @@ export default function WorkspacePage() {
           </div>
         </div>
       )}
-      {/* Hero — Product Card */}
-      <div className="rounded-2xl border border-surface-800 bg-gradient-to-br from-surface-900 via-surface-900 to-brand-500/5 p-8 mb-10">
-        <div className="flex items-start justify-between">
-          <div className="flex-1">
-            <p className="text-xs font-semibold uppercase tracking-widest text-brand-500 mb-3">
-              {lang === 'zh' ? 'GTM 工作台' : 'GTM Workspace'}
-            </p>
-            <h1 className="text-3xl font-bold tracking-tight mb-3">
-              {productContext?.name || (lang === 'zh' ? '你的产品' : 'Your Product')}
-            </h1>
-            {productContext?.oneLiner && (
-              <p className="text-surface-300 text-base leading-relaxed mb-5 max-w-xl">
-                {productContext.oneLiner}
-              </p>
-            )}
-
-            {/* Meta tags */}
-            <div className="flex flex-wrap items-center gap-2">
-              {categoryLabel && (
-                <span className="inline-flex items-center gap-1.5 bg-brand-500/10 text-brand-500 text-xs font-medium px-3 py-1 rounded-full">
-                  {categoryLabel}
-                </span>
-              )}
-              {productContext?.stage && (
-                <span className="inline-flex items-center gap-1.5 bg-surface-800 text-surface-300 text-xs font-medium px-3 py-1 rounded-full">
-                  {productContext.stage.charAt(0).toUpperCase() + productContext.stage.slice(1)}
-                </span>
-              )}
-              {productContext?.targetRegions && productContext.targetRegions.length > 0 && (
-                <span className="inline-flex items-center gap-1.5 bg-surface-800 text-surface-300 text-xs font-medium px-3 py-1 rounded-full">
-                  <Globe className="h-3 w-3" />
-                  {productContext.targetRegions.slice(0, 2).join(", ")}
-                  {productContext.targetRegions.length > 2 && ` +${productContext.targetRegions.length - 2}`}
-                </span>
-              )}
-              {productContext?.url && (
-                <a
-                  href={productContext.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1 text-xs text-surface-500 hover:text-brand-500 transition-colors"
-                >
-                  {productContext.url.replace(/^https?:\/\//, "")}
-                  <ArrowRight className="h-3 w-3" />
-                </a>
-              )}
-            </div>
+      {/* System Status Bar */}
+      <div className="flex items-center justify-between rounded-lg border border-surface-800 bg-surface-900/80 px-4 py-2 mb-6">
+        <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2">
+            <span className="h-2 w-2 rounded-full bg-brand-500 shadow-[0_0_6px_rgba(6,245,183,0.5)]" />
+            <span className="text-[10px] font-mono text-brand-500 uppercase tracking-wider">SYSTEM</span>
           </div>
+          <div className="hidden sm:flex items-center gap-3 text-[10px] font-mono text-surface-500">
+            <span className="flex items-center gap-1">
+              <Activity className="h-3 w-3 text-surface-600" />
+              {lang === 'zh' ? '项目状态' : 'Project status'}
+              <span className="text-brand-500 ml-1">{lang === 'zh' ? '活跃' : 'Active'}</span>
+            </span>
+            <span className="text-surface-700">|</span>
+            <span className="flex items-center gap-1">
+              <Zap className="h-3 w-3 text-surface-600" />
+              {lang === 'zh' ? '模块' : 'Modules'}
+              <span className="text-surface-300 ml-1">3 {lang === 'zh' ? '个在线' : 'live'}</span>
+            </span>
+          </div>
+        </div>
+        <div className="flex items-center gap-2">
+          <span className="h-1.5 w-1.5 rounded-full bg-brand-500 animate-pulse" />
+          <span className="text-[10px] font-mono text-surface-600">{lang === 'zh' ? '系统运行中' : 'System online'}</span>
+        </div>
+      </div>
 
-          {/* Action buttons */}
-          <div className="flex items-center gap-2 flex-shrink-0">
-            {productContext && (
-              <button
-                type="button"
-                onClick={() => setShowDeleteConfirm(true)}
+      {/* Hero — Product Card */}
+      <div className="rounded-2xl border border-surface-800 bg-gradient-to-br from-surface-900 via-surface-900 to-brand-500/5 p-8 mb-10 relative overflow-hidden">
+        {/* Subtle dot matrix background */}
+        <div className="absolute inset-0 bg-dot-matrix opacity-30 pointer-events-none" />
+        <div className="relative">
+          <div className="flex items-start justify-between">
+            <div className="flex-1">
+              <p className="text-xs font-semibold uppercase tracking-widest text-brand-500 mb-3">
+                {lang === 'zh' ? 'GTM 工作台' : 'GTM Workspace'}
+              </p>
+              <h1 className="text-3xl font-bold tracking-tight mb-3">
+                {productContext?.name || (lang === 'zh' ? '你的产品' : 'Your Product')}
+              </h1>
+              {productContext?.oneLiner && (
+                <p className="text-surface-300 text-base leading-relaxed mb-5 max-w-xl">
+                  {productContext.oneLiner}
+                </p>
+              )}
+
+              {/* Meta tags */}
+              <div className="flex flex-wrap items-center gap-2">
+                {categoryLabel && (
+                  <span className="inline-flex items-center gap-1.5 bg-brand-500/10 text-brand-500 text-xs font-medium px-3 py-1 rounded-full">
+                    {categoryLabel}
+                  </span>
+                )}
+                {productContext?.stage && (
+                  <span className="inline-flex items-center gap-1.5 bg-surface-800 text-surface-300 text-xs font-medium px-3 py-1 rounded-full">
+                    {productContext.stage.charAt(0).toUpperCase() + productContext.stage.slice(1)}
+                  </span>
+                )}
+                {productContext?.targetRegions && productContext.targetRegions.length > 0 && (
+                  <span className="inline-flex items-center gap-1.5 bg-surface-800 text-surface-300 text-xs font-medium px-3 py-1 rounded-full">
+                    <Globe className="h-3 w-3" />
+                    {productContext.targetRegions.slice(0, 2).join(", ")}
+                    {productContext.targetRegions.length > 2 && ` +${productContext.targetRegions.length - 2}`}
+                  </span>
+                )}
+                {productContext?.url && (
+                  <a
+                    href={productContext.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1 text-xs text-surface-500 hover:text-brand-500 transition-colors"
+                  >
+                    {productContext.url.replace(/^https?:\/\//, "")}
+                    <ArrowRight className="h-3 w-3" />
+                  </a>
+                )}
+              </div>
+            </div>
+
+            {/* Action buttons */}
+            <div className="flex items-center gap-2 flex-shrink-0">
+              {productContext && (
+                <button
+                  type="button"
+                  onClick={() => setShowDeleteConfirm(true)}
+                  className="flex items-center gap-1.5 text-xs text-surface-500 hover:text-white bg-surface-800 hover:bg-surface-700 px-3 py-2 rounded-lg transition-colors"
+                >
+                  <RotateCcw className="h-3.5 w-3.5" />
+                  {lang === 'zh' ? '重置' : 'Reset'}
+                </button>
+              )}
+              <Link
+                href="/onboarding"
                 className="flex items-center gap-1.5 text-xs text-surface-500 hover:text-white bg-surface-800 hover:bg-surface-700 px-3 py-2 rounded-lg transition-colors"
               >
-                <RotateCcw className="h-3.5 w-3.5" />
-                {lang === 'zh' ? '重置' : 'Reset'}
-              </button>
-            )}
-            <Link
-              href="/onboarding"
-              className="flex items-center gap-1.5 text-xs text-surface-500 hover:text-white bg-surface-800 hover:bg-surface-700 px-3 py-2 rounded-lg transition-colors"
-            >
-              {lang === 'zh' ? '编辑' : 'Edit'}
-              <ChevronRight className="h-3 w-3" />
-            </Link>
+                {lang === 'zh' ? '编辑' : 'Edit'}
+                <ChevronRight className="h-3 w-3" />
+              </Link>
+            </div>
           </div>
         </div>
       </div>
@@ -352,35 +383,66 @@ export default function WorkspacePage() {
         {TOOLS.map((tool) => {
           const colors = COLOR_MAP[tool.color];
           const Icon = tool.icon;
+          const moduleMeta: Record<string, { status: string; tag: string }> = {
+            "social-listening": {
+              status: lang === "zh" ? "实时监控" : "Real-time monitoring",
+              tag: lang === "zh" ? "X + Reddit" : "X + Reddit",
+            },
+            "kol-pricer": {
+              status: lang === "zh" ? "定价基准" : "Pricing benchmarks",
+              tag: lang === "zh" ? "ROI 建模" : "ROI modeling",
+            },
+            "news": {
+              status: lang === "zh" ? "每日更新" : "Daily updates",
+              tag: lang === "zh" ? "Telegram 推送" : "Telegram push",
+            },
+          };
+          const meta = moduleMeta[tool.id];
           return (
             <Link
               key={tool.id}
               href={tool.href}
-              className={`block rounded-xl border ${colors.border} ${colors.bg} p-6 transition-all group`}
+              className={`block rounded-xl border ${colors.border} ${colors.bg} p-6 transition-all group relative overflow-hidden`}
             >
-              <div className="flex items-start justify-between mb-4">
-                <div className={`h-12 w-12 rounded-xl ${colors.icon} flex items-center justify-center`}>
-                  <Icon className="h-6 w-6" />
+              {/* Hover radial highlight */}
+              <div className="absolute inset-0 bg-gradient-to-br from-white/[0.02] to-transparent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
+              <div className="relative">
+                <div className="flex items-start justify-between mb-4">
+                  <div className={`h-12 w-12 rounded-xl ${colors.icon} flex items-center justify-center group-hover:scale-105 transition-transform`}>
+                    <Icon className="h-6 w-6" />
+                  </div>
+                  <ArrowRight className="h-5 w-5 text-surface-600 group-hover:text-surface-300 group-hover:translate-x-0.5 transition-all" />
                 </div>
-                <ArrowRight className="h-5 w-5 text-surface-600 group-hover:text-surface-300 group-hover:translate-x-0.5 transition-all" />
-              </div>
 
-              <h3 className="text-lg font-semibold mb-2 group-hover:text-white transition-colors">
-                {tool.name}
-              </h3>
-              <p className="text-sm text-surface-400 leading-relaxed mb-4">
-                {tool.description}
-              </p>
+                <h3 className="text-lg font-semibold mb-2 group-hover:text-white transition-colors">
+                  {tool.name}
+                </h3>
+                <p className="text-sm text-surface-400 leading-relaxed mb-4">
+                  {tool.description}
+                </p>
 
-              <div className="flex flex-wrap gap-2">
-                {tool.features.map((feature) => (
-                  <span
-                    key={feature}
-                    className={`text-xs ${colors.badge} px-2 py-1 rounded-md`}
-                  >
-                    {feature}
-                  </span>
-                ))}
+                <div className="flex flex-wrap gap-2 mb-4">
+                  {tool.features.map((feature) => (
+                    <span
+                      key={feature}
+                      className={`text-xs ${colors.badge} px-2 py-1 rounded-md`}
+                    >
+                      {feature}
+                    </span>
+                  ))}
+                </div>
+
+                {/* Module metadata */}
+                {meta && (
+                  <div className="flex items-center gap-3 pt-3 border-t border-surface-800/50">
+                    <span className="flex items-center gap-1.5 text-[10px] font-mono text-surface-500">
+                      <span className={`h-1.5 w-1.5 rounded-full ${tool.color === "brand" ? "bg-brand-500" : tool.color === "purple" ? "bg-purple-400" : "bg-cyan-400"}`} />
+                      {meta.status}
+                    </span>
+                    <span className="text-surface-700">·</span>
+                    <span className="text-[10px] font-mono text-surface-500">{meta.tag}</span>
+                  </div>
+                )}
               </div>
             </Link>
           );

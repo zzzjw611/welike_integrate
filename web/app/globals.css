@@ -421,8 +421,152 @@ body {
   background-size: 256px 256px;
 }
 
+/* ===== Status pulse — for live/connected dots ===== */
+@keyframes statusPulse {
+  0%   { opacity: 1; transform: scale(1); }
+  50%  { opacity: 0.5; transform: scale(0.85); }
+  100% { opacity: 1; transform: scale(1); }
+}
+
+.status-dot {
+  animation: statusPulse 2.5s ease-in-out infinite;
+}
+
+/* ===== Radial highlight — surface activation on hover ===== */
+.radial-highlight {
+  position: relative;
+  overflow: hidden;
+}
+
+.radial-highlight::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(600px circle at var(--mx, 50%) var(--my, 50%), rgba(6, 245, 183, 0.04) 0%, transparent 60%);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.radial-highlight:hover::before {
+  opacity: 1;
+}
+
+.radial-highlight > * {
+  position: relative;
+  z-index: 1;
+}
+
+/* ===== Spotlight — large area glow following mouse ===== */
+.spotlight-area {
+  position: relative;
+  overflow: hidden;
+}
+
+.spotlight-area::before {
+  content: '';
+  position: absolute;
+  width: 600px;
+  height: 600px;
+  background: radial-gradient(circle, rgba(6, 245, 183, 0.03) 0%, transparent 70%);
+  border-radius: 50%;
+  pointer-events: none;
+  transform: translate(-50%, -50%);
+  transition: opacity 0.4s ease;
+  opacity: 0;
+  z-index: 0;
+}
+
+.spotlight-area:hover::before {
+  opacity: 1;
+}
+
+/* ===== Dot matrix background ===== */
+.bg-dot-matrix {
+  background-image: radial-gradient(
+    circle at 1px 1px,
+    rgba(6, 245, 183, 0.06) 1px,
+    transparent 1px
+  );
+  background-size: 20px 20px;
+}
+
+/* ===== Signal bars — vertical data throughput ===== */
+@keyframes signalBar1 {
+  0%   { height: 15%; opacity: 0.15; }
+  50%  { height: 60%; opacity: 0.35; }
+  100% { height: 20%; opacity: 0.2; }
+}
+@keyframes signalBar2 {
+  0%   { height: 40%; opacity: 0.2; }
+  50%  { height: 10%; opacity: 0.3; }
+  100% { height: 50%; opacity: 0.15; }
+}
+@keyframes signalBar3 {
+  0%   { height: 25%; opacity: 0.15; }
+  50%  { height: 70%; opacity: 0.4; }
+  100% { height: 30%; opacity: 0.2; }
+}
+@keyframes signalBar4 {
+  0%   { height: 50%; opacity: 0.2; }
+  50%  { height: 20%; opacity: 0.25; }
+  100% { height: 60%; opacity: 0.15; }
+}
+@keyframes signalBar5 {
+  0%   { height: 10%; opacity: 0.1; }
+  50%  { height: 45%; opacity: 0.3; }
+  100% { height: 15%; opacity: 0.2; }
+}
+
+.signal-bar-1 { animation: signalBar1 3s ease-in-out infinite; }
+.signal-bar-2 { animation: signalBar2 3.5s ease-in-out infinite; }
+.signal-bar-3 { animation: signalBar3 2.8s ease-in-out infinite; }
+.signal-bar-4 { animation: signalBar4 4s ease-in-out infinite; }
+.signal-bar-5 { animation: signalBar5 3.2s ease-in-out infinite; }
+
+/* ===== Scanning shimmer for cards ===== */
+@keyframes shimmer {
+  0%   { transform: translateX(-100%); }
+  100% { transform: translateX(200%); }
+}
+
+.shimmer-scan {
+  position: relative;
+  overflow: hidden;
+}
+
+.shimmer-scan::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 60%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(6, 245, 183, 0.03), transparent);
+  transform: translateX(-100%);
+  animation: shimmer 6s ease-in-out infinite;
+  pointer-events: none;
+}
+
 /* ===== Reduced motion ===== */
 @media (prefers-reduced-motion: reduce) {
+  .status-dot,
+  .signal-bar-1,
+  .signal-bar-2,
+  .signal-bar-3,
+  .signal-bar-4,
+  .signal-bar-5,
+  .shimmer-scan::after {
+    animation: none !important;
+  }
+  .status-dot { opacity: 1; }
+  .signal-bar-1 { height: 30%; opacity: 0.2; }
+  .signal-bar-2 { height: 30%; opacity: 0.2; }
+  .signal-bar-3 { height: 30%; opacity: 0.2; }
+  .signal-bar-4 { height: 30%; opacity: 0.2; }
+  .signal-bar-5 { height: 30%; opacity: 0.2; }
+
   .big-ribbon-glow,
   .big-ribbon-band,
   .big-ribbon-signal,
@@ -473,8 +617,6 @@ body {
   .drift-particle-6 { opacity: 0.15; }
   .grid-breathe { opacity: 0.3; }
 }
-
-
 
 
 

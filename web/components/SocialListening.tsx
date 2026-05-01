@@ -287,14 +287,14 @@ export default function SocialListening({ onSwitchToAlerts }: SocialListeningPro
 
           {/* Create Alert CTA */}
           {onSwitchToAlerts && (
-            <div className="rounded-xl border border-brand-500/20 bg-gradient-to-br from-brand-500/10 to-brand-500/5 p-5 flex items-center justify-between">
+            <div className="rounded-xl border border-brand-500/20 bg-gradient-to-br from-brand-500/10 to-brand-500/5 p-5 flex items-center justify-between group">
               <div className="flex items-center gap-3">
-                <div className="h-10 w-10 rounded-xl bg-brand-500/20 flex items-center justify-center">
+                <div className="h-10 w-10 rounded-lg bg-brand-500/20 flex items-center justify-center group-hover:bg-brand-500/30 transition-colors">
                   <Bell className="h-5 w-5 text-brand-500" />
                 </div>
                 <div>
                   <p className="text-sm font-semibold text-white">
-                    {lang === "zh" ? "实时捕捉，即刻决策" : "Real-time Capture, Instant Decisions"}
+                    {lang === "zh" ? "实时舆情预警" : "Real-time Alerts"}
                   </p>
                   <p className="text-xs text-surface-400">
                     {lang === "zh"
@@ -305,7 +305,7 @@ export default function SocialListening({ onSwitchToAlerts }: SocialListeningPro
               </div>
               <button
                 onClick={() => onSwitchToAlerts(result.query)}
-                className="rounded-lg bg-brand-500 px-5 py-2.5 text-sm font-semibold text-black hover:bg-brand-400 transition-colors inline-flex items-center gap-2 flex-shrink-0"
+                className="rounded-lg bg-brand-500 px-5 py-2.5 text-sm font-semibold text-black hover:bg-brand-400 transition-all inline-flex items-center gap-2 flex-shrink-0 glow-brand"
               >
                 <Plus className="h-4 w-4" />
                 {lang === "zh" ? "创建 Alert" : "Create Alert"}
