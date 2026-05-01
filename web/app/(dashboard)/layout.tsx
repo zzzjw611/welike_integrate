@@ -153,18 +153,38 @@ export default function DashboardLayout({
         </div>
       </div>
 
-      {/* User footer */}
-      <div className="px-4 py-4 border-t border-surface-800 space-y-1">
+      {/* Profile + Sign out */}
+      <div className="px-4 py-3 border-t border-surface-800">
+        {/* Profile block */}
+        <div className="group flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 cursor-pointer hover:bg-surface-800/80 hover:shadow-[inset_0_0_0_1px_rgba(6,245,183,0.12)] mb-1">
+          {/* Avatar / initial badge */}
+          <div className="h-8 w-8 rounded-full bg-surface-800 flex items-center justify-center flex-shrink-0 transition-all duration-200 group-hover:bg-surface-700 group-hover:shadow-[0_0_12px_rgba(6,245,183,0.15)]">
+            <span className="text-xs font-semibold text-surface-300 group-hover:text-brand-500 transition-colors duration-200">
+              {(user?.name || 'U').charAt(0).toUpperCase()}
+            </span>
+          </div>
+          {/* Name + email */}
+          <div className="min-w-0 flex-1">
+            <p className="text-sm font-medium text-surface-200 truncate group-hover:text-white transition-colors duration-200">
+              {user?.name || 'WeLike User'}
+            </p>
+            <p className="text-[11px] text-surface-500 truncate">
+              {user?.email || ''}
+            </p>
+          </div>
+        </div>
+        {/* Sign out */}
         <button
           onClick={async () => {
             await logout();
           }}
-          className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-surface-400 hover:text-red-400 hover:bg-surface-800 transition-colors"
+          className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-surface-500 hover:text-red-400 hover:bg-surface-800/60 transition-colors"
         >
           <LogOut className="h-4 w-4" />
           {currentLang === 'zh' ? '退出登录' : 'Sign out'}
         </button>
       </div>
+
     </>
   );
 
