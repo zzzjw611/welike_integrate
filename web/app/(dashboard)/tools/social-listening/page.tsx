@@ -70,9 +70,10 @@ export default function SocialListeningPage() {
             filter: "blur(100px)",
           }}
         />
-        <div className="drift-particle-1 absolute left-[10%] top-[15%] h-1.5 w-1.5 rounded-full bg-brand-500/25" />
-        <div className="drift-particle-3 absolute right-[25%] top-[40%] h-1 w-1 rounded-full bg-white/15" />
-        <div className="drift-particle-5 absolute left-[50%] bottom-[20%] h-1.5 w-1.5 rounded-full bg-brand-500/20" />
+        <div className="drift-particle-1 absolute left-[10%] top-[15%] h-4 w-4 rounded-full bg-brand-500/50 shadow-[0_0_20px_rgba(6,245,183,0.5)]" />
+        <div className="drift-particle-3 absolute right-[25%] top-[40%] h-3 w-3 rounded-full bg-white/35 shadow-[0_0_14px_rgba(255,255,255,0.25)]" />
+        <div className="drift-particle-5 absolute left-[50%] bottom-[20%] h-5 w-5 rounded-full bg-brand-500/40 shadow-[0_0_28px_rgba(6,245,183,0.45)]" />
+
       </div>
 
       {/* Header */}

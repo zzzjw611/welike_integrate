@@ -190,13 +190,14 @@ export default function KolPricerHome() {
             filter: "blur(100px)",
           }}
         />
-        {/* Drifting particles */}
-        <div className="drift-particle-1 absolute left-[15%] top-[20%] h-1.5 w-1.5 rounded-full bg-brand-500/40" />
-        <div className="drift-particle-2 absolute right-[20%] top-[30%] h-1 w-1 rounded-full bg-white/30" />
-        <div className="drift-particle-3 absolute left-[30%] bottom-[25%] h-2 w-2 rounded-full bg-brand-500/30" />
-        <div className="drift-particle-4 absolute right-[35%] bottom-[15%] h-1 w-1 rounded-full bg-white/25" />
-        <div className="drift-particle-5 absolute left-[60%] top-[15%] h-1.5 w-1.5 rounded-full bg-brand-500/35" />
-        <div className="drift-particle-6 absolute right-[10%] top-[60%] h-1 w-1 rounded-full bg-white/20" />
+        {/* Drifting particles — BIG sci-fi tech orbs with glow */}
+        <div className="drift-particle-1 absolute left-[15%] top-[20%] h-4 w-4 rounded-full bg-brand-500/50 shadow-[0_0_20px_rgba(6,245,183,0.5)]" />
+        <div className="drift-particle-2 absolute right-[20%] top-[30%] h-3 w-3 rounded-full bg-white/40 shadow-[0_0_16px_rgba(255,255,255,0.3)]" />
+        <div className="drift-particle-3 absolute left-[30%] bottom-[25%] h-5 w-5 rounded-full bg-brand-500/40 shadow-[0_0_28px_rgba(6,245,183,0.45)]" />
+        <div className="drift-particle-4 absolute right-[35%] bottom-[15%] h-3 w-3 rounded-full bg-white/35 shadow-[0_0_14px_rgba(255,255,255,0.25)]" />
+        <div className="drift-particle-5 absolute left-[60%] top-[15%] h-4 w-4 rounded-full bg-brand-500/45 shadow-[0_0_22px_rgba(6,245,183,0.5)]" />
+        <div className="drift-particle-6 absolute right-[10%] top-[60%] h-3 w-3 rounded-full bg-white/30 shadow-[0_0_12px_rgba(255,255,255,0.2)]" />
+
         {/* Scanning sweep */}
         <div className="scanning-sweep absolute inset-y-0 left-0 w-[60%] bg-gradient-to-r from-transparent via-brand-500/8 to-transparent pointer-events-none" />
 
