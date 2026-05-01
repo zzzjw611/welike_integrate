@@ -170,9 +170,9 @@ export default function KolPricerHome() {
         </div>
 
         {/* 2. Eyebrow badge */}
-        <div data-stagger className="inline-flex items-center gap-2 rounded-full border border-brand-500/25 bg-brand-500/5 px-4 py-1.5 mb-6">
-          <DollarSign className="h-3.5 w-3.5 text-brand-500" />
-          <span className="text-[14px] font-mono tracking-[0.18em] text-brand-500 uppercase">AI-POWERED KOL PRICING</span>
+        <div data-stagger className="inline-flex items-center gap-2 mb-6">
+          <DollarSign className="h-3.5 w-3.5 text-brand-500/70" />
+          <span className="text-[13px] font-mono tracking-[0.2em] text-brand-500/80 uppercase">AI-POWERED KOL PRICING</span>
         </div>
 
         {/* 3. Main title */}
