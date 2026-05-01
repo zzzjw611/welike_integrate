@@ -153,14 +153,36 @@ function FeatureCard({
   icon: React.ReactNode;
 }) {
   return (
-    <div className="group rounded-2xl border border-surface-800 bg-surface-900/50 p-6 transition-colors hover:border-brand-500/30 hover:bg-surface-900">
-      <div className="mb-4 inline-flex rounded-xl bg-brand-500/10 p-3 text-brand-500">
-        {icon}
+    <div
+      className="group relative cursor-pointer rounded-2xl border border-surface-800 bg-surface-900/50 p-6 transition-all duration-300 ease-out hover:-translate-y-2 hover:scale-[1.015] hover:border-brand-400/80 hover:bg-[#171717]"
+      style={{
+        boxShadow: "0 0 0 1px rgba(6,245,183,0)",
+        transition: "all 300ms ease-out",
+      }}
+      onMouseEnter={(e) => {
+        e.currentTarget.style.boxShadow = "0 0 0 1px rgba(6,245,183,0.28), 0 0 36px rgba(6,245,183,0.22), 0 24px 80px rgba(6,245,183,0.16)";
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.boxShadow = "0 0 0 1px rgba(6,245,183,0)";
+      }}
+    >
+      {/* Radial highlight inside card */}
+      <div className="pointer-events-none absolute inset-0 rounded-2xl opacity-0 transition-opacity duration-300 group-hover:opacity-100 bg-[radial-gradient(circle_at_65%_20%,rgba(6,245,183,0.18),transparent_38%)]" />
+      {/* Top gradient highlight */}
+      <div className="pointer-events-none absolute inset-0 rounded-2xl opacity-0 transition-opacity duration-300 group-hover:opacity-100 bg-[linear-gradient(180deg,rgba(6,245,183,0.06),transparent_35%)]" />
+      <div className="relative">
+        <div className="mb-4 inline-flex rounded-xl bg-brand-500/10 p-3 text-brand-500 transition-all duration-300 group-hover:bg-[#0a3329] group-hover:border group-hover:border-brand-400/45 group-hover:shadow-[0_0_24px_rgba(6,245,183,0.20)]">
+          <div className="transition-all duration-300 group-hover:drop-shadow-[0_0_10px_rgba(6,245,183,0.7)]">
+            {icon}
+          </div>
+        </div>
+        <h3 className="text-lg font-semibold text-white transition-colors duration-300 group-hover:text-white">
+          {title}
+        </h3>
+        <p className="mt-2 text-sm leading-relaxed text-surface-400">
+          {description}
+        </p>
       </div>
-      <h3 className="text-lg font-semibold text-white">{title}</h3>
-      <p className="mt-2 text-sm leading-relaxed text-surface-400">
-        {description}
-      </p>
     </div>
   );
 }
