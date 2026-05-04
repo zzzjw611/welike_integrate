@@ -197,6 +197,9 @@ export default function OnboardingPage() {
     competitors: "",
     language: "en",
   });
+  const [customCategory, setCustomCategory] = useState("");
+  const CATEGORY_OTHER = "__other__";
+
 
   // Pre-fill if editing
   useEffect(() => {
@@ -454,8 +457,16 @@ export default function OnboardingPage() {
             <div className="relative">
               <select
                 required
-                value={form.category}
-                onChange={(e) => update("category", e.target.value)}
+                value={form.category === CATEGORY_OTHER || (form.category && !AI_CATEGORIES.some(g => g.items.some(i => i.value === form.category))) ? CATEGORY_OTHER : form.category}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  if (val === CATEGORY_OTHER) {
+                    update("category", CATEGORY_OTHER);
+                  } else {
+                    update("category", val);
+                    setCustomCategory("");
+                  }
+                }}
                 className="w-full rounded-lg border border-surface-700 bg-surface-900 px-4 py-2.5 pr-10 text-sm text-white focus-brand transition-colors appearance-none"
                 style={{ colorScheme: 'dark' }}
               >
@@ -469,6 +480,9 @@ export default function OnboardingPage() {
                     ))}
                   </optgroup>
                 ))}
+                <option value={CATEGORY_OTHER} className="bg-surface-900 text-white border-t border-surface-700">
+                  {lang === 'zh' ? '其他（请注明）' : 'Other (please specify)'}
+                </option>
               </select>
               <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3">
                 <svg className="h-4 w-4 text-surface-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -476,6 +490,20 @@ export default function OnboardingPage() {
                 </svg>
               </div>
             </div>
+            {form.category === CATEGORY_OTHER && (
+              <input
+                type="text"
+                required
+                value={customCategory}
+                onChange={(e) => {
+                  setCustomCategory(e.target.value);
+                  update("category", e.target.value || CATEGORY_OTHER);
+                }}
+                placeholder={lang === 'zh' ? '请输入你的 AI 类别' : 'Enter your AI category'}
+                className="mt-2 w-full rounded-lg border border-surface-700 bg-surface-900 px-4 py-2.5 text-sm text-white placeholder:text-surface-600 focus-brand transition-colors"
+              />
+            )}
+
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
