@@ -16,9 +16,10 @@ const spaceGrotesk = Space_Grotesk({
 });
 
 export const metadata: Metadata = {
-  title: "AI Marketer Daily",
-  description: "The daily intelligence brief for AI marketers worldwide. 8 minutes a day. Free forever.",
+  title: "WeLike — GTM Workspace for AI Products",
+  description: "WeLike is the GTM workspace for AI products. Battle-tested playbooks and tools from 100+ launches. Social listening, KOL pricing, AI news, and more.",
 };
+
 
 export default function RootLayout({
   children,
