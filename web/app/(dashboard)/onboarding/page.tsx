@@ -133,28 +133,29 @@ const STAGE_OPTIONS_ZH = [
 const REGION_OPTIONS_EN = [
   "Global",
   "North America",
-  "Europe",
+  "China / Greater China",
+  "Korea",
+  "Latin America",
+  "Middle East",
   "Southeast Asia",
   "Japan",
-  "Korea",
-  "China / Greater China",
-  "Middle East",
-  "Latin America",
   "Africa",
+  "Europe",
 ];
 
 const REGION_OPTIONS_ZH = [
   "全球",
   "北美",
-  "欧洲",
+  "中国 / 大中华区",
+  "韩国",
+  "拉丁美洲",
+  "中东",
   "东南亚",
   "日本",
-  "韩国",
-  "中国 / 大中华区",
-  "中东",
-  "拉丁美洲",
   "非洲",
+  "欧洲",
 ];
+
 
 const LANGUAGE_OPTIONS_EN = [
   { value: "en", label: "English" },
@@ -219,13 +220,33 @@ export default function OnboardingPage() {
     setForm((prev) => ({ ...prev, [field]: value }));
 
   const toggleRegion = (region: string) => {
-    setForm((prev) => ({
-      ...prev,
-      targetRegions: prev.targetRegions.includes(region)
-        ? prev.targetRegions.filter((r) => r !== region)
-        : [...prev.targetRegions, region],
-    }));
+    setForm((prev) => {
+      const isGlobal = region === "Global" || region === "全球";
+      const isSelected = prev.targetRegions.includes(region);
+
+      if (isGlobal) {
+        // Global is exclusive: selecting it clears all others, deselecting it clears everything
+        return {
+          ...prev,
+          targetRegions: isSelected ? [] : ["Global"],
+        };
+      }
+
+      // Selecting any non-Global region clears Global
+      if (isSelected) {
+        return {
+          ...prev,
+          targetRegions: prev.targetRegions.filter((r) => r !== region),
+        };
+      }
+
+      return {
+        ...prev,
+        targetRegions: [...prev.targetRegions.filter((r) => r !== "Global" && r !== "全球"), region],
+      };
+    });
   };
+
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
