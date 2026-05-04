@@ -3,7 +3,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 
 /* ── Types ── */
 type Lang = "en" | "zh";
-type Tab = "news" | "funding" | "growth" | "tools";
+type Tab = "news" | "funding" | "growth" | "tools" | "newsletter";
 type NewsItem = { time?: string; title: string; source?: string; url?: string; summary?: string; background?: string; category?: string; tags?: string[]; analysis?: string };
 type TrendItem = { title: string; category?: string; url?: string; mentions: number };
 type TabCache = Record<Tab, NewsItem[] | null>;
@@ -12,7 +12,7 @@ type TabCache = Record<Tab, NewsItem[] | null>;
 const I18N = {
   en: {
     nav_sub: "AI Intelligence", tab_news: "Daily News", tab_funding: "Funding",
-    tab_growth: "Growth Insights", tab_tools: "AI Tools",
+    tab_growth: "Growth Insights", tab_tools: "AI Tools", tab_newsletter: "Newsletter",
     chip_news: "Today's Timeline", chip_funding: "Funding Updates",
     chip_growth: "Growth · Case Studies", chip_tools: "AI Tool Picks",
     chip_trending: "Top 5 Trending", refresh: "↻ Refresh", ctx_label: "Context",
@@ -26,7 +26,7 @@ const I18N = {
   },
   zh: {
     nav_sub: "AI 情报", tab_news: "每日重要新闻", tab_funding: "融资动态",
-    tab_growth: "增长洞察", tab_tools: "AI工具推荐",
+    tab_growth: "增长洞察", tab_tools: "AI工具推荐", tab_newsletter: "Newsletter",
     chip_news: "今日时间线", chip_funding: "融资动态",
     chip_growth: "增长洞察 · 策略案例", chip_tools: "AI 工具推荐",
     chip_trending: "热门话题 Top 5", refresh: "↻ 刷新", ctx_label: "背景",
@@ -40,7 +40,7 @@ const I18N = {
   },
 };
 
-const TAB_CONFIG = {
+const TAB_CONFIG: Partial<Record<Tab, { chipClass: string; chipKey: string }>> = {
   news:    { chipClass: "chip-green",  chipKey: "chip_news"    },
   funding: { chipClass: "chip-orange", chipKey: "chip_funding" },
   growth:  { chipClass: "chip-blue",   chipKey: "chip_growth"  },
@@ -125,13 +125,14 @@ async function fetchTrending(today: string, li: string): Promise<TrendItem[]> {
   return parseJSON(raw).trending ?? [];
 }
 
-const FETCH_FN = { news: fetchNews, funding: fetchFunding, growth: fetchGrowth, tools: fetchTools };
+const FETCH_FN: Partial<Record<Tab, (today: string, li: string) => Promise<NewsItem[]>>> = { news: fetchNews, funding: fetchFunding, growth: fetchGrowth, tools: fetchTools };
 
 const TG_LABELS: Record<Tab, { en: string; zh: string }> = {
-  news:    { en: "Daily News",       zh: "每日重要新闻" },
-  funding: { en: "Funding Updates",  zh: "融资动态" },
-  growth:  { en: "Growth Insights",  zh: "增长洞察" },
-  tools:   { en: "AI Tool Picks",    zh: "AI工具推荐" },
+  news:       { en: "Daily News",       zh: "每日重要新闻" },
+  funding:    { en: "Funding Updates",  zh: "融资动态" },
+  growth:     { en: "Growth Insights",  zh: "增长洞察" },
+  tools:      { en: "AI Tool Picks",    zh: "AI工具推荐" },
+  newsletter: { en: "Newsletter",       zh: "Newsletter" },
 };
 
 /* ── Component ── */
@@ -139,7 +140,7 @@ export default function NewsPage() {
   const now = useRef(new Date());
   const [lang, setLangState] = useState<Lang>("en");
   const [tab, setTab] = useState<Tab>("news");
-  const [cache, setCache] = useState<TabCache>({ news: null, funding: null, growth: null, tools: null });
+  const [cache, setCache] = useState<TabCache>({ news: null, funding: null, growth: null, tools: null, newsletter: null });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [trending, setTrending] = useState<TrendItem[] | null>(null);
@@ -165,10 +166,12 @@ export default function NewsPage() {
 
   const loadTab = useCallback(async (t: Tab, l: Lang, c: TabCache) => {
     if (c[t]) return;
+    const fn = FETCH_FN[t];
+    if (!fn) return;
     setLoading(true); setError(null);
     try {
       const li = I18N[l].lang_instr;
-      const items = await FETCH_FN[t](today, li);
+      const items = await fn(today, li);
       setCache(prev => ({ ...prev, [t]: items }));
     } catch (e) {
       setError(e instanceof Error ? e.message : "Unknown error");
@@ -192,9 +195,9 @@ export default function NewsPage() {
   function switchLang(l: Lang) {
     if (l === lang) return;
     setLangState(l);
-    setCache({ news: null, funding: null, growth: null, tools: null });
+    setCache({ news: null, funding: null, growth: null, tools: null, newsletter: null });
     setTrending(null);
-    const newCache = { news: null, funding: null, growth: null, tools: null };
+    const newCache = { news: null, funding: null, growth: null, tools: null, newsletter: null };
     loadTab(tab, l, newCache);
     loadTrending(l);
   }
@@ -277,7 +280,7 @@ export default function NewsPage() {
   }
 
   const items = cache[tab];
-  const chipCfg = TAB_CONFIG[tab];
+  const chipCfg = TAB_CONFIG[tab] ?? { chipClass: "chip-green", chipKey: "chip_news" };
 
   /* ── Render helpers ── */
   function renderCard(item: NewsItem, idx: number) {
@@ -395,6 +398,7 @@ export default function NewsPage() {
         .tab-btn[data-tab=funding].active{color:var(--cn-funding);border-bottom-color:var(--cn-funding)}
         .tab-btn[data-tab=growth].active{color:var(--cn-research);border-bottom-color:var(--cn-research)}
         .tab-btn[data-tab=tools].active{color:var(--cn-policy);border-bottom-color:var(--cn-policy)}
+        .tab-btn[data-tab=newsletter].active{color:var(--cn-model);border-bottom-color:var(--cn-model)}
         .tl{position:relative}
         .tl::before{content:'';position:absolute;left:42px;top:12px;bottom:12px;width:1px;background:linear-gradient(to bottom,transparent,var(--cn-bd2) 8%,var(--cn-bd2) 92%,transparent)}
         .tl-item{display:flex;margin-bottom:12px;animation:cn-fadeUp .38s ease forwards}
@@ -496,8 +500,14 @@ export default function NewsPage() {
               </div>
 
               <nav className="tab-nav">
-                {(["news", "funding", "growth", "tools"] as Tab[]).map(t => (
-                  <button key={t} className={`tab-btn${tab === t ? " active" : ""}`} data-tab={t} onClick={() => switchTab(t)}>
+                {(["news", "funding", "growth", "tools", "newsletter"] as Tab[]).map(t => (
+                  <button key={t} className={`tab-btn${tab === t ? " active" : ""}`} data-tab={t} onClick={() => {
+                    if (t === "newsletter") {
+                      window.location.href = "/tools/news/archive";
+                    } else {
+                      switchTab(t);
+                    }
+                  }}>
                     {s[`tab_${t}` as keyof typeof s] as string}
                   </button>
                 ))}
