@@ -11,5 +11,6 @@ export const config = {
   webhookUrl:  required('WEBHOOK_URL'),
   webhookPort: parseInt(process.env.BOT_PORT ?? '3001', 10),
   databaseUrl: required('DATABASE_URL'),
-  webBaseUrl:  process.env.WEB_BASE_URL ?? 'https://ai-marketer-daily.vercel.app',
+  webBaseUrl:  process.env.WEB_BASE_URL ?? 'https://welike-integrate.vercel.app',
+
 } as const;

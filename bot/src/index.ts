@@ -3,12 +3,15 @@ import { config } from './config.js';
 import { startCommand } from './commands/start.js';
 import { settingsCommand } from './commands/settings.js';
 import { unsubscribeCommand } from './commands/unsubscribe.js';
+import { toolsCommand } from './commands/tools.js';
 
 const bot = new Telegraf(config.botToken);
 
 bot.command('start',       startCommand);
 bot.command('settings',    settingsCommand);
 bot.command('unsubscribe', unsubscribeCommand);
+bot.command('tools',       toolsCommand);
+
 
 bot.catch((err, ctx) => {
   console.error(`[Bot] Error for ${ctx.updateType}:`, err);
