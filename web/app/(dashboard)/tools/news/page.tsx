@@ -17,6 +17,8 @@ import Footer from "@/components/ai-marketer-news/Footer";
 import BackToTop from "@/components/ai-marketer-news/BackToTop";
 import DatePicker from "@/components/ai-marketer-news/DatePicker";
 import CreateAlerts from "@/components/ai-marketer-news/CreateAlerts";
+import SectionHeader from "@/components/ai-marketer-news/SectionHeader";
+import { Bell } from "lucide-react";
 
 export default async function NewsPage() {
   const issue = await getLatestIssue();
@@ -63,9 +65,14 @@ export default async function NewsPage() {
       <DailyCaseSection caseItem={issue.daily_case} />
       <PastIssues issues={pastSummaries} />
 
-      <div id="create-alerts">
+      <section data-anchor id="create-alerts" className="mb-16">
+        <SectionHeader
+          eyebrow="06 · CREATE ALERTS"
+          title="Create your daily alert"
+          icon={Bell}
+        />
         <CreateAlerts issue={issue} />
-      </div>
+      </section>
 
       <Footer />
 

@@ -26,6 +26,7 @@ const guideSections = [
   { id: "launch-radar", emoji: "🚀", title: "Launch Radar", desc: "New AI product launches worth watching." },
   { id: "daily-case", emoji: "🎯", title: "Daily Case", desc: "Real-world marketing case study." },
   { id: "archive", emoji: "📚", title: "Archive", desc: "Browse previous newsletters." },
+  { id: "create-alerts", emoji: "🔔", title: "Create Alerts", desc: "Get today's issue delivered to Telegram or email." },
 ];
 
 function scrollTo(id: string) {

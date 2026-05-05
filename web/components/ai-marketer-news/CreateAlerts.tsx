@@ -442,304 +442,302 @@ export default function CreateAlerts({
   const isConfigured = config?.enabled;
 
   return (
-    <section className="mx-auto max-w-3xl px-6 pb-16">
-      <div className="rounded-xl border border-surface-800 bg-surface-900/50 overflow-hidden">
-        {/* Header */}
-        <button
-          onClick={() => setExpanded(!expanded)}
-          className="w-full flex items-center justify-between p-5 hover:bg-surface-800/30 transition-colors"
-        >
-          <div className="flex items-center gap-3">
-            <div className="h-8 w-8 rounded-lg border border-surface-700 bg-surface-800/50 flex items-center justify-center">
-              {isConfigured ? (
-                <Bell className="h-4 w-4 text-brand-500" />
-              ) : (
-                <BellOff className="h-4 w-4 text-surface-400" />
-              )}
-            </div>
-            <div className="text-left">
-              <h2 className="text-sm font-semibold text-white">Create Alerts</h2>
-              <p className="text-xs text-surface-500 font-light">
-                {isConfigured
-                  ? `Delivering daily at ${config!.deliveryTime} via ${config!.channel === "telegram" ? "Telegram" : config!.email}`
-                  : "Get today's issue delivered to Telegram or email"}
-              </p>
+    <div className="w-full rounded-xl border border-surface-800 bg-surface-900/50 overflow-hidden">
+      {/* Header */}
+      <button
+        onClick={() => setExpanded(!expanded)}
+        className="w-full flex items-center justify-between px-8 py-7 hover:bg-surface-800/30 transition-colors"
+      >
+        <div className="flex items-center gap-3">
+          <div className="h-8 w-8 rounded-lg border border-surface-700 bg-surface-800/50 flex items-center justify-center">
+            {isConfigured ? (
+              <Bell className="h-4 w-4 text-brand-500" />
+            ) : (
+              <BellOff className="h-4 w-4 text-surface-400" />
+            )}
+          </div>
+          <div className="text-left">
+            <h2 className="text-sm font-semibold text-white">Create Alerts</h2>
+            <p className="text-xs text-surface-500 font-light">
+              {isConfigured
+                ? `Delivering daily at ${config!.deliveryTime} via ${config!.channel === "telegram" ? "Telegram" : config!.email}`
+                : "Get today's issue delivered to Telegram or email"}
+            </p>
+          </div>
+        </div>
+        {expanded ? (
+          <ChevronUp className="h-4 w-4 text-surface-500" />
+        ) : (
+          <ChevronDown className="h-4 w-4 text-surface-500" />
+        )}
+      </button>
+
+      {expanded && (
+        <div className="px-8 pb-8 border-t border-surface-800 pt-8 space-y-6">
+          {/* ===== Channel selector ===== */}
+          <div>
+            <label className="block text-[11px] uppercase tracking-widest text-surface-500 mb-3">
+              Delivery Channel
+            </label>
+            <div className="flex gap-3">
+              <button
+                onClick={() => { setChannel("telegram"); setError(""); }}
+                className={`flex items-center gap-2 rounded-lg px-5 py-3 text-sm font-medium transition-colors ${
+                  channel === "telegram"
+                    ? "bg-brand-500/10 text-brand-500 border border-brand-500/20"
+                    : "bg-surface-800/50 text-surface-400 border border-surface-800 hover:text-white"
+                }`}
+              >
+                <MessageCircle className="h-4 w-4" />
+                Telegram
+              </button>
+              <button
+                onClick={() => { setChannel("email"); setError(""); }}
+                className={`flex items-center gap-2 rounded-lg px-5 py-3 text-sm font-medium transition-colors ${
+                  channel === "email"
+                    ? "bg-brand-500/10 text-brand-500 border border-brand-500/20"
+                    : "bg-surface-800/50 text-surface-400 border border-surface-800 hover:text-white"
+                }`}
+              >
+                <Mail className="h-4 w-4" />
+                Gmail
+              </button>
             </div>
           </div>
-          {expanded ? (
-            <ChevronUp className="h-4 w-4 text-surface-500" />
-          ) : (
-            <ChevronDown className="h-4 w-4 text-surface-500" />
-          )}
-        </button>
 
-        {expanded && (
-          <div className="px-5 pb-5 border-t border-surface-800 pt-5 space-y-5">
-            {/* ===== Channel selector ===== */}
+          {/* ===== Channel-specific fields ===== */}
+          {channel === "telegram" ? (
             <div>
-              <label className="block text-[11px] uppercase tracking-widest text-surface-500 mb-2">
-                Delivery Channel
+              <label className="block text-[11px] uppercase tracking-widest text-surface-500 mb-3">
+                Connect Telegram
               </label>
-              <div className="flex gap-2">
-                <button
-                  onClick={() => { setChannel("telegram"); setError(""); }}
-                  className={`flex items-center gap-2 rounded-lg px-3.5 py-2 text-xs font-medium transition-colors ${
-                    channel === "telegram"
-                      ? "bg-brand-500/10 text-brand-500 border border-brand-500/20"
-                      : "bg-surface-800/50 text-surface-400 border border-surface-800 hover:text-white"
-                  }`}
-                >
-                  <MessageCircle className="h-3.5 w-3.5" />
-                  Telegram
-                </button>
-                <button
-                  onClick={() => { setChannel("email"); setError(""); }}
-                  className={`flex items-center gap-2 rounded-lg px-3.5 py-2 text-xs font-medium transition-colors ${
-                    channel === "email"
-                      ? "bg-brand-500/10 text-brand-500 border border-brand-500/20"
-                      : "bg-surface-800/50 text-surface-400 border border-surface-800 hover:text-white"
-                  }`}
-                >
-                  <Mail className="h-3.5 w-3.5" />
-                  Gmail
-                </button>
-              </div>
-            </div>
-
-            {/* ===== Channel-specific fields ===== */}
-            {channel === "telegram" ? (
-              <div>
-                <label className="block text-[11px] uppercase tracking-widest text-surface-500 mb-2">
-                  Connect Telegram
-                </label>
-                {chatId ? (
-                  <div className="rounded-lg border border-brand-500/20 bg-gradient-to-br from-brand-500/10 to-brand-500/5 px-3.5 py-2.5 flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <Check className="h-3.5 w-3.5 text-brand-500" />
-                      <span className="text-xs text-surface-300">
-                        Connected — Chat ID: <span className="font-mono text-brand-500">{chatId}</span>
-                      </span>
-                    </div>
-                    <button
-                      onClick={() => setChatId(null)}
-                      className="text-[11px] text-surface-500 hover:text-red-400 transition-colors"
-                    >
-                      Disconnect
-                    </button>
+              {chatId ? (
+                <div className="rounded-lg border border-brand-500/20 bg-gradient-to-br from-brand-500/10 to-brand-500/5 px-5 py-3 flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Check className="h-4 w-4 text-brand-500" />
+                    <span className="text-sm text-surface-300">
+                      Connected — Chat ID: <span className="font-mono text-brand-500">{chatId}</span>
+                    </span>
                   </div>
-                ) : linking ? (
-                  <div className="rounded-lg border border-surface-800 bg-surface-900/80 px-3.5 py-3 text-center">
-                    <Loader2 className="h-5 w-5 animate-spin text-brand-500 mx-auto mb-2" />
-                    <p className="text-xs text-surface-400 mb-2">
-                      Waiting for Telegram connection...
-                    </p>
-                    {linkStatus?.linked ? (
-                      <div className="flex items-center justify-center gap-2 text-brand-500 text-xs">
-                        <Check className="h-3.5 w-3.5" />
-                        Connected!
-                      </div>
-                    ) : (
-                      <>
-                        <a
-                          href={`https://t.me/WeLike_Alerts_bot`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-xs text-brand-500 hover:text-brand-400 transition-colors inline-flex items-center gap-1 mb-2"
-                        >
-                          Open @WeLike_Alerts_bot
-                          <ExternalLink className="h-3 w-3" />
-                        </a>
-                        <p className="text-[11px] text-surface-600">
-                          Send /start to the bot to connect
-                        </p>
-                      </>
-                    )}
-                  </div>
-                ) : (
-                  <div className="space-y-2">
-                    <button
-                      onClick={startLinking}
-                      className="w-full rounded-lg border border-surface-700 bg-surface-900 px-3.5 py-2.5 text-xs text-surface-400 hover:text-white hover:border-surface-600 transition-colors inline-flex items-center justify-center gap-2"
-                    >
-                      <MessageCircle className="h-3.5 w-3.5" />
-                      Connect with @WeLike_Alerts_bot
-                    </button>
-                    {showManual && (
-                      <>
-                        <div className="relative">
-                          <div className="absolute inset-0 flex items-center">
-                            <div className="w-full border-t border-surface-800" />
-                          </div>
-                          <div className="relative flex justify-center">
-                            <span className="bg-surface-900/50 px-2 text-[10px] text-surface-600">or enter Chat ID manually</span>
-                          </div>
-                        </div>
-                        <div className="flex gap-2">
-                          <input
-                            type="text"
-                            value={manualChatId}
-                            onChange={(e) => setManualChatId(e.target.value)}
-                            placeholder="123456789"
-                            className="flex-1 rounded-lg border border-surface-700 bg-surface-900 px-3.5 py-2 text-sm text-white placeholder:text-surface-500 focus-brand transition-colors font-mono"
-                          />
-                          <button
-                            onClick={handleManualConnect}
-                            disabled={!manualChatId.trim()}
-                            className="rounded-lg border border-surface-700 bg-surface-900 px-3 py-2 text-xs text-surface-400 hover:text-white disabled:opacity-50 transition-colors"
-                          >
-                            <Check className="h-3.5 w-3.5" />
-                          </button>
-                        </div>
-                        <p className="text-[11px] text-surface-600">
-                          Start a chat with{" "}
-                          <a href="https://t.me/WeLike_Alerts_bot" target="_blank" rel="noopener noreferrer" className="text-brand-500 hover:underline">
-                            @WeLike_Alerts_bot
-                          </a>
-                          , send any message, then get your Chat ID from{" "}
-                          <a href="https://t.me/userinfobot" target="_blank" rel="noopener noreferrer" className="text-brand-500 hover:underline">
-                            @userinfobot
-                          </a>
-                        </p>
-                      </>
-                    )}
-                  </div>
-                )}
-              </div>
-            ) : (
-              <div>
-                <label className="block text-[11px] uppercase tracking-widest text-surface-500 mb-1.5">
-                  Email Address
-                </label>
-                <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="you@gmail.com"
-                  className="w-full rounded-lg border border-surface-700 bg-surface-900 px-3.5 py-2 text-sm text-white placeholder:text-surface-500 focus-brand transition-colors"
-                />
-              </div>
-            )}
-
-            {/* ===== Section selector ===== */}
-            <div>
-              <label className="block text-[11px] uppercase tracking-widest text-surface-500 mb-2">
-                Sections to include
-              </label>
-              <div className="space-y-2">
-                {SECTION_LABELS.map(({ key, label, desc }) => (
                   <button
-                    key={key}
-                    onClick={() => toggleSection(key)}
-                    className={`w-full flex items-center gap-3 rounded-lg border px-3.5 py-2.5 text-left transition-colors ${
+                    onClick={() => setChatId(null)}
+                    className="text-xs text-surface-500 hover:text-red-400 transition-colors"
+                  >
+                    Disconnect
+                  </button>
+                </div>
+              ) : linking ? (
+                <div className="rounded-lg border border-surface-800 bg-surface-900/80 px-5 py-5 text-center">
+                  <Loader2 className="h-5 w-5 animate-spin text-brand-500 mx-auto mb-2" />
+                  <p className="text-sm text-surface-400 mb-2">
+                    Waiting for Telegram connection...
+                  </p>
+                  {linkStatus?.linked ? (
+                    <div className="flex items-center justify-center gap-2 text-brand-500 text-sm">
+                      <Check className="h-4 w-4" />
+                      Connected!
+                    </div>
+                  ) : (
+                    <>
+                      <a
+                        href={`https://t.me/WeLike_Alerts_bot`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-sm text-brand-500 hover:text-brand-400 transition-colors inline-flex items-center gap-1 mb-2"
+                      >
+                        Open @WeLike_Alerts_bot
+                        <ExternalLink className="h-3 w-3" />
+                      </a>
+                      <p className="text-xs text-surface-600">
+                        Send /start to the bot to connect
+                      </p>
+                    </>
+                  )}
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  <button
+                    onClick={startLinking}
+                    className="w-full rounded-lg border border-surface-700 bg-surface-900 px-5 py-4 text-sm text-surface-400 hover:text-white hover:border-surface-600 transition-colors inline-flex items-center justify-center gap-2 h-14"
+                  >
+                    <MessageCircle className="h-4 w-4" />
+                    Connect with @WeLike_Alerts_bot
+                  </button>
+                  {showManual && (
+                    <>
+                      <div className="relative">
+                        <div className="absolute inset-0 flex items-center">
+                          <div className="w-full border-t border-surface-800" />
+                        </div>
+                        <div className="relative flex justify-center">
+                          <span className="bg-surface-900/50 px-2 text-[10px] text-surface-600">or enter Chat ID manually</span>
+                        </div>
+                      </div>
+                      <div className="flex gap-3">
+                        <input
+                          type="text"
+                          value={manualChatId}
+                          onChange={(e) => setManualChatId(e.target.value)}
+                          placeholder="123456789"
+                          className="flex-1 rounded-lg border border-surface-700 bg-surface-900 px-5 py-3 text-sm text-white placeholder:text-surface-500 focus-brand transition-colors font-mono"
+                        />
+                        <button
+                          onClick={handleManualConnect}
+                          disabled={!manualChatId.trim()}
+                          className="rounded-lg border border-surface-700 bg-surface-900 px-5 py-3 text-sm text-surface-400 hover:text-white disabled:opacity-50 transition-colors"
+                        >
+                          <Check className="h-4 w-4" />
+                        </button>
+                      </div>
+                      <p className="text-[11px] text-surface-600">
+                        Start a chat with{" "}
+                        <a href="https://t.me/WeLike_Alerts_bot" target="_blank" rel="noopener noreferrer" className="text-brand-500 hover:underline">
+                          @WeLike_Alerts_bot
+                        </a>
+                        , send any message, then get your Chat ID from{" "}
+                        <a href="https://t.me/userinfobot" target="_blank" rel="noopener noreferrer" className="text-brand-500 hover:underline">
+                          @userinfobot
+                        </a>
+                      </p>
+                    </>
+                  )}
+                </div>
+              )}
+            </div>
+          ) : (
+            <div>
+              <label className="block text-[11px] uppercase tracking-widest text-surface-500 mb-2">
+                Email Address
+              </label>
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="you@gmail.com"
+                className="w-full rounded-lg border border-surface-700 bg-surface-900 px-5 py-3.5 text-sm text-white placeholder:text-surface-500 focus-brand transition-colors"
+              />
+            </div>
+          )}
+
+          {/* ===== Section selector ===== */}
+          <div>
+            <label className="block text-[11px] uppercase tracking-widest text-surface-500 mb-3">
+              Sections to include
+            </label>
+            <div className="space-y-2.5">
+              {SECTION_LABELS.map(({ key, label, desc }) => (
+                <button
+                  key={key}
+                  onClick={() => toggleSection(key)}
+                  className={`w-full flex items-center gap-3 rounded-lg border px-5 py-3.5 text-left transition-colors ${
+                    sections[key]
+                      ? "border-brand-500/20 bg-brand-500/5"
+                      : "border-surface-800 bg-surface-900/50 hover:bg-surface-800/50"
+                  }`}
+                >
+                  <div
+                    className={`h-4 w-4 rounded border flex items-center justify-center transition-colors ${
                       sections[key]
-                        ? "border-brand-500/20 bg-brand-500/5"
-                        : "border-surface-800 bg-surface-900/50 hover:bg-surface-800/50"
+                        ? "bg-brand-500 border-brand-500"
+                        : "border-surface-600 bg-transparent"
                     }`}
                   >
-                    <div
-                      className={`h-4 w-4 rounded border flex items-center justify-center transition-colors ${
-                        sections[key]
-                          ? "bg-brand-500 border-brand-500"
-                          : "border-surface-600 bg-transparent"
-                      }`}
-                    >
-                      {sections[key] && <Check className="h-3 w-3 text-black" />}
-                    </div>
-                    <div className="flex-1">
-                      <span className={`text-xs font-medium ${sections[key] ? "text-white" : "text-surface-400"}`}>
-                        {label}
-                      </span>
-                      <p className="text-[11px] text-surface-600">{desc}</p>
-                    </div>
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* ===== Delivery time ===== */}
-            <div>
-              <label className="block text-[11px] uppercase tracking-widest text-surface-500 mb-1.5">
-                <Clock className="h-3 w-3 inline mr-1" />
-                Daily delivery time
-              </label>
-              <div className="flex gap-2">
-                <input
-                  type="time"
-                  value={deliveryTime}
-                  onChange={(e) => setDeliveryTime(e.target.value)}
-                  className="flex-1 rounded-lg border border-surface-700 bg-surface-900 px-3.5 py-2 text-sm text-white focus-brand transition-colors"
-                />
-                <select
-                  value={timezone}
-                  onChange={(e) => setTimezone(e.target.value)}
-                  className="flex-1 rounded-lg border border-surface-700 bg-surface-900 px-3.5 py-2 text-sm text-white focus-brand transition-colors appearance-none cursor-pointer"
-                >
-                  {TIMEZONES.map((tz) => (
-                    <option key={tz.value} value={tz.value} className="bg-surface-900 text-white">
-                      {tz.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <p className="text-[11px] text-surface-600 mt-1">
-                You'll receive the day's issue at this time in your selected timezone
-              </p>
-            </div>
-
-            {/* ===== Error ===== */}
-            {error && (
-              <div className="rounded-lg bg-red-500/10 border border-red-500/20 px-3.5 py-2">
-                <p className="text-xs text-red-400">{error}</p>
-              </div>
-            )}
-
-            {/* ===== Actions ===== */}
-            <div className="flex items-center gap-3 pt-1">
-              {isConfigured ? (
-                <>
-                  <button
-                    onClick={handleSendNow}
-                    disabled={sending || !issue}
-                    className="flex items-center gap-2 rounded-lg bg-brand-500 px-4 py-2 text-xs font-semibold text-black hover:bg-brand-400 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                  >
-                    {sending ? (
-                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                    ) : sent ? (
-                      <Check className="h-3.5 w-3.5" />
-                    ) : (
-                      <Send className="h-3.5 w-3.5" />
-                    )}
-                    {sending ? "Sending…" : sent ? "Sent!" : "Send now"}
-                  </button>
-                  <button
-                    onClick={handleSave}
-                    className="flex items-center gap-2 rounded-lg border border-surface-700 bg-surface-900 px-4 py-2 text-xs text-surface-400 hover:text-white transition-colors"
-                  >
-                    <Check className="h-3.5 w-3.5" />
-                    Update
-                  </button>
-                  <button
-                    onClick={handleDelete}
-                    className="flex items-center gap-2 rounded-lg border border-surface-700 bg-surface-900 px-4 py-2 text-xs text-surface-400 hover:text-red-400 hover:border-red-500/30 transition-colors"
-                  >
-                    <Trash2 className="h-3.5 w-3.5" />
-                    Remove
-                  </button>
-                </>
-              ) : (
-                <button
-                  onClick={handleSave}
-                  disabled={channel === "telegram" ? !chatId : !email}
-                  className="flex items-center gap-2 rounded-lg bg-brand-500 px-4 py-2 text-xs font-semibold text-black hover:bg-brand-400 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                >
-                  <Bell className="h-3.5 w-3.5" />
-                  Save alert
+                    {sections[key] && <Check className="h-3 w-3 text-black" />}
+                  </div>
+                  <div className="flex-1">
+                    <span className={`text-sm font-medium ${sections[key] ? "text-white" : "text-surface-400"}`}>
+                      {label}
+                    </span>
+                    <p className="text-[11px] text-surface-600">{desc}</p>
+                  </div>
                 </button>
-              )}
+              ))}
             </div>
           </div>
-        )}
-      </div>
-    </section>
+
+          {/* ===== Delivery time ===== */}
+          <div>
+            <label className="block text-[11px] uppercase tracking-widest text-surface-500 mb-2">
+              <Clock className="h-3 w-3 inline mr-1" />
+              Daily delivery time
+            </label>
+            <div className="flex gap-3">
+              <input
+                type="time"
+                value={deliveryTime}
+                onChange={(e) => setDeliveryTime(e.target.value)}
+                className="flex-1 rounded-lg border border-surface-700 bg-surface-900 px-5 py-3.5 text-sm text-white focus-brand transition-colors"
+              />
+              <select
+                value={timezone}
+                onChange={(e) => setTimezone(e.target.value)}
+                className="flex-1 rounded-lg border border-surface-700 bg-surface-900 px-5 py-3.5 text-sm text-white focus-brand transition-colors appearance-none cursor-pointer"
+              >
+                {TIMEZONES.map((tz) => (
+                  <option key={tz.value} value={tz.value} className="bg-surface-900 text-white">
+                    {tz.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <p className="text-[11px] text-surface-600 mt-1.5">
+              You'll receive the day's issue at this time in your selected timezone
+            </p>
+          </div>
+
+          {/* ===== Error ===== */}
+          {error && (
+            <div className="rounded-lg bg-red-500/10 border border-red-500/20 px-5 py-3">
+              <p className="text-sm text-red-400">{error}</p>
+            </div>
+          )}
+
+          {/* ===== Actions ===== */}
+          <div className="flex items-center gap-3 pt-2">
+            {isConfigured ? (
+              <>
+                <button
+                  onClick={handleSendNow}
+                  disabled={sending || !issue}
+                  className="flex items-center gap-2 rounded-lg bg-brand-500 px-5 py-3 text-sm font-semibold text-black hover:bg-brand-400 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                >
+                  {sending ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : sent ? (
+                    <Check className="h-4 w-4" />
+                  ) : (
+                    <Send className="h-4 w-4" />
+                  )}
+                  {sending ? "Sending…" : sent ? "Sent!" : "Send now"}
+                </button>
+                <button
+                  onClick={handleSave}
+                  className="flex items-center gap-2 rounded-lg border border-surface-700 bg-surface-900 px-5 py-3 text-sm text-surface-400 hover:text-white transition-colors"
+                >
+                  <Check className="h-4 w-4" />
+                  Update
+                </button>
+                <button
+                  onClick={handleDelete}
+                  className="flex items-center gap-2 rounded-lg border border-surface-700 bg-surface-900 px-5 py-3 text-sm text-surface-400 hover:text-red-400 hover:border-red-500/30 transition-colors"
+                >
+                  <Trash2 className="h-4 w-4" />
+                  Remove
+                </button>
+              </>
+            ) : (
+              <button
+                onClick={handleSave}
+                disabled={channel === "telegram" ? !chatId : !email}
+                className="flex items-center gap-2 rounded-lg bg-brand-500 px-5 py-3 text-sm font-semibold text-black hover:bg-brand-400 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              >
+                <Bell className="h-4 w-4" />
+                Save alert
+              </button>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
   );
 }
