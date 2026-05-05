@@ -3,7 +3,7 @@ import {
   getLatestIssue,
   getAdjacentIssues,
   getPreviousIssueSummaries,
-  listIssues,
+  listPublishedIssues,
 } from "@/lib/ai-marketer-news";
 import Masthead from "@/components/ai-marketer-news/Masthead";
 import HighlightSummary from "@/components/ai-marketer-news/HighlightSummary";
@@ -24,7 +24,7 @@ export default async function NewsPage() {
   const issue = await getLatestIssue();
   if (!issue) notFound();
 
-  const issues = await listIssues();
+  const issues = await listPublishedIssues();
   const { prev, next } = await getAdjacentIssues(issue.date);
   const isLatest = issues.length > 0 && issues[0] === issue.date;
   const pastSummaries = await getPreviousIssueSummaries(issue.date, 6);

@@ -3,6 +3,7 @@ import path from "node:path";
 import matter from "gray-matter";
 import { remark } from "remark";
 import remarkHtml from "remark-html";
+import { getSupabase } from "@/lib/supabase";
 
 export type Brief = {
   title: string;
@@ -140,7 +141,7 @@ export async function getPreviousIssueSummaries(
   currentDate: string,
   limit = 6
 ): Promise<IssueSummary[]> {
-  const all = await listIssues();
+  const all = await listPublishedIssues();
   const previous = all.filter((d) => d < currentDate).slice(0, limit);
   const summaries = await Promise.all(previous.map(getIssueSummary));
   return summaries.filter((s): s is IssueSummary => s !== null);
@@ -159,15 +160,59 @@ export async function listIssues(): Promise<string[]> {
 }
 
 export async function getLatestIssue(): Promise<Issue | null> {
+  // Only return the latest published issue
+  const published = await listPublishedIssues();
+  if (published.length > 0) {
+    return getIssueByDate(published[0]);
+  }
+
+  // Fallback: if no published issues, check if any files exist
   const issues = await listIssues();
   if (issues.length === 0) return null;
+
   return getIssueByDate(issues[0]);
+}
+
+export async function getLatestPublishedDate(): Promise<string | null> {
+  try {
+    const supabase = getSupabase();
+    const { data } = await supabase
+      .from("news_publishing")
+      .select("date")
+      .eq("published", true)
+      .order("date", { ascending: false })
+      .limit(1)
+      .single();
+
+    return data ? data.date : null;
+  } catch {
+    return null;
+  }
+}
+
+export async function listPublishedIssues(): Promise<string[]> {
+  try {
+    const supabase = getSupabase();
+    const { data } = await supabase
+      .from("news_publishing")
+      .select("date")
+      .eq("published", true)
+      .order("date", { ascending: false });
+
+    if (data && data.length > 0) {
+      return data.map((d) => d.date);
+    }
+  } catch {
+    // Fall through to file-based listing
+  }
+
+  return listIssues();
 }
 
 export async function getAdjacentIssues(
   date: string
 ): Promise<{ prev: string | null; next: string | null }> {
-  const issues = await listIssues();
+  const issues = await listPublishedIssues();
   const idx = issues.indexOf(date);
   if (idx === -1) return { prev: null, next: null };
   return {

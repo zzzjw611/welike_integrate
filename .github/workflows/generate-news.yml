@@ -27,6 +27,8 @@ jobs:
         run: node scripts/generate-news.mjs "$(date -d 'yesterday' '+%Y-%m-%d')"
         env:
           DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
 
       - name: Commit and push generated content
         run: |
@@ -35,6 +37,3 @@ jobs:
           git add web/content/
           git diff --staged --quiet || git commit -m "chore: auto-generate AI news for $(date +'%Y-%m-%d')"
           git push
-</｜｜DSML｜｜parameter>
-</｜｜DSML｜｜invoke>
-</｜｜DSML｜｜tool_calls>

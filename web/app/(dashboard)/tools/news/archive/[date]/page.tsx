@@ -3,7 +3,7 @@ import {
   getIssueByDate,
   getAdjacentIssues,
   getPreviousIssueSummaries,
-  listIssues,
+  listPublishedIssues,
 } from "@/lib/ai-marketer-news";
 import Masthead from "@/components/ai-marketer-news/Masthead";
 import HighlightSummary from "@/components/ai-marketer-news/HighlightSummary";
@@ -19,7 +19,7 @@ import DatePicker from "@/components/ai-marketer-news/DatePicker";
 import GuideButton from "@/components/ai-marketer-news/GuideButton";
 
 export async function generateStaticParams() {
-  const dates = await listIssues();
+  const dates = await listPublishedIssues();
   return dates.map((date) => ({ date }));
 }
 
@@ -33,7 +33,7 @@ export default async function ArchivePage({
   if (!issue) notFound();
 
   const { prev, next } = await getAdjacentIssues(date);
-  const issues = await listIssues();
+  const issues = await listPublishedIssues();
   const isLatest = issues.length > 0 && issues[0] === date;
   const pastSummaries = await getPreviousIssueSummaries(date, 6);
 

@@ -18,6 +18,10 @@ const CONTENT_DIR = path.join(__dirname, "..", "web", "content");
 const DEEPSEEK_API_KEY = process.env.DEEPSEEK_API_KEY || "sk-f5c9e4006af7418ba864709b76773bba";
 const DEEPSEEK_BASE = "https://api.deepseek.com/v1";
 
+// Supabase config for inserting publishing records
+const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || "";
+const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || "";
+
 // ===== Helpers =====
 
 function getExistingDates() {
@@ -315,6 +319,40 @@ ${(issueData.daily_case?.metrics || []).map((m) => `    - "${m}"`).join("\n")}
   return issueData;
 }
 
+// ===== Supabase Publishing =====
+
+async function insertPublishingRecord(dateStr) {
+  if (!SUPABASE_URL || !SUPABASE_SERVICE_KEY) {
+    console.log(`  ⚠️ Skipping Supabase record (no credentials configured)`);
+    return;
+  }
+
+  try {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/news_publishing`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "apikey": SUPABASE_SERVICE_KEY,
+        "Authorization": `Bearer ${SUPABASE_SERVICE_KEY}`,
+        "Prefer": "resolution=merge-duplicates",
+      },
+      body: JSON.stringify({
+        date: dateStr,
+        published: false,
+      }),
+    });
+
+    if (!res.ok) {
+      const text = await res.text();
+      console.error(`  ⚠️ Failed to insert Supabase record: ${res.status} ${text}`);
+    } else {
+      console.log(`  📝 Created draft record in Supabase`);
+    }
+  } catch (e) {
+    console.error(`  ⚠️ Supabase error: ${e.message}`);
+  }
+}
+
 // ===== Main =====
 
 async function main() {
@@ -338,7 +376,10 @@ async function main() {
       } catch {}
     }
 
-    await generateIssue(targetDate, prevIssue);
+    const result = await generateIssue(targetDate, prevIssue);
+    if (result) {
+      await insertPublishingRecord(targetDate);
+    }
   } else {
     // Generate for all missing dates from 2026-04-29 to today
     const today = new Date().toISOString().slice(0, 10);
@@ -381,6 +422,7 @@ async function main() {
           issueNumber: result.issueNumber,
           highlight: result.highlight,
         };
+        await insertPublishingRecord(dateStr);
       }
       // Wait a bit between API calls to avoid rate limiting
       await new Promise((r) => setTimeout(r, 2000));
