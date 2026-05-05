@@ -203,9 +203,8 @@ export default function DashboardLayout({
 
           {/* AI News with Guide submenu */}
           <div>
-            <button
-              type="button"
-              onClick={() => setGuideExpanded(!guideExpanded)}
+            <Link
+              href="/tools/news"
               className={cn(
                 "w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors relative",
                 isNewsActive
@@ -217,16 +216,26 @@ export default function DashboardLayout({
                 <span className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-5 bg-brand-500 rounded-full sidebar-indicator" />
               )}
               <Newspaper className="h-4 w-4 flex-shrink-0" />
-              <span className="flex-1 truncate text-left">{currentLang === 'zh' ? 'AI 新闻' : 'AI News'}</span>
+              <span className="flex-1 truncate">{currentLang === 'zh' ? 'AI 新闻' : 'AI News'}</span>
               {isNewsActive && (
-                <ChevronDown
-                  className={cn(
-                    "h-3.5 w-3.5 flex-shrink-0 transition-transform duration-200",
-                    guideExpanded && "rotate-180"
-                  )}
-                />
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    setGuideExpanded(!guideExpanded);
+                  }}
+                  className="p-1 -m-1 rounded hover:bg-surface-800 transition-colors"
+                >
+                  <ChevronDown
+                    className={cn(
+                      "h-3.5 w-3.5 flex-shrink-0 transition-transform duration-200",
+                      guideExpanded && "rotate-180"
+                    )}
+                  />
+                </button>
               )}
-            </button>
+            </Link>
 
             {/* Guide submenu */}
             {isNewsActive && guideExpanded && (
