@@ -63,7 +63,9 @@ export default async function NewsPage() {
       <DailyCaseSection caseItem={issue.daily_case} />
       <PastIssues issues={pastSummaries} />
 
-      <CreateAlerts issue={issue} />
+      <div id="create-alerts">
+        <CreateAlerts issue={issue} />
+      </div>
 
       <Footer />
 
