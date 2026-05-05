@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
 import Link from "next/link";
@@ -78,6 +78,7 @@ export default function DashboardLayout({
   const [guideExpanded, setGuideExpanded] = useState(false);
   const [guideHovered, setGuideHovered] = useState(false);
   const [toolkitExpanded, setToolkitExpanded] = useState(false);
+  const [activeSection, setActiveSection] = useState<string>("");
 
   const currentLang = useLang();
 
@@ -105,6 +106,41 @@ export default function DashboardLayout({
   useEffect(() => {
     setSidebarOpen(false);
   }, [pathname]);
+
+  // Scroll spy: track which section is currently in view on the AI News page
+  useEffect(() => {
+    if (!isNewsActive) return;
+
+    const sectionIds = guideSections.map((s) => s.id);
+    const observer = new IntersectionObserver(
+      (entries) => {
+        // Find the entry with the highest intersection ratio that is currently intersecting
+        const visible = entries
+          .filter((e) => e.isIntersecting)
+          .sort((a, b) => b.intersectionRatio - a.intersectionRatio);
+        if (visible.length > 0) {
+          setActiveSection(visible[0].target.id);
+        }
+      },
+      {
+        rootMargin: "-10% 0px -70% 0px",
+        threshold: [0, 0.1, 0.2, 0.3],
+      }
+    );
+
+    // Small delay to let the page render sections
+    const timer = setTimeout(() => {
+      sectionIds.forEach((id) => {
+        const el = document.getElementById(id);
+        if (el) observer.observe(el);
+      });
+    }, 300);
+
+    return () => {
+      clearTimeout(timer);
+      observer.disconnect();
+    };
+  }, [isNewsActive, pathname]);
 
   if (isLoading || !user) {
     return (
@@ -280,13 +316,25 @@ export default function DashboardLayout({
                         scrollToSection(s.id);
                       }
                     }}
-                    className="w-full text-left flex items-start gap-2 rounded-lg border border-transparent px-3 py-2 hover:border-surface-800 hover:bg-surface-900/80 transition-all cursor-pointer group"
+                    className={cn(
+                      "w-full text-left flex items-start gap-2 rounded-lg border px-3 py-2 transition-all cursor-pointer group",
+                      activeSection === s.id
+                        ? "border-brand-500/30 bg-brand-500/10"
+                        : "border-transparent hover:border-surface-800 hover:bg-surface-900/80"
+                    )}
                   >
                     <span className="text-xs leading-none mt-0.5 flex-shrink-0">
                       {s.emoji}
                     </span>
                     <div className="min-w-0">
-                      <p className="text-[11px] font-medium text-surface-400 group-hover:text-brand-500 transition-colors">
+                      <p
+                        className={cn(
+                          "text-[11px] font-medium transition-colors",
+                          activeSection === s.id
+                            ? "text-brand-500"
+                            : "text-surface-400 group-hover:text-brand-500"
+                        )}
+                      >
                         {s.title}
                       </p>
                       <p className="text-[10px] text-surface-600 leading-relaxed mt-0.5 line-clamp-2">
