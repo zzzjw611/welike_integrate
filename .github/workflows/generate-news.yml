@@ -8,6 +8,9 @@ on:
   workflow_dispatch:
     # Allow manual trigger for testing
 
+permissions:
+  contents: write
+
 jobs:
   generate-news:
     runs-on: ubuntu-latest
@@ -21,7 +24,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 24
 
       - name: Generate AI News (yesterday's 24h window)
         run: node scripts/generate-news.mjs "$(date -d 'yesterday' '+%Y-%m-%d')"

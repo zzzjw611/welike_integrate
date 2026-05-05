@@ -20,7 +20,7 @@ export default function DailyCaseSection({ caseItem }: { caseItem: DailyCase }) 
           <h3 className="mt-3 text-[26px] sm:text-[34px] font-bold leading-[1.1] tracking-[-0.025em] text-white">
             {caseItem.title}
           </h3>
-          <p className="mt-4 text-[24px] sm:text-[28px] font-extrabold leading-[1.4] text-surface-100">
+          <p className="mt-4 text-[15px] leading-[1.6] text-surface-300">
             {caseItem.deck}
           </p>
           {caseItem.metrics && caseItem.metrics.length > 0 && (
