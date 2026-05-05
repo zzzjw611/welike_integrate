@@ -17,7 +17,6 @@ import Footer from "@/components/ai-marketer-news/Footer";
 import BackToTop from "@/components/ai-marketer-news/BackToTop";
 import DatePicker from "@/components/ai-marketer-news/DatePicker";
 import CreateAlerts from "@/components/ai-marketer-news/CreateAlerts";
-import NewsScrollSpy from "@/components/ai-marketer-news/NewsScrollSpy";
 
 export default async function NewsPage() {
   const issue = await getLatestIssue();
@@ -57,14 +56,12 @@ export default async function NewsPage() {
         editor={issue.editor}
       />
 
-      <NewsScrollSpy>
-        <HighlightSummary highlight={issue.highlight} />
-        <DailyBrief items={issue.briefs} />
-        <GrowthInsightSection items={issue.growth_insights} />
-        <LaunchRadar items={issue.launches} />
-        <DailyCaseSection caseItem={issue.daily_case} />
-        <PastIssues issues={pastSummaries} />
-      </NewsScrollSpy>
+      <HighlightSummary highlight={issue.highlight} />
+      <DailyBrief items={issue.briefs} />
+      <GrowthInsightSection items={issue.growth_insights} />
+      <LaunchRadar items={issue.launches} />
+      <DailyCaseSection caseItem={issue.daily_case} />
+      <PastIssues issues={pastSummaries} />
 
       <CreateAlerts issue={issue} />
 

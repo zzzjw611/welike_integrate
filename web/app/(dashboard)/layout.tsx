@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
 import Link from "next/link";
@@ -29,6 +29,13 @@ const guideSections = [
   { id: "archive", emoji: "📚", title: "Archive", desc: "Browse previous newsletters." },
 ];
 
+function scrollTo(id: string) {
+  const el = document.getElementById(id);
+  if (el) {
+    el.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+}
+
 export default function DashboardLayout({
   children,
 }: {
@@ -41,6 +48,8 @@ export default function DashboardLayout({
   const [guideExpanded, setGuideExpanded] = useState(false);
   const [guideHovered, setGuideHovered] = useState(false);
   const [toolkitExpanded, setToolkitExpanded] = useState(false);
+  const [activeSection, setActiveSection] = useState<string>("");
+  const observerRef = useRef<IntersectionObserver | null>(null);
 
   const currentLang = useLang();
 
@@ -68,6 +77,58 @@ export default function DashboardLayout({
   useEffect(() => {
     setSidebarOpen(false);
   }, [pathname]);
+
+  // Scroll spy: track which section is visible in main content
+  useEffect(() => {
+    if (!isNewsActive) return;
+
+    const main = document.querySelector("main");
+    if (!main) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const visible = entries
+          .filter((e) => e.isIntersecting)
+          .sort((a, b) => b.intersectionRatio - a.intersectionRatio);
+        if (visible.length > 0) {
+          setActiveSection(visible[0].target.id);
+        }
+      },
+      {
+        root: main,
+        rootMargin: "-25% 0px -60% 0px",
+        threshold: [0, 0.1, 0.3, 0.5],
+      }
+    );
+
+    observerRef.current = observer;
+
+    const timer = setTimeout(() => {
+      guideSections.forEach(({ id }) => {
+        const el = document.getElementById(id);
+        if (el) observer.observe(el);
+      });
+    }, 300);
+
+    return () => {
+      clearTimeout(timer);
+      observer.disconnect();
+      observerRef.current = null;
+    };
+  }, [isNewsActive, pathname]);
+
+  const handleGuideClick = useCallback(
+    (id: string) => {
+      if (!isNewsActive) {
+        router.push("/tools/news");
+        // After navigation, scroll to section
+        setTimeout(() => scrollTo(id), 400);
+      } else {
+        scrollTo(id);
+      }
+    },
+    [isNewsActive, router]
+  );
 
   if (isLoading || !user) {
     return (
@@ -189,7 +250,7 @@ export default function DashboardLayout({
             );
           })}
 
-          {/* AI News with Guide submenu */}
+          {/* AI News with scroll-spy Guide submenu */}
           <div
             onMouseEnter={() => setGuideHovered(true)}
             onMouseLeave={() => setGuideHovered(false)}
@@ -228,35 +289,46 @@ export default function DashboardLayout({
               )}
             </Link>
 
-            {/* Guide submenu */}
+            {/* Guide submenu — scroll-spy navigation */}
             {shouldExpandGuide && (
-              <div className="ml-2 mt-0.5 space-y-0.5">
-                {guideSections.map((s) => (
-                  <button
-                    key={s.id}
-                    type="button"
-                    onClick={() => {
-                      if (!isNewsActive) {
-                        router.push('/tools/news');
-                      }
-                    }}
-                    className="w-full text-left flex items-start gap-2 rounded-lg border border-transparent px-3 py-2 hover:border-surface-800 hover:bg-surface-900/80 transition-all cursor-pointer group"
-                  >
-                    <span className="text-xs leading-none mt-0.5 flex-shrink-0">
-                      {s.emoji}
-                    </span>
-                    <div className="min-w-0">
-                      <p className="text-[11px] font-medium text-surface-400 group-hover:text-brand-500 transition-colors">
-                        {s.title}
-                      </p>
-                      <p className="text-[10px] text-surface-600 leading-relaxed mt-0.5 line-clamp-2">
-                        {s.desc}
-                      </p>
-                    </div>
-                  </button>
-                ))}
+              <div className="ml-2 mt-0.5 space-y-0.5 rounded-xl border border-surface-800/60 bg-surface-950/60 backdrop-blur-sm p-1.5">
+                {guideSections.map((s) => {
+                  const isActive = activeSection === s.id;
+                  return (
+                    <button
+                      key={s.id}
+                      type="button"
+                      onClick={() => handleGuideClick(s.id)}
+                      className={cn(
+                        "w-full text-left flex items-start gap-2 rounded-lg px-3 py-2 transition-all duration-200 cursor-pointer group",
+                        isActive
+                          ? "bg-brand-500/12 border border-brand-500/25 shadow-[0_0_18px_rgba(6,245,183,0.05)]"
+                          : "border border-transparent hover:border-surface-800 hover:bg-surface-900/80"
+                      )}
+                    >
+                      <span className="text-xs leading-none mt-0.5 flex-shrink-0">
+                        {s.emoji}
+                      </span>
+                      <div className="min-w-0">
+                        <p
+                          className={cn(
+                            "text-[11px] font-medium transition-colors",
+                            isActive
+                              ? "text-brand-400"
+                              : "text-surface-400 group-hover:text-brand-500"
+                          )}
+                        >
+                          {s.title}
+                        </p>
+                        <p className="text-[10px] text-surface-600 leading-relaxed mt-0.5 line-clamp-2">
+                          {s.desc}
+                        </p>
+                      </div>
+                    </button>
+                  );
+                })}
 
-                {/* Connect Telegram — inside Guide, after Past Issues */}
+                {/* Connect Telegram */}
                 <a
                   href="https://t.me/WeLike_Alerts_bot"
                   target="_blank"
@@ -312,7 +384,7 @@ export default function DashboardLayout({
 
   return (
     <ToastProvider>
-      <div className="min-h-screen flex">
+      <div className="h-screen overflow-hidden flex">
         {/* Mobile overlay */}
         {sidebarOpen && (
           <div
@@ -322,14 +394,14 @@ export default function DashboardLayout({
         )}
 
         {/* Sidebar — desktop */}
-        <aside className="hidden lg:flex w-72 border-r border-surface-800 flex-col flex-shrink-0 bg-surface-950">
+        <aside className="hidden lg:flex w-72 border-r border-surface-800 flex-col flex-shrink-0 bg-surface-950 overflow-y-auto">
           {sidebarContent}
         </aside>
 
         {/* Sidebar — mobile drawer */}
         <aside
           className={cn(
-            "fixed inset-y-0 left-0 z-50 w-72 border-r border-surface-800 flex-col bg-surface-950 transform transition-transform duration-300 ease-in-out lg:hidden",
+            "fixed inset-y-0 left-0 z-50 w-72 border-r border-surface-800 flex-col bg-surface-950 transform transition-transform duration-300 ease-in-out lg:hidden overflow-y-auto",
             sidebarOpen ? "translate-x-0" : "-translate-x-full"
           )}
         >
@@ -346,8 +418,8 @@ export default function DashboardLayout({
           {sidebarContent}
         </aside>
 
-        {/* Main content */}
-        <main className="flex-1 overflow-y-auto min-w-0">
+        {/* Main content — scrollable independently */}
+        <main className="flex-1 overflow-y-auto scroll-smooth min-w-0">
           <div className="sticky top-0 z-10 flex items-center justify-between px-4 sm:px-8 py-3 bg-surface-950/80 backdrop-blur-sm border-b border-surface-800">
             <button
               type="button"
