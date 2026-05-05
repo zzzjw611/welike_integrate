@@ -15,6 +15,8 @@ import IssueSwitcher from "@/components/ai-marketer-news/IssueSwitcher";
 import PastIssues from "@/components/ai-marketer-news/PastIssues";
 import Footer from "@/components/ai-marketer-news/Footer";
 import BackToTop from "@/components/ai-marketer-news/BackToTop";
+import DatePicker from "@/components/ai-marketer-news/DatePicker";
+import GuideButton from "@/components/ai-marketer-news/GuideButton";
 
 export async function generateStaticParams() {
   const dates = await listIssues();
@@ -37,42 +39,47 @@ export default async function ArchivePage({
 
   return (
     <div
-      className="min-h-screen"
+      className="min-h-full"
       style={{
         background:
           "radial-gradient(ellipse 900px 600px at 10% 0%,rgba(0,245,160,.055) 0%,transparent 65%),radial-gradient(ellipse 700px 500px at 90% 100%,rgba(90,171,255,.05) 0%,transparent 60%),#07090d",
       }}
     >
-      <div className="mx-auto max-w-4xl px-5 sm:px-8 py-10 sm:py-14">
-        <IssueSwitcher
-          current={date}
-          prev={prev}
-          next={next}
-          isLatest={isLatest}
-        />
-
-        <Masthead
-          date={issue.date}
-          issueNumber={issue.issueNumber}
-          editor={issue.editor}
-        />
-
-        <HighlightSummary highlight={issue.highlight} />
-
-        <DailyBrief items={issue.briefs} />
-
-        <GrowthInsightSection items={issue.growth_insights} />
-
-        <LaunchRadar items={issue.launches} />
-
-        <DailyCaseSection caseItem={issue.daily_case} />
-
-        <PastIssues issues={pastSummaries} />
-
-        <Footer />
+      {/* Top bar with IssueSwitcher + DatePicker */}
+      <div className="flex items-center justify-between gap-4 mb-8">
+        <div className="flex-1 min-w-0">
+          <IssueSwitcher
+            current={date}
+            prev={prev}
+            next={next}
+            isLatest={isLatest}
+          />
+        </div>
+        <DatePicker issues={issues} currentDate={date} />
       </div>
 
+      <Masthead
+        date={issue.date}
+        issueNumber={issue.issueNumber}
+        editor={issue.editor}
+      />
+
+      <HighlightSummary highlight={issue.highlight} />
+
+      <DailyBrief items={issue.briefs} />
+
+      <GrowthInsightSection items={issue.growth_insights} />
+
+      <LaunchRadar items={issue.launches} />
+
+      <DailyCaseSection caseItem={issue.daily_case} />
+
+      <PastIssues issues={pastSummaries} />
+
+      <Footer />
+
       <BackToTop />
+      <GuideButton />
     </div>
   );
 }

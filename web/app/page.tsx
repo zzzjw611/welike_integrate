@@ -373,66 +373,64 @@ export default function Home() {
 
 
 
-          {/* Content — left-center composition */}
-          <div className="relative z-10 px-12 md:px-20 py-24 w-full md:w-[88%] md:ml-[6%]">
+          {/* Content — left composition */}
+          <div className="relative z-10 px-8 md:px-12 py-24 w-full md:w-[80%] md:ml-0">
             <div className="max-w-3xl">
+              <div className="text-left">
+                {/* Badge — more technical, with scanning light */}
+                <div className="entrance-badge hover-target inline-flex items-center gap-2 border border-surface-700/50 rounded-full px-3.5 py-1 mb-8 relative overflow-hidden transition-all duration-300 hover:border-brand-500/40">
+                  {/* Scanning light across badge */}
+                  <div className="badge-scan absolute inset-0 bg-gradient-to-r from-transparent via-brand-500/20 to-transparent pointer-events-none" />
+                  <span className="relative h-1.5 w-1.5 rounded-full bg-brand-500 animate-pulse" style={{ animationDuration: '2s' }} />
+                  <span className="relative text-[11px] text-surface-500 tracking-widest uppercase font-medium">
+                    {lang === 'zh' ? 'AI 产品的 GTM 工作台' : 'GTM Workspace for AI Products'}
+                  </span>
+                  <span className="relative text-[10px] text-surface-600 ml-1 font-mono">v0.1</span>
+                </div>
 
-              {/* Badge — more technical, with scanning light */}
-              <div className="entrance-badge hover-target inline-flex items-center gap-2 border border-surface-700/50 rounded-full px-3.5 py-1 mb-8 relative overflow-hidden transition-all duration-300 hover:border-brand-500/40">
-                {/* Scanning light across badge */}
-                <div className="badge-scan absolute inset-0 bg-gradient-to-r from-transparent via-brand-500/20 to-transparent pointer-events-none" />
-                <span className="relative h-1.5 w-1.5 rounded-full bg-brand-500 animate-pulse" style={{ animationDuration: '2s' }} />
-                <span className="relative text-[11px] text-surface-500 tracking-widest uppercase font-medium">
-                  {lang === 'zh' ? 'AI 产品的 GTM 工作台' : 'GTM Workspace for AI Products'}
-                </span>
-                <span className="relative text-[10px] text-surface-600 ml-1 font-mono">v0.1</span>
+                {/* Headline — oversized editorial */}
+                <h1 className="entrance-headline text-5xl md:text-6xl lg:text-7xl font-bold leading-[1.05] tracking-[-0.04em] mb-8">
+                  {lang === 'zh' ? (
+                    <>
+                      你的 AI 产品
+                      <br />
+                      <span className="text-gradient gradient-shift">颠覆性</span>
+                      <br />
+                      你的 GTM 也
+                      <br />
+                      应该如此
+                    </>
+                  ) : (
+                    <>
+                      Your AI is
+                      <br />
+                      <span className="text-gradient gradient-shift">groundbreaking</span>
+                      <br />
+                      Your GTM
+                      <br />
+                      should be too.
+                    </>
+                  )}
+                </h1>
+
+                {/* Subtitle */}
+                <p className="entrance-subtitle text-base md:text-lg text-surface-500 font-light leading-relaxed max-w-xl mb-10">
+                  {lang === 'zh'
+                    ? 'WeLike — AI 产品的 GTM 工作台。源自 100+ 次产品发布实战打磨的策略与工具。'
+                    : 'WeLike is the GTM workspace for AI products. Battle-tested playbooks and tools from 100+ launches.'}
+                </p>
+
+                {/* CTA — clean, with micro-interactions */}
+                <div className="entrance-cta flex items-center gap-4">
+                  <Link
+                    href="/register"
+                    className="hover-target group inline-flex items-center gap-2 rounded-full bg-brand-500 px-5 py-2.5 text-xs font-semibold text-black transition-all duration-300 ease-out hover:bg-brand-400 hover:scale-[1.02] hover:shadow-[0_0_24px_rgba(6,245,183,0.35)]"
+                  >
+                    {lang === 'zh' ? '开始' : 'Start'}
+                    <ArrowRight className="h-3 w-3 transition-all duration-300 ease-out group-hover:translate-x-[3px]" />
+                  </Link>
+                </div>
               </div>
-
-              {/* Headline — oversized editorial */}
-              <h1 className="entrance-headline text-6xl md:text-7xl lg:text-8xl font-bold leading-[0.92] tracking-[-0.055em] mb-8">
-                {lang === 'zh' ? (
-                  <>
-                    你的 AI 产品
-                    <br />
-                    <span className="text-gradient gradient-shift">颠覆性</span>
-                    <br />
-                    你的 GTM 也
-                    <br />
-                    应该如此
-                  </>
-                ) : (
-                  <>
-                    Your AI is
-                    <br />
-                    <span className="text-gradient gradient-shift">groundbreaking</span>
-                    <br />
-                    Your GTM
-                    <br />
-                    should be too.
-                  </>
-                )}
-              </h1>
-
-              {/* Subtitle */}
-              <p className="entrance-subtitle text-base md:text-lg text-surface-500 font-light leading-relaxed max-w-xl mb-10">
-                {lang === 'zh'
-                  ? 'WeLike — AI 产品的 GTM 工作台。源自 100+ 次产品发布实战打磨的策略与工具。'
-                  : 'WeLike is the GTM workspace for AI products. Battle-tested playbooks and tools from 100+ launches.'}
-              </p>
-
-              {/* CTA — clean, with micro-interactions */}
-              <div className="entrance-cta flex items-center gap-4">
-                <Link
-                  href="/register"
-                  className="hover-target group inline-flex items-center gap-2 rounded-full bg-brand-500 px-5 py-2.5 text-xs font-semibold text-black transition-all duration-300 ease-out hover:bg-brand-400 hover:scale-[1.02] hover:shadow-[0_0_24px_rgba(6,245,183,0.35)]"
-                >
-                  {lang === 'zh' ? '开始' : 'Start'}
-                  <ArrowRight className="h-3 w-3 transition-all duration-300 ease-out group-hover:translate-x-[3px]" />
-                </Link>
-              </div>
-
-
-
             </div>
           </div>
         </div>
