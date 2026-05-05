@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState, useRef, useCallback } from "react";
+import { useEffect, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
 import Link from "next/link";
@@ -21,50 +21,13 @@ import {
 } from "lucide-react";
 
 const guideSections = [
-  {
-    id: "highlight",
-    emoji: "✨",
-    title: "Highlight Summary",
-    desc: "Top AI marketing story of the day — the one thing you need to know.",
-  },
-  {
-    id: "daily-brief",
-    emoji: "📡",
-    title: "Daily Brief",
-    desc: "Quick-hit AI marketing news across product launches, policy shifts, and industry moves.",
-  },
-  {
-    id: "growth-insight",
-    emoji: "📈",
-    title: "Growth Insight",
-    desc: "Deep-dive analysis on growth strategies, distribution plays, and go-to-market tactics.",
-  },
-  {
-    id: "launch-radar",
-    emoji: "🚀",
-    title: "Launch Radar",
-    desc: "New AI product launches and feature releases worth watching.",
-  },
-  {
-    id: "daily-case",
-    emoji: "🎯",
-    title: "Daily Case",
-    desc: "Real-world marketing case study — what worked, what didn't, and why.",
-  },
-  {
-    id: "past-issues",
-    emoji: "📚",
-    title: "Past Issues",
-    desc: "Browse previous newsletters to catch up on what you missed.",
-  },
+  { id: "highlight-summary", emoji: "✨", title: "Highlight Summary", desc: "Top AI marketing story of the day." },
+  { id: "daily-brief", emoji: "📡", title: "Daily Brief", desc: "Quick-hit AI marketing news." },
+  { id: "growth-insight", emoji: "📈", title: "Growth Insight", desc: "Deep-dive growth strategy analysis." },
+  { id: "launch-radar", emoji: "🚀", title: "Launch Radar", desc: "New AI product launches worth watching." },
+  { id: "daily-case", emoji: "🎯", title: "Daily Case", desc: "Real-world marketing case study." },
+  { id: "archive", emoji: "📚", title: "Archive", desc: "Browse previous newsletters." },
 ];
-
-function scrollToSection(id: string) {
-  const el = document.getElementById(id);
-  if (el) {
-    el.scrollIntoView({ behavior: "smooth", block: "start" });
-  }
-}
 
 export default function DashboardLayout({
   children,
@@ -78,7 +41,6 @@ export default function DashboardLayout({
   const [guideExpanded, setGuideExpanded] = useState(false);
   const [guideHovered, setGuideHovered] = useState(false);
   const [toolkitExpanded, setToolkitExpanded] = useState(false);
-  const [activeSection, setActiveSection] = useState<string>("");
 
   const currentLang = useLang();
 
@@ -106,41 +68,6 @@ export default function DashboardLayout({
   useEffect(() => {
     setSidebarOpen(false);
   }, [pathname]);
-
-  // Scroll spy: track which section is currently in view on the AI News page
-  useEffect(() => {
-    if (!isNewsActive) return;
-
-    const sectionIds = guideSections.map((s) => s.id);
-    const observer = new IntersectionObserver(
-      (entries) => {
-        // Find the entry with the highest intersection ratio that is currently intersecting
-        const visible = entries
-          .filter((e) => e.isIntersecting)
-          .sort((a, b) => b.intersectionRatio - a.intersectionRatio);
-        if (visible.length > 0) {
-          setActiveSection(visible[0].target.id);
-        }
-      },
-      {
-        rootMargin: "-10% 0px -70% 0px",
-        threshold: [0, 0.1, 0.2, 0.3],
-      }
-    );
-
-    // Small delay to let the page render sections
-    const timer = setTimeout(() => {
-      sectionIds.forEach((id) => {
-        const el = document.getElementById(id);
-        if (el) observer.observe(el);
-      });
-    }, 300);
-
-    return () => {
-      clearTimeout(timer);
-      observer.disconnect();
-    };
-  }, [isNewsActive, pathname]);
 
   if (isLoading || !user) {
     return (
@@ -311,30 +238,15 @@ export default function DashboardLayout({
                     onClick={() => {
                       if (!isNewsActive) {
                         router.push('/tools/news');
-                        setTimeout(() => scrollToSection(s.id), 350);
-                      } else {
-                        scrollToSection(s.id);
                       }
                     }}
-                    className={cn(
-                      "w-full text-left flex items-start gap-2 rounded-lg border px-3 py-2 transition-all cursor-pointer group",
-                      activeSection === s.id
-                        ? "border-brand-500/30 bg-brand-500/10"
-                        : "border-transparent hover:border-surface-800 hover:bg-surface-900/80"
-                    )}
+                    className="w-full text-left flex items-start gap-2 rounded-lg border border-transparent px-3 py-2 hover:border-surface-800 hover:bg-surface-900/80 transition-all cursor-pointer group"
                   >
                     <span className="text-xs leading-none mt-0.5 flex-shrink-0">
                       {s.emoji}
                     </span>
                     <div className="min-w-0">
-                      <p
-                        className={cn(
-                          "text-[11px] font-medium transition-colors",
-                          activeSection === s.id
-                            ? "text-brand-500"
-                            : "text-surface-400 group-hover:text-brand-500"
-                        )}
-                      >
+                      <p className="text-[11px] font-medium text-surface-400 group-hover:text-brand-500 transition-colors">
                         {s.title}
                       </p>
                       <p className="text-[10px] text-surface-600 leading-relaxed mt-0.5 line-clamp-2">

@@ -5,7 +5,7 @@ export default function HighlightSummary({ highlight }: { highlight?: Highlight 
   if (!highlight?.bullets || highlight.bullets.length === 0) return null;
 
   return (
-    <section data-anchor id="highlight" className="mb-16">
+    <section data-anchor id="highlight-summary" className="mb-16">
       <div className="mb-6 flex items-start justify-between gap-4">
         <div>
           <div className="flex items-center gap-2.5 text-[11px] uppercase tracking-widest font-medium">

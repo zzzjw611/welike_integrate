@@ -21,7 +21,7 @@ export default function PastIssues({ issues }: { issues: IssueSummary[] }) {
   if (!issues || issues.length === 0) return null;
 
   return (
-    <section data-anchor id="past-issues" className="mb-16">
+    <section data-anchor id="archive" className="mb-16">
       <div className="mb-6 flex items-start justify-between gap-4">
         <div>
           <div className="flex items-center gap-2.5 text-[11px] uppercase tracking-widest font-medium">
