@@ -572,6 +572,42 @@ body {
   pointer-events: none;
 }
 
+/* ===== Daily Case prose content (Markdown body) ===== */
+.case-prose {
+  font-size: 15px;
+  line-height: 1.65;
+  color: #a3a3a3;
+}
+
+.case-prose h2 {
+  font-size: 22px;
+  font-weight: 800;
+  line-height: 1.35;
+  letter-spacing: -0.015em;
+  color: #f5f5f5;
+  margin-top: 2rem;
+  margin-bottom: 0.75rem;
+}
+
+.case-prose h3 {
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 1.4;
+  letter-spacing: -0.01em;
+  color: #e5e5e5;
+  margin-top: 1.75rem;
+  margin-bottom: 0.5rem;
+}
+
+@media (min-width: 640px) {
+  .case-prose h2 {
+    font-size: 26px;
+  }
+  .case-prose h3 {
+    font-size: 20px;
+  }
+}
+
 /* ===== Reduced motion ===== */
 @media (prefers-reduced-motion: reduce) {
   .status-dot,
