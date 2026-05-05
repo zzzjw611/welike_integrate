@@ -18,6 +18,61 @@ const CONTENT_DIR = path.join(__dirname, "..", "web", "content");
 const DEEPSEEK_API_KEY = process.env.DEEPSEEK_API_KEY || "sk-f5c9e4006af7418ba864709b76773bba";
 const DEEPSEEK_BASE = "https://api.deepseek.com/v1";
 
+// ===== URL Validation =====
+
+async function checkUrl(url) {
+  try {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 8000);
+    const res = await fetch(url, {
+      method: "HEAD",
+      signal: controller.signal,
+      redirect: "follow",
+    });
+    clearTimeout(timeout);
+    return { ok: res.ok, status: res.status };
+  } catch {
+    return { ok: false, status: 0 };
+  }
+}
+
+async function validateUrls(issueData) {
+  const allUrls = [];
+  const urlMap = [];
+
+  for (const b of issueData.briefs || []) {
+    if (b.url) {
+      allUrls.push(b.url);
+      urlMap.push({ section: "briefs", label: b.title, url: b.url });
+    }
+  }
+  for (const g of issueData.growth_insights || []) {
+    if (g.url) {
+      allUrls.push(g.url);
+      urlMap.push({ section: "growth_insights", label: g.author, url: g.url });
+    }
+  }
+  for (const l of issueData.launches || []) {
+    if (l.url) {
+      allUrls.push(l.url);
+      urlMap.push({ section: "launches", label: l.product, url: l.url });
+    }
+  }
+
+  console.log(`  → Validating ${allUrls.length} URLs...`);
+  const results = await Promise.all(allUrls.map(checkUrl));
+
+  const invalid = [];
+  results.forEach((r, i) => {
+    if (!r.ok) {
+      invalid.push(urlMap[i]);
+      console.log(`    ⚠️  [${r.status}] ${urlMap[i].url} (${urlMap[i].label})`);
+    }
+  });
+
+  return invalid;
+}
+
 
 // ===== Helpers =====
 
@@ -253,6 +308,45 @@ Output ONLY the markdown content, no JSON.`;
     } catch (e) {
       console.error(`  ⚠️ Failed to generate body: ${e.message}`);
       bodyContent = "";
+    }
+  }
+
+  // Validate URLs — retry up to 2 times if invalid links found
+  let retries = 0;
+  const maxRetries = 2;
+  while (retries <= maxRetries) {
+    const invalidUrls = await validateUrls(issueData);
+    if (invalidUrls.length === 0) {
+      console.log("    ✅ All URLs are valid");
+      break;
+    }
+
+    if (retries < maxRetries) {
+      retries++;
+      console.log(`  → Retrying with fixed URLs (attempt ${retries}/${maxRetries})...`);
+      const fixPrompt = `The following URLs in the AI Marketer News issue for ${dateStr} are invalid or unreachable:
+
+${invalidUrls.map((u) => `- [${u.section}] "${u.label}": ${u.url}`).join("\n")}
+
+Please regenerate the SAME issue but replace ONLY the invalid URLs with real, working URLs. Keep everything else exactly the same. Output ONLY raw JSON.`;
+
+      try {
+        frontmatterContent = await callDeepSeek(
+          [
+            { role: "system", content: sysPrompt },
+            { role: "user", content: fixPrompt },
+          ],
+          0.5,
+          4096
+        );
+        issueData = parseJSON(frontmatterContent);
+      } catch (e) {
+        console.error(`  ❌ Retry failed: ${e.message}`);
+        break;
+      }
+    } else {
+      console.log(`  ⚠️ ${invalidUrls.length} invalid URLs remain after ${maxRetries} retries. Saving with warnings.`);
+      break;
     }
   }
 
