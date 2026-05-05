@@ -94,7 +94,7 @@ ${(prevIssue.highlight?.bullets || []).join("\n")}
 
   return `You are a senior AI industry analyst and marketing strategist at JE Labs. Today is ${dateStr} (${dayOfWeek}).
 
-Your job is to produce a daily AI marketing newsletter issue. The issue must be based on REAL news from the past 24-48 hours. Do NOT make up stories.
+Your job is to produce a daily AI marketing newsletter issue covering news from the past 24 hours (Pacific Time). The issue must be based on REAL news. Do NOT make up stories.
 
 ${prevContext}
 
