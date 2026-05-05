@@ -1,100 +1,61 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getSupabase } from "@/lib/supabase";
+import fs from "node:fs/promises";
+import path from "node:path";
+import matter from "gray-matter";
+
+export async function GET() {
+  try {
+    const contentDir = path.join(process.cwd(), "content");
+    const files = await fs.readdir(contentDir);
+    const issues: { date: string; published: boolean }[] = [];
+
+    for (const file of files.sort().reverse()) {
+      if (!file.endsWith(".md")) continue;
+      const date = file.replace(/\.md$/, "");
+      const raw = await fs.readFile(path.join(contentDir, file), "utf8");
+      const { data } = matter(raw);
+      issues.push({
+        date,
+        published: data.published !== false,
+      });
+    }
+
+    return NextResponse.json({ data: issues });
+  } catch (e) {
+    return NextResponse.json({ data: [], error: String(e) }, { status: 500 });
+  }
+}
 
 export async function POST(req: NextRequest) {
   try {
     const { date, published } = await req.json();
-
     if (!date) {
-      return NextResponse.json(
-        { error: "Missing date parameter" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Missing date" }, { status: 400 });
     }
 
-    const supabase = getSupabase();
+    const filePath = path.join(process.cwd(), "content", `${date}.md`);
+    let raw: string;
+    try {
+      raw = await fs.readFile(filePath, "utf8");
+    } catch {
+      return NextResponse.json({ error: "Issue not found" }, { status: 404 });
+    }
 
-    // Check if a record already exists
-    const { data: existing } = await supabase
-      .from("news_publishing")
-      .select("id")
-      .eq("date", date)
-      .single();
-
-    if (existing) {
-      // Update existing record
-      const { error } = await supabase
-        .from("news_publishing")
-        .update({
-          published,
-          published_at: published ? new Date().toISOString() : null,
-        })
-        .eq("date", date);
-
-      if (error) throw error;
+    const { data, content } = matter(raw);
+    data.published = published;
+    if (published) {
+      data.published_at = new Date().toISOString();
     } else {
-      // Insert new record
-      const { error } = await supabase.from("news_publishing").insert({
-        date,
-        published,
-        published_at: published ? new Date().toISOString() : null,
-      });
-
-      if (error) throw error;
+      delete data.published_at;
     }
 
-    return NextResponse.json({
-      success: true,
-      date,
-      published,
-    });
-  } catch (err) {
-    console.error("Error publishing news:", err);
+    const newRaw = matter.stringify(content, data);
+    await fs.writeFile(filePath, newRaw, "utf8");
+
+    return NextResponse.json({ success: true, date, published });
+  } catch (e) {
     return NextResponse.json(
-      { error: err instanceof Error ? err.message : "Failed to publish" },
-      { status: 500 }
-    );
-  }
-}
-
-export async function GET(req: NextRequest) {
-  try {
-    const supabase = getSupabase();
-    const { searchParams } = new URL(req.url);
-    const date = searchParams.get("date");
-
-    if (date) {
-      const { data, error } = await supabase
-        .from("news_publishing")
-        .select("*")
-        .eq("date", date)
-        .single();
-
-      if (error && error.code !== "PGRST116") throw error;
-
-      const published = data ? data.published : false;
-      const publishedAt = data ? data.published_at : null;
-
-      return NextResponse.json({
-        published,
-        published_at: publishedAt,
-      });
-    }
-
-    // Return all publishing statuses
-    const { data, error } = await supabase
-      .from("news_publishing")
-      .select("*")
-      .order("date", { ascending: false });
-
-    if (error) throw error;
-
-    const resultData = data || [];
-    return NextResponse.json({ data: resultData });
-  } catch (err) {
-    console.error("Error fetching publishing status:", err);
-    return NextResponse.json(
-      { error: err instanceof Error ? err.message : "Failed to fetch" },
+      { error: String(e) },
       { status: 500 }
     );
   }

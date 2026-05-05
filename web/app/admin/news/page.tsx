@@ -76,31 +76,19 @@ export default function AdminNewsPage() {
     setLoading(true);
     setError("");
     try {
-      // Get all publishing statuses
-      const pubRes = await fetch("/api/news/publish");
-      if (!pubRes.ok) throw new Error("Failed to fetch publishing status");
-      const pubData = await pubRes.json();
+      const res = await fetch("/api/news/publish");
+      if (!res.ok) throw new Error("Failed to fetch publishing status");
+      const data = await res.json();
 
-      // Get all file dates
-      const filesRes = await fetch("/api/news/archive");
-      if (!filesRes.ok) throw new Error("Failed to fetch news files");
-      const filesData = await filesRes.json();
-
-      // Merge: for each file date, check if it has a publishing record
-      const merged: NewsItem[] = (filesData.issues || []).map(
-        (date: string) => {
-          const pub = (pubData.data || []).find(
-            (p: any) => p.date === date
-          );
-          return {
-            date,
-            published: pub ? pub.published : false,
-            published_at: pub ? pub.published_at : null,
-          };
-        }
+      const items: NewsItem[] = (data.data || []).map(
+        (item: { date: string; published: boolean; published_at?: string }) => ({
+          date: item.date,
+          published: item.published,
+          published_at: item.published_at || null,
+        })
       );
 
-      setNewsItems(merged);
+      setNewsItems(items);
     } catch (err) {
       setError(
         err instanceof Error ? err.message : "Failed to load news"

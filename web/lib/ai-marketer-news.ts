@@ -3,7 +3,6 @@ import path from "node:path";
 import matter from "gray-matter";
 import { remark } from "remark";
 import remarkHtml from "remark-html";
-import { getSupabase } from "@/lib/supabase";
 
 export type Brief = {
   title: string;
@@ -173,40 +172,24 @@ export async function getLatestIssue(): Promise<Issue | null> {
   return getIssueByDate(issues[0]);
 }
 
-export async function getLatestPublishedDate(): Promise<string | null> {
-  try {
-    const supabase = getSupabase();
-    const { data } = await supabase
-      .from("news_publishing")
-      .select("date")
-      .eq("published", true)
-      .order("date", { ascending: false })
-      .limit(1)
-      .single();
-
-    return data ? data.date : null;
-  } catch {
-    return null;
-  }
-}
-
 export async function listPublishedIssues(): Promise<string[]> {
-  try {
-    const supabase = getSupabase();
-    const { data } = await supabase
-      .from("news_publishing")
-      .select("date")
-      .eq("published", true)
-      .order("date", { ascending: false });
+  const all = await listIssues();
+  const published: string[] = [];
 
-    if (data && data.length > 0) {
-      return data.map((d) => d.date);
+  for (const date of all) {
+    const filePath = path.join(CONTENT_DIR, `${date}.md`);
+    try {
+      const raw = await fs.readFile(filePath, "utf8");
+      const { data } = matter(raw);
+      if (data.published !== false) {
+        published.push(date);
+      }
+    } catch {
+      // Skip files that can't be read
     }
-  } catch {
-    // Fall through to file-based listing
   }
 
-  return listIssues();
+  return published;
 }
 
 export async function getAdjacentIssues(
