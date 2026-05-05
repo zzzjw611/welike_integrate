@@ -76,13 +76,14 @@ export default function DashboardLayout({
   const pathname = usePathname();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [guideExpanded, setGuideExpanded] = useState(false);
+  const [guideHovered, setGuideHovered] = useState(false);
   const [toolkitExpanded, setToolkitExpanded] = useState(false);
 
   const currentLang = useLang();
 
   const isNewsActive = pathname === "/tools/news" || pathname.startsWith("/tools/news/");
-  // Auto-expand Guide when on AI News page (users can also toggle manually)
-  const shouldExpandGuide = isNewsActive || guideExpanded;
+  // Auto-expand Guide when on AI News page, hovered, or manually toggled
+  const shouldExpandGuide = isNewsActive || guideExpanded || guideHovered;
 
   const isToolkitPage =
     pathname === "/tools/social-listening" ||
@@ -226,7 +227,10 @@ export default function DashboardLayout({
           })}
 
           {/* AI News with Guide submenu */}
-          <div>
+          <div
+            onMouseEnter={() => setGuideHovered(true)}
+            onMouseLeave={() => setGuideHovered(false)}
+          >
             <Link
               href="/tools/news"
               className={cn(
@@ -241,7 +245,7 @@ export default function DashboardLayout({
               )}
               <Newspaper className="h-4 w-4 flex-shrink-0" />
               <span className="flex-1 truncate">{currentLang === 'zh' ? 'AI 新闻' : 'AI News'}</span>
-              {isNewsActive && (
+              {(isNewsActive || guideHovered) && (
                 <button
                   type="button"
                   onClick={(e) => {
@@ -254,7 +258,7 @@ export default function DashboardLayout({
                   <ChevronDown
                     className={cn(
                       "h-3.5 w-3.5 flex-shrink-0 transition-transform duration-200",
-                      guideExpanded && "rotate-180"
+                      (guideExpanded || guideHovered) && "rotate-180"
                     )}
                   />
                 </button>
@@ -268,7 +272,14 @@ export default function DashboardLayout({
                   <button
                     key={s.id}
                     type="button"
-                    onClick={() => scrollToSection(s.id)}
+                    onClick={() => {
+                      if (!isNewsActive) {
+                        router.push('/tools/news');
+                        setTimeout(() => scrollToSection(s.id), 350);
+                      } else {
+                        scrollToSection(s.id);
+                      }
+                    }}
                     className="w-full text-left flex items-start gap-2 rounded-lg border border-transparent px-3 py-2 hover:border-surface-800 hover:bg-surface-900/80 transition-all cursor-pointer group"
                   >
                     <span className="text-xs leading-none mt-0.5 flex-shrink-0">
