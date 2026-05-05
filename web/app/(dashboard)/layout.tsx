@@ -13,10 +13,57 @@ import {
   LayoutGrid,
   LogOut,
   ChevronRight,
+  ChevronDown,
   Newspaper,
   Menu,
   X,
 } from "lucide-react";
+
+const guideSections = [
+  {
+    id: "highlight",
+    emoji: "✨",
+    title: "Highlight Summary",
+    desc: "Top AI marketing story of the day — the one thing you need to know.",
+  },
+  {
+    id: "daily-brief",
+    emoji: "📡",
+    title: "Daily Brief",
+    desc: "Quick-hit AI marketing news across product launches, policy shifts, and industry moves.",
+  },
+  {
+    id: "growth-insight",
+    emoji: "📈",
+    title: "Growth Insight",
+    desc: "Deep-dive analysis on growth strategies, distribution plays, and go-to-market tactics.",
+  },
+  {
+    id: "launch-radar",
+    emoji: "🚀",
+    title: "Launch Radar",
+    desc: "New AI product launches and feature releases worth watching.",
+  },
+  {
+    id: "daily-case",
+    emoji: "🎯",
+    title: "Daily Case",
+    desc: "Real-world marketing case study — what worked, what didn't, and why.",
+  },
+  {
+    id: "past-issues",
+    emoji: "📚",
+    title: "Past Issues",
+    desc: "Browse previous newsletters to catch up on what you missed.",
+  },
+];
+
+function scrollToSection(id: string) {
+  const el = document.getElementById(id);
+  if (el) {
+    el.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+}
 
 export default function DashboardLayout({
   children,
@@ -27,8 +74,12 @@ export default function DashboardLayout({
   const router = useRouter();
   const pathname = usePathname();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [guideExpanded, setGuideExpanded] = useState(false);
 
   const currentLang = useLang();
+
+  const isNewsActive = pathname === "/tools/news" || pathname.startsWith("/tools/news/");
+  const isGuideActive = isNewsActive && guideExpanded;
 
   useEffect(() => {
     if (!isLoading && !user) {
@@ -127,7 +178,6 @@ export default function DashboardLayout({
           {[
             { href: "/tools/social-listening", label: currentLang === 'zh' ? '社交聆听' : 'Social Listening', icon: Radio },
             { href: "/tools/kol-pricer", label: currentLang === 'zh' ? 'KOL 定价器' : 'KOL Pricer', icon: DollarSign },
-            { href: "/tools/news", label: currentLang === 'zh' ? 'AI 新闻' : 'AI News', icon: Newspaper },
           ].map((item) => {
             const isActive = pathname === item.href || pathname.startsWith(item.href + "/");
             const Icon = item.icon;
@@ -150,6 +200,60 @@ export default function DashboardLayout({
               </Link>
             );
           })}
+
+          {/* AI News with Guide submenu */}
+          <div>
+            <button
+              type="button"
+              onClick={() => setGuideExpanded(!guideExpanded)}
+              className={cn(
+                "w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors relative",
+                isNewsActive
+                  ? "bg-brand-500/10 text-brand-500"
+                  : "text-surface-400 hover:text-white hover:bg-surface-800"
+              )}
+            >
+              {isNewsActive && (
+                <span className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-5 bg-brand-500 rounded-full sidebar-indicator" />
+              )}
+              <Newspaper className="h-4 w-4 flex-shrink-0" />
+              <span className="flex-1 truncate text-left">{currentLang === 'zh' ? 'AI 新闻' : 'AI News'}</span>
+              {isNewsActive && (
+                <ChevronDown
+                  className={cn(
+                    "h-3.5 w-3.5 flex-shrink-0 transition-transform duration-200",
+                    guideExpanded && "rotate-180"
+                  )}
+                />
+              )}
+            </button>
+
+            {/* Guide submenu */}
+            {isNewsActive && guideExpanded && (
+              <div className="ml-2 mt-0.5 space-y-0.5">
+                {guideSections.map((s) => (
+                  <button
+                    key={s.id}
+                    type="button"
+                    onClick={() => scrollToSection(s.id)}
+                    className="w-full text-left flex items-start gap-2 rounded-lg border border-transparent px-3 py-2 hover:border-surface-800 hover:bg-surface-900/80 transition-all cursor-pointer group"
+                  >
+                    <span className="text-xs leading-none mt-0.5 flex-shrink-0">
+                      {s.emoji}
+                    </span>
+                    <div className="min-w-0">
+                      <p className="text-[11px] font-medium text-surface-400 group-hover:text-brand-500 transition-colors">
+                        {s.title}
+                      </p>
+                      <p className="text-[10px] text-surface-600 leading-relaxed mt-0.5 line-clamp-2">
+                        {s.desc}
+                      </p>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
       </div>
 

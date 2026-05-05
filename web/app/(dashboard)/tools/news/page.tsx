@@ -16,7 +16,6 @@ import PastIssues from "@/components/ai-marketer-news/PastIssues";
 import Footer from "@/components/ai-marketer-news/Footer";
 import BackToTop from "@/components/ai-marketer-news/BackToTop";
 import DatePicker from "@/components/ai-marketer-news/DatePicker";
-import GuideButton from "@/components/ai-marketer-news/GuideButton";
 import CreateAlerts from "@/components/ai-marketer-news/CreateAlerts";
 
 export default async function NewsPage() {
@@ -46,7 +45,9 @@ export default async function NewsPage() {
             isLatest={isLatest}
           />
         </div>
-        <DatePicker issues={issues} currentDate={issue.date} />
+        <div className="flex items-center gap-2">
+          <DatePicker issues={issues} currentDate={issue.date} />
+        </div>
       </div>
 
       <Masthead
@@ -72,7 +73,6 @@ export default async function NewsPage() {
       <Footer />
 
       <BackToTop />
-      <GuideButton />
     </div>
   );
 }
