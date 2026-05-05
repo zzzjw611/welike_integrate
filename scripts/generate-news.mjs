@@ -15,7 +15,7 @@ import { fileURLToPath } from "node:url";
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const CONTENT_DIR = path.join(__dirname, "..", "web", "content");
 
-const DEEPSEEK_API_KEY = "sk-f5c9e4006af7418ba864709b76773bba";
+const DEEPSEEK_API_KEY = process.env.DEEPSEEK_API_KEY || "sk-f5c9e4006af7418ba864709b76773bba";
 const DEEPSEEK_BASE = "https://api.deepseek.com/v1";
 
 // ===== Helpers =====
