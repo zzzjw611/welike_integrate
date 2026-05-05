@@ -37,12 +37,42 @@ export default function AdminNewsPage() {
   const [previewContent, setPreviewContent] = useState<string>("");
   const [previewLoading, setPreviewLoading] = useState(false);
 
+  const fetchNews = async () => {
+    setLoading(true);
+    setError("");
+    try {
+      const res = await fetch("/api/news/publish");
+      if (!res.ok) throw new Error("Failed to fetch publishing status");
+      const data = await res.json();
+
+      const items: NewsItem[] = (data.data || []).map(
+        (item: { date: string; published: boolean; published_at?: string }) => ({
+          date: item.date,
+          published: item.published,
+          published_at: item.published_at || null,
+        })
+      );
+
+      setNewsItems(items);
+    } catch (err) {
+      setError(
+        err instanceof Error ? err.message : "Failed to load news"
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // Redirect to login if not authenticated
   useEffect(() => {
     if (!authLoading && !user) {
       router.push("/login");
     }
   }, [authLoading, user, router]);
+
+  useEffect(() => {
+    fetchNews();
+  }, []);
 
   if (authLoading) {
     return (
@@ -71,36 +101,6 @@ export default function AdminNewsPage() {
       </div>
     );
   }
-
-  const fetchNews = async () => {
-    setLoading(true);
-    setError("");
-    try {
-      const res = await fetch("/api/news/publish");
-      if (!res.ok) throw new Error("Failed to fetch publishing status");
-      const data = await res.json();
-
-      const items: NewsItem[] = (data.data || []).map(
-        (item: { date: string; published: boolean; published_at?: string }) => ({
-          date: item.date,
-          published: item.published,
-          published_at: item.published_at || null,
-        })
-      );
-
-      setNewsItems(items);
-    } catch (err) {
-      setError(
-        err instanceof Error ? err.message : "Failed to load news"
-      );
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchNews();
-  }, []);
 
   const handlePublish = async (date: string, published: boolean) => {
     setPublishing(date);
