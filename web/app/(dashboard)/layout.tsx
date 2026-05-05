@@ -17,6 +17,7 @@ import {
   Newspaper,
   Menu,
   X,
+  Send,
 } from "lucide-react";
 
 const guideSections = [
@@ -75,11 +76,22 @@ export default function DashboardLayout({
   const pathname = usePathname();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [guideExpanded, setGuideExpanded] = useState(false);
+  const [toolkitExpanded, setToolkitExpanded] = useState(false);
 
   const currentLang = useLang();
 
   const isNewsActive = pathname === "/tools/news" || pathname.startsWith("/tools/news/");
   const isGuideActive = isNewsActive && guideExpanded;
+
+  const isToolkitPage =
+    pathname === "/tools/social-listening" ||
+    pathname.startsWith("/tools/social-listening/") ||
+    pathname === "/tools/kol-pricer" ||
+    pathname.startsWith("/tools/kol-pricer/") ||
+    isNewsActive;
+
+  // Auto-expand toolkit when on a toolkit page
+  const shouldExpandToolkit = isToolkitPage || toolkitExpanded;
 
   useEffect(() => {
     if (!isLoading && !user) {
@@ -171,9 +183,20 @@ export default function DashboardLayout({
 
       {/* Toolkit and Playbook */}
       <div className="px-4 flex-1 overflow-y-auto">
-        <p className="px-1 text-[11px] font-semibold uppercase tracking-widest text-surface-500 mb-3">
-          {currentLang === 'zh' ? '工具集与策略指南' : 'Toolkit and Playbook'}
-        </p>
+        <button
+          type="button"
+          onClick={() => setToolkitExpanded(!toolkitExpanded)}
+          className="w-full flex items-center gap-2 px-1 text-[11px] font-semibold uppercase tracking-widest text-surface-500 mb-3 hover:text-surface-300 transition-colors"
+        >
+          <ChevronDown
+            className={cn(
+              "h-3 w-3 flex-shrink-0 transition-transform duration-200",
+              shouldExpandToolkit && "rotate-180"
+            )}
+          />
+          <span>{currentLang === 'zh' ? '工具集与策略指南' : 'Toolkit and Playbook'}</span>
+        </button>
+        {shouldExpandToolkit && (
         <div className="space-y-1">
           {[
             { href: "/tools/social-listening", label: currentLang === 'zh' ? '社交聆听' : 'Social Listening', icon: Radio },
@@ -263,7 +286,21 @@ export default function DashboardLayout({
               </div>
             )}
           </div>
+
+          {/* Connect Telegram */}
+          <a
+            href="https://t.me/WeLikeBot"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="mt-2 flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-surface-400 hover:text-white hover:bg-surface-800 transition-colors border border-dashed border-surface-700 hover:border-surface-600"
+          >
+            <Send className="h-4 w-4 flex-shrink-0" />
+            <span className="flex-1 truncate">{currentLang === 'zh' ? '连接 Telegram' : 'Connect Telegram'}</span>
+            <ChevronRight className="h-3.5 w-3.5 flex-shrink-0 text-surface-600" />
+          </a>
+
         </div>
+        )}
       </div>
 
       {/* Profile + Sign out */}
