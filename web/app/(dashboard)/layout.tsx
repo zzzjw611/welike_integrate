@@ -17,7 +17,6 @@ import {
   Newspaper,
   Menu,
   X,
-  Send,
 } from "lucide-react";
 
 const guideSections = [
@@ -328,17 +327,6 @@ export default function DashboardLayout({
                   );
                 })}
 
-                {/* Connect Telegram */}
-                <a
-                  href="https://t.me/WeLike_Alerts_bot"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="mt-1 flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-surface-400 hover:text-white hover:bg-surface-800 transition-colors border border-dashed border-surface-700 hover:border-surface-600"
-                >
-                  <Send className="h-4 w-4 flex-shrink-0" />
-                  <span className="flex-1 truncate">{currentLang === 'zh' ? '连接 Telegram' : 'Connect Telegram'}</span>
-                  <ChevronRight className="h-3.5 w-3.5 flex-shrink-0 text-surface-600" />
-                </a>
               </div>
             )}
           </div>
