@@ -81,7 +81,8 @@ export default function DashboardLayout({
   const currentLang = useLang();
 
   const isNewsActive = pathname === "/tools/news" || pathname.startsWith("/tools/news/");
-  const isGuideActive = isNewsActive && guideExpanded;
+  // Auto-expand Guide when on AI News page (users can also toggle manually)
+  const shouldExpandGuide = isNewsActive || guideExpanded;
 
   const isToolkitPage =
     pathname === "/tools/social-listening" ||
@@ -261,7 +262,7 @@ export default function DashboardLayout({
             </Link>
 
             {/* Guide submenu */}
-            {isNewsActive && guideExpanded && (
+            {shouldExpandGuide && (
               <div className="ml-2 mt-0.5 space-y-0.5">
                 {guideSections.map((s) => (
                   <button
@@ -283,21 +284,21 @@ export default function DashboardLayout({
                     </div>
                   </button>
                 ))}
+
+                {/* Connect Telegram — inside Guide, after Past Issues */}
+                <a
+                  href="https://t.me/WeLike_Alerts_bot"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="mt-1 flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-surface-400 hover:text-white hover:bg-surface-800 transition-colors border border-dashed border-surface-700 hover:border-surface-600"
+                >
+                  <Send className="h-4 w-4 flex-shrink-0" />
+                  <span className="flex-1 truncate">{currentLang === 'zh' ? '连接 Telegram' : 'Connect Telegram'}</span>
+                  <ChevronRight className="h-3.5 w-3.5 flex-shrink-0 text-surface-600" />
+                </a>
               </div>
             )}
           </div>
-
-          {/* Connect Telegram */}
-          <a
-            href="https://t.me/WeLikeBot"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="mt-2 flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-surface-400 hover:text-white hover:bg-surface-800 transition-colors border border-dashed border-surface-700 hover:border-surface-600"
-          >
-            <Send className="h-4 w-4 flex-shrink-0" />
-            <span className="flex-1 truncate">{currentLang === 'zh' ? '连接 Telegram' : 'Connect Telegram'}</span>
-            <ChevronRight className="h-3.5 w-3.5 flex-shrink-0 text-surface-600" />
-          </a>
 
         </div>
         )}
