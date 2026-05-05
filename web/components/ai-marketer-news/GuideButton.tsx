@@ -69,7 +69,7 @@ export default function GuideButton() {
         type="button"
         aria-label="Page guide"
         onClick={() => setOpen(true)}
-        className="fixed bottom-6 right-20 sm:right-24 z-40 flex items-center gap-1.5 rounded-full border border-surface-800 bg-surface-900/80 backdrop-blur-md px-3.5 py-2.5 text-[11px] uppercase tracking-widest text-surface-400 hover:text-brand-500 hover:border-brand-500/40 transition-all opacity-0 translate-y-3 animate-[fadeInUp_0.4s_ease-out_0.5s_forwards]"
+        className="fixed bottom-6 left-5 sm:left-8 z-40 flex items-center gap-1.5 rounded-full border border-surface-800 bg-surface-900/80 backdrop-blur-md px-3.5 py-2.5 text-[11px] uppercase tracking-widest text-surface-400 hover:text-brand-500 hover:border-brand-500/40 transition-all opacity-0 translate-y-3 animate-[fadeInUp_0.4s_ease-out_0.5s_forwards]"
       >
         <HelpCircle className="h-3.5 w-3.5" strokeWidth={1.75} />
         <span>Guide</span>
