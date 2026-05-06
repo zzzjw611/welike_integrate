@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useLang } from "@/lib/use-lang";
 import { useAuth } from "@/lib/auth-context";
+import matter from "gray-matter";
 import {
   Eye,
   EyeOff,
@@ -199,20 +200,25 @@ export default function AdminNewsPage() {
     setEditing(date);
     setEditLoading(true);
     try {
-      const res = await fetch(`/api/news/archive/${date}`);
+      // Fetch directly from GitHub API to get the latest version (not Vercel's cached version)
+      const res = await fetch(
+        `https://api.github.com/repos/zzzjw611/welike_integrate/contents/web/content/${date}.md?ref=master`,
+        { headers: { Accept: "application/vnd.github.v3+json" } }
+      );
       if (!res.ok) throw new Error("Failed to fetch issue");
       const data = await res.json();
-      const issue = data.issue;
+      const raw = atob(data.content.replace(/\n/g, ""));
+      const { data: frontmatter } = matter(raw);
 
       setEditData({
-        date: issue.date,
-        issueNumber: issue.issueNumber || 0,
-        editor: issue.editor || "JE Labs",
-        highlight: issue.highlight || { bullets: ["", "", "", ""] },
-        briefs: issue.briefs || [],
-        growth_insights: issue.growth_insights || [],
-        launches: issue.launches || [],
-        daily_case: issue.daily_case || { company: "", title: "", deck: "", metrics: [""] },
+        date: date,
+        issueNumber: frontmatter.issueNumber || 0,
+        editor: frontmatter.editor || "JE Labs",
+        highlight: frontmatter.highlight || { bullets: ["", "", "", ""] },
+        briefs: frontmatter.briefs || [],
+        growth_insights: frontmatter.growth_insights || [],
+        launches: frontmatter.launches || [],
+        daily_case: frontmatter.daily_case || { company: "", title: "", deck: "", metrics: [""] },
       });
     } catch (err) {
       alert("Failed to load issue for editing");
