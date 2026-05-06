@@ -88,6 +88,7 @@ export default function AdminNewsPage() {
   const [publishCountdown, setPublishCountdown] = useState(0);
   const [publishAction, setPublishAction] = useState<"publish" | "unpublish">("publish");
   const [editSuccess, setEditSuccess] = useState<string | null>(null);
+  const [editNeedsRepublish, setEditNeedsRepublish] = useState(false);
 
   const fetchNews = async () => {
     setLoading(true);
@@ -240,9 +241,13 @@ export default function AdminNewsPage() {
         throw new Error(data.error || "Failed to save");
       }
 
+      // Check if this issue was already published
+      const wasPublished = newsItems.find((item) => item.date === editData.date)?.published ?? false;
+
       setEditing(null);
       setEditData(null);
       setEditSuccess(editData.date);
+      setEditNeedsRepublish(wasPublished);
       await fetchNews();
     } catch (err) {
       alert(err instanceof Error ? err.message : "Failed to save edit");
@@ -698,9 +703,13 @@ export default function AdminNewsPage() {
               {lang === "zh" ? "保存成功！" : "Saved Successfully!"}
             </h3>
             <p className="text-sm text-surface-400 mb-6">
-              {lang === "zh"
-                ? "编辑已保存到 GitHub，预览将显示最新版本"
-                : "Changes saved to GitHub. Preview will show the latest version."}
+              {editNeedsRepublish
+                ? (lang === "zh"
+                    ? "编辑已保存。点击重新发布以更新网站。"
+                    : "Changes saved. Click Republish to update the website.")
+                : (lang === "zh"
+                    ? "编辑已保存到 GitHub，预览将显示最新版本"
+                    : "Changes saved to GitHub. Preview will show the latest version.")}
             </p>
             <div className="flex items-center justify-center gap-3">
               <button
@@ -717,6 +726,18 @@ export default function AdminNewsPage() {
                 <Eye className="h-4 w-4" />
                 {lang === "zh" ? "预览" : "Preview"}
               </button>
+              {editNeedsRepublish && (
+                <button
+                  onClick={() => {
+                    setEditSuccess(null);
+                    handlePublish(editSuccess, true);
+                  }}
+                  className="inline-flex items-center gap-2 text-sm text-white bg-green-500 hover:bg-green-400 px-4 py-2 rounded-lg transition-colors"
+                >
+                  <Send className="h-4 w-4" />
+                  {lang === "zh" ? "重新发布" : "Republish"}
+                </button>
+              )}
             </div>
           </div>
         </div>
