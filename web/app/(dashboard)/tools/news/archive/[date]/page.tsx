@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
+import matter from "gray-matter";
 import type { Issue } from "@/lib/ai-marketer-news";
 import Masthead from "@/components/ai-marketer-news/Masthead";
 import HighlightSummary from "@/components/ai-marketer-news/HighlightSummary";
@@ -15,6 +16,41 @@ import Footer from "@/components/ai-marketer-news/Footer";
 import BackToTop from "@/components/ai-marketer-news/BackToTop";
 import DatePicker from "@/components/ai-marketer-news/DatePicker";
 import GuideButton from "@/components/ai-marketer-news/GuideButton";
+
+const GITHUB_OWNER = "zzzjw611";
+const GITHUB_REPO = "welike_integrate";
+const GITHUB_BRANCH = "master";
+
+async function fetchFromGitHub(date: string): Promise<Issue | null> {
+  try {
+    const res = await fetch(
+      `https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/contents/web/content/${date}.md?ref=${GITHUB_BRANCH}`,
+      { headers: { Accept: "application/vnd.github.v3+json" } }
+    );
+    if (!res.ok) return null;
+    const data = await res.json();
+    const raw = atob(data.content);
+    const { data: frontmatter, content } = matter(raw);
+    return {
+      date: date,
+      issueNumber: frontmatter.issueNumber,
+      editor: frontmatter.editor,
+      highlight: frontmatter.highlight,
+      briefs: frontmatter.briefs ?? [],
+      growth_insights: frontmatter.growth_insights ?? [],
+      launches: frontmatter.launches ?? [],
+      daily_case: {
+        company: frontmatter.daily_case?.company ?? "",
+        title: frontmatter.daily_case?.title ?? "",
+        deck: frontmatter.daily_case?.deck ?? "",
+        metrics: frontmatter.daily_case?.metrics,
+        bodyHtml: "",
+      },
+    };
+  } catch {
+    return null;
+  }
+}
 
 export default function ArchivePage() {
   const params = useParams();
@@ -31,14 +67,9 @@ export default function ArchivePage() {
     async function fetchData() {
       setLoading(true);
       try {
-        // Fetch issue data from API (reads from GitHub, includes draft content)
-        const res = await fetch(`/api/news/archive/${date}`);
-        if (!res.ok) {
-          setIssue(null);
-          return;
-        }
-        const data = await res.json();
-        setIssue(data.issue);
+        // Fetch issue data directly from GitHub API (always latest, no Vercel deploy delay)
+        const issueData = await fetchFromGitHub(date);
+        setIssue(issueData);
 
         // Fetch all published issues for navigation
         const pubRes = await fetch("/api/news/archive");
