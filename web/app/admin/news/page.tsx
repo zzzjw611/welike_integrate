@@ -85,6 +85,7 @@ export default function AdminNewsPage() {
   const [editLoading, setEditLoading] = useState(false);
   const [editSaving, setEditSaving] = useState(false);
   const [publishSuccess, setPublishSuccess] = useState<string | null>(null);
+  const [publishCountdown, setPublishCountdown] = useState(0);
 
   const fetchNews = async () => {
     setLoading(true);
@@ -121,6 +122,19 @@ export default function AdminNewsPage() {
   useEffect(() => {
     fetchNews();
   }, []);
+
+  // Countdown and redirect after publish
+  useEffect(() => {
+    if (publishSuccess && publishCountdown > 0) {
+      const timer = setTimeout(() => {
+        setPublishCountdown(publishCountdown - 1);
+      }, 1000);
+      return () => clearTimeout(timer);
+    }
+    if (publishSuccess && publishCountdown === 0) {
+      window.location.href = "/tools/news";
+    }
+  }, [publishSuccess, publishCountdown]);
 
   if (authLoading) {
     return (
@@ -165,6 +179,7 @@ export default function AdminNewsPage() {
       }
 
       setPublishSuccess(date);
+      setPublishCountdown(60);
     } catch (err) {
       alert(err instanceof Error ? err.message : "Failed to publish");
     } finally {
@@ -646,26 +661,17 @@ export default function AdminNewsPage() {
             </h3>
             <p className="text-sm text-surface-400 mb-6">
               {lang === "zh"
-                ? "新闻正在同步到网页..."
-                : "News is syncing to the website..."}
+                ? `网站需要约 1 分钟更新，更新后将自动跳转到 AI News 页面... (${publishCountdown}s)`
+                : `The website needs about 1 minute to update. Redirecting to AI News page... (${publishCountdown}s)`}
             </p>
             <div className="flex items-center justify-center gap-3">
               <button
-                onClick={() => setPublishSuccess(null)}
+                onClick={() => { setPublishSuccess(null); setPublishCountdown(0); }}
                 className="inline-flex items-center gap-2 text-sm text-surface-300 hover:text-white bg-surface-800 hover:bg-surface-700 px-4 py-2 rounded-lg transition-colors"
               >
                 <Edit3 className="h-4 w-4" />
                 {lang === "zh" ? "继续编辑" : "Continue Editing"}
               </button>
-              <a
-                href="https://welike-integrate.vercel.app"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 text-sm text-white bg-brand-500 hover:bg-brand-400 px-4 py-2 rounded-lg transition-colors"
-              >
-                <ExternalLink className="h-4 w-4" />
-                {lang === "zh" ? "前往首页" : "Go to Home"}
-              </a>
             </div>
           </div>
         </div>
@@ -837,17 +843,17 @@ export default function AdminNewsPage() {
                         onChange={(e) => updateField("daily_case", { ...editData.daily_case, deck: e.target.value })}
                       />
                       <div>
-                        <label className="block text-xs text-surface-500 mb-1">
-                          {lang === "zh" ? "指标" : "Metrics"}
+                        <label className="block text-xs font-medium text-surface-500 mb-1.5 mt-3">
+                          {lang === "zh" ? "关键指标" : "Metrics"}
                         </label>
                         <div className="space-y-2">
-                          {editData.daily_case.metrics.map((metric, i) => (
+                          {(editData.daily_case.metrics || [""]).map((metric, i) => (
                             <div key={i} className="flex items-center gap-2">
                               <input
                                 className="flex-1 bg-surface-900 text-white text-sm border border-surface-700 rounded-lg px-3 py-2 focus:outline-none focus:border-brand-500/50"
                                 value={metric}
                                 onChange={(e) => {
-                                  const metrics = [...editData.daily_case.metrics];
+                                  const metrics = [...(editData.daily_case.metrics || [""])];
                                   metrics[i] = e.target.value;
                                   updateField("daily_case", { ...editData.daily_case, metrics });
                                 }}
@@ -855,24 +861,24 @@ export default function AdminNewsPage() {
                               />
                               <button
                                 onClick={() => {
-                                  const metrics = editData.daily_case.metrics.filter((_, j) => j !== i);
+                                  const metrics = editData.daily_case.metrics?.filter((_, j) => j !== i) || [];
                                   updateField("daily_case", { ...editData.daily_case, metrics });
                                 }}
                                 className="text-red-400 hover:text-red-300 p-1"
                               >
-                                <X className="h-3.5 w-3.5" />
+                                <Trash2 className="h-3.5 w-3.5" />
                               </button>
                             </div>
                           ))}
                           <button
                             onClick={() => {
-                              const metrics = [...editData.daily_case.metrics, ""];
+                              const metrics = [...(editData.daily_case.metrics || []), ""];
                               updateField("daily_case", { ...editData.daily_case, metrics });
                             }}
                             className="inline-flex items-center gap-1 text-xs text-brand-500 hover:text-brand-400"
                           >
                             <Plus className="h-3 w-3" />
-                            {lang === "zh" ? "添加指标" : "Add metric"}
+                            {lang === "zh" ? "添加指标" : "Add Metric"}
                           </button>
                         </div>
                       </div>
@@ -892,13 +898,11 @@ export default function AdminNewsPage() {
               </button>
               <button
                 onClick={handleSaveEdit}
-                disabled={editSaving || editLoading}
+                disabled={editSaving}
                 className="inline-flex items-center gap-2 text-sm text-white bg-brand-500 hover:bg-brand-400 px-4 py-2 rounded-lg transition-colors disabled:opacity-50"
               >
                 <Save className="h-4 w-4" />
-                {editSaving
-                  ? (lang === "zh" ? "保存中..." : "Saving...")
-                  : (lang === "zh" ? "保存" : "Save")}
+                {editSaving ? "..." : lang === "zh" ? "保存" : "Save"}
               </button>
             </div>
           </div>
