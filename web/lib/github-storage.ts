@@ -92,6 +92,55 @@ export async function writeContentFile(
   await commitFile(filePath, content, message);
 }
 
+/** Ensure a branch exists by creating it from master if it doesn't exist */
+async function ensureBranch(branch: string): Promise<void> {
+  // Check if branch exists
+  const checkRes = await fetch(
+    `https://api.github.com/repos/${OWNER}/${REPO}/branches/${branch}`,
+    {
+      headers: {
+        Authorization: `Bearer ${GITHUB_TOKEN}`,
+        Accept: "application/vnd.github.v3+json",
+      },
+    }
+  );
+  if (checkRes.ok) return; // Branch already exists
+
+  // Branch doesn't exist, create it from master
+  const masterRes = await fetch(
+    `https://api.github.com/repos/${OWNER}/${REPO}/git/refs/heads/master`,
+    {
+      headers: {
+        Authorization: `Bearer ${GITHUB_TOKEN}`,
+        Accept: "application/vnd.github.v3+json",
+      },
+    }
+  );
+  if (!masterRes.ok) throw new Error("Failed to get master branch ref");
+  const masterData = await masterRes.json();
+  const masterSha = masterData.object.sha;
+
+  const createRes = await fetch(
+    `https://api.github.com/repos/${OWNER}/${REPO}/git/refs`,
+    {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${GITHUB_TOKEN}`,
+        Accept: "application/vnd.github.v3+json",
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        ref: `refs/heads/${branch}`,
+        sha: masterSha,
+      }),
+    }
+  );
+  if (!createRes.ok) {
+    const err = await createRes.text();
+    throw new Error(`Failed to create branch ${branch}: ${err}`);
+  }
+}
+
 /** Write content file to a specific branch (e.g. "content" branch for edits to avoid Vercel redeploy) */
 export async function writeContentFileToBranch(
   date: string,
@@ -99,6 +148,9 @@ export async function writeContentFileToBranch(
   message: string,
   branch: string
 ): Promise<void> {
+  // Ensure the branch exists first
+  await ensureBranch(branch);
+
   const filePath = `${CONTENT_PATH}/${date}.md`;
   // Override the BRANCH constant for this commit
   const body: Record<string, unknown> = {
