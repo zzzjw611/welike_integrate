@@ -2,6 +2,7 @@ const GITHUB_TOKEN = process.env.GITHUB_TOKEN || process.env.GH_TOKEN || "";
 const OWNER = "zzzjw611";
 const REPO = "welike_integrate";
 const BRANCH = "master";
+const CONTENT_BRANCH = "content"; // Branch for content files (edits go here to avoid Vercel redeploy)
 const CONTENT_PATH = "web/content";
 
 interface GitHubFile {
@@ -89,6 +90,64 @@ export async function writeContentFile(
 ): Promise<void> {
   const filePath = `${CONTENT_PATH}/${date}.md`;
   await commitFile(filePath, content, message);
+}
+
+/** Write content file to a specific branch (e.g. "content" branch for edits to avoid Vercel redeploy) */
+export async function writeContentFileToBranch(
+  date: string,
+  content: string,
+  message: string,
+  branch: string
+): Promise<void> {
+  const filePath = `${CONTENT_PATH}/${date}.md`;
+  // Override the BRANCH constant for this commit
+  const body: Record<string, unknown> = {
+    message,
+    content: Buffer.from(content, "utf8").toString("base64"),
+    branch,
+  };
+
+  // Try to get existing file SHA from the target branch
+  let sha: string | undefined;
+  try {
+    const res = await fetch(
+      `https://api.github.com/repos/${OWNER}/${REPO}/contents/${filePath}?ref=${branch}`,
+      {
+        headers: {
+          Authorization: `Bearer ${GITHUB_TOKEN}`,
+          Accept: "application/vnd.github.v3+json",
+        },
+      }
+    );
+    if (res.ok) {
+      const existing = await res.json();
+      sha = existing.sha;
+    }
+  } catch {
+    // File doesn't exist on this branch yet
+  }
+
+  if (sha) {
+    body.sha = sha;
+  }
+
+  const res = await fetch(
+    `https://api.github.com/repos/${OWNER}/${REPO}/contents/${filePath}`,
+    {
+      method: "PUT",
+      headers: {
+        Authorization: `Bearer ${GITHUB_TOKEN}`,
+        Accept: "application/vnd.github.v3+json",
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(body),
+    }
+  );
+
+  if (!res.ok) {
+    const err = await res.text();
+    throw new Error(`GitHub commit error: ${err}`);
+  }
 }
 
 export async function listContentFiles(): Promise<string[]> {

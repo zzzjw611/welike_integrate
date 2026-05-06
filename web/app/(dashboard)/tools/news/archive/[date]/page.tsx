@@ -34,36 +34,41 @@ async function fetchFromGitHub(date: string, skipCache = false): Promise<Issue |
     }
   }
 
-  try {
-    const res = await fetch(
-      `https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/contents/web/content/${date}.md?ref=${GITHUB_BRANCH}`,
-      { headers: { Accept: "application/vnd.github.v3+json" } }
-    );
-    if (!res.ok) return null;
-    const data = await res.json();
-    const raw = atob(data.content.replace(/\n/g, ""));
-    const { data: frontmatter } = matter(raw);
-    const issue: Issue = {
-      date: date,
-      issueNumber: frontmatter.issueNumber,
-      editor: frontmatter.editor,
-      highlight: frontmatter.highlight,
-      briefs: frontmatter.briefs ?? [],
-      growth_insights: frontmatter.growth_insights ?? [],
-      launches: frontmatter.launches ?? [],
-      daily_case: {
-        company: frontmatter.daily_case?.company ?? "",
-        title: frontmatter.daily_case?.title ?? "",
-        deck: frontmatter.daily_case?.deck ?? "",
-        metrics: frontmatter.daily_case?.metrics,
-        bodyHtml: "",
-      },
-    };
-    cache.set(date, { data: issue, ts: Date.now() });
-    return issue;
-  } catch {
-    return null;
+  // Try "content" branch first (for edits), fall back to "master" branch
+  const branches = ["content", "master"];
+  for (const branch of branches) {
+    try {
+      const res = await fetch(
+        `https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/contents/web/content/${date}.md?ref=${branch}`,
+        { headers: { Accept: "application/vnd.github.v3+json" } }
+      );
+      if (!res.ok) continue;
+      const data = await res.json();
+      const raw = atob(data.content.replace(/\n/g, ""));
+      const { data: frontmatter } = matter(raw);
+      const issue: Issue = {
+        date: date,
+        issueNumber: frontmatter.issueNumber,
+        editor: frontmatter.editor,
+        highlight: frontmatter.highlight,
+        briefs: frontmatter.briefs ?? [],
+        growth_insights: frontmatter.growth_insights ?? [],
+        launches: frontmatter.launches ?? [],
+        daily_case: {
+          company: frontmatter.daily_case?.company ?? "",
+          title: frontmatter.daily_case?.title ?? "",
+          deck: frontmatter.daily_case?.deck ?? "",
+          metrics: frontmatter.daily_case?.metrics,
+          bodyHtml: "",
+        },
+      };
+      cache.set(date, { data: issue, ts: Date.now() });
+      return issue;
+    } catch {
+      continue;
+    }
   }
+  return null;
 }
 
 export default function ArchivePage() {

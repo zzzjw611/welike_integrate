@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import matter from "gray-matter";
-import { readContentFile, writeContentFile } from "@/lib/github-storage";
+import { readContentFile, writeContentFileToBranch } from "@/lib/github-storage";
 
 export async function PUT(request: Request) {
   try {
@@ -28,9 +28,9 @@ export async function PUT(request: Request) {
     // Reconstruct the markdown file
     const newContent = matter.stringify(body || "", mergedFrontmatter);
 
-    // Use [skip vercel] to avoid triggering a Vercel deployment for edits
+    // Write to "content" branch to avoid triggering Vercel deployment
     // (preview reads directly from GitHub API, no deploy needed)
-    await writeContentFile(date, newContent, `chore: edit AI news for ${date} [skip vercel]`);
+    await writeContentFileToBranch(date, newContent, `chore: edit AI news for ${date}`, "content");
 
     return NextResponse.json({ success: true, date });
   } catch (err) {
