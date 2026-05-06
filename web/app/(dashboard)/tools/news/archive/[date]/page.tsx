@@ -21,7 +21,17 @@ const GITHUB_OWNER = "zzzjw611";
 const GITHUB_REPO = "welike_integrate";
 const GITHUB_BRANCH = "master";
 
+// Simple in-memory cache to avoid hitting GitHub API rate limits
+const cache = new Map<string, { data: Issue; ts: number }>();
+const CACHE_TTL = 10_000; // 10 seconds
+
 async function fetchFromGitHub(date: string): Promise<Issue | null> {
+  // Check cache first
+  const cached = cache.get(date);
+  if (cached && Date.now() - cached.ts < CACHE_TTL) {
+    return cached.data;
+  }
+
   try {
     const res = await fetch(
       `https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/contents/web/content/${date}.md?ref=${GITHUB_BRANCH}`,
@@ -30,8 +40,8 @@ async function fetchFromGitHub(date: string): Promise<Issue | null> {
     if (!res.ok) return null;
     const data = await res.json();
     const raw = atob(data.content);
-    const { data: frontmatter, content } = matter(raw);
-    return {
+    const { data: frontmatter } = matter(raw);
+    const issue: Issue = {
       date: date,
       issueNumber: frontmatter.issueNumber,
       editor: frontmatter.editor,
@@ -47,6 +57,8 @@ async function fetchFromGitHub(date: string): Promise<Issue | null> {
         bodyHtml: "",
       },
     };
+    cache.set(date, { data: issue, ts: Date.now() });
+    return issue;
   } catch {
     return null;
   }
