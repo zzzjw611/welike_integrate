@@ -397,16 +397,45 @@ export default function AdminNewsPage() {
   const handleEdit = async (date: string) => {
     setEditing(date);
     setEditLoading(true);
+
+    // 1) Try localStorage first — has the most recent in-flight edits (instant,
+    //    survives Exit Preview → resume → Continue Editing without any GitHub
+    //    roundtrip).
     try {
-      // Fetch directly from GitHub API to get the latest version (not Vercel's cached version)
-      const res = await fetch(
-        `https://api.github.com/repos/zzzjw611/welike_integrate/contents/web/content/${date}.md?ref=master`,
-        { headers: { Accept: "application/vnd.github.v3+json" } }
-      );
-      if (!res.ok) throw new Error("Failed to fetch issue");
-      const data = await res.json();
-      const rawRes = await fetch(data.download_url);
-      const raw = await rawRes.text();
+      const draftRaw = localStorage.getItem(`news-draft-${date}`);
+      if (draftRaw) {
+        const parsed = JSON.parse(draftRaw) as { data: IssueData; ts: number };
+        if (Date.now() - parsed.ts < 30 * 60_000) {
+          setEditData(parsed.data);
+          setEditLoading(false);
+          return;
+        }
+      }
+    } catch {
+      // bad JSON / disabled storage — fall through to GitHub
+    }
+
+    try {
+      // 2) Read from GitHub. Edits live on the `content` branch (we write there
+      //    to skip Vercel rebuild), with `master` as the fallback for issues
+      //    that have only been generated/published, never edited.
+      let raw: string | null = null;
+      for (const branch of ["content", "master"]) {
+        try {
+          const res = await fetch(
+            `https://api.github.com/repos/zzzjw611/welike_integrate/contents/web/content/${date}.md?ref=${branch}`,
+            { headers: { Accept: "application/vnd.github.v3+json" } }
+          );
+          if (!res.ok) continue;
+          const data = await res.json();
+          const rawRes = await fetch(data.download_url);
+          raw = await rawRes.text();
+          break;
+        } catch {
+          continue;
+        }
+      }
+      if (!raw) throw new Error("Failed to fetch issue");
       const { data: frontmatter } = matter(raw);
 
       setEditData({
@@ -1073,7 +1102,14 @@ export default function AdminNewsPage() {
             </p>
             <div className="flex items-center justify-center gap-3">
               <button
-                onClick={() => setEditSuccess(null)}
+                onClick={() => {
+                  // Re-open the edit modal with the latest draft so the admin
+                  // sees their just-saved changes (handleEdit reads localStorage
+                  // first, then content branch, then master).
+                  const date = editSuccess;
+                  setEditSuccess(null);
+                  if (date) handleEdit(date);
+                }}
                 className="inline-flex items-center gap-2 text-sm text-surface-300 hover:text-white bg-surface-800 hover:bg-surface-700 px-4 py-2 rounded-lg transition-colors"
               >
                 <Edit3 className="h-4 w-4" />
