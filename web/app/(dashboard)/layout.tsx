@@ -54,8 +54,8 @@ export default function DashboardLayout({
   const currentLang = useLang();
 
   const isNewsActive = pathname === "/tools/news" || pathname.startsWith("/tools/news/");
-  // Auto-expand Guide when on AI News page, hovered, or manually toggled
-  const shouldExpandGuide = isNewsActive || guideExpanded || guideHovered;
+  // Auto-expand Guide when on AI News page, or manually toggled (not on hover)
+  const shouldExpandGuide = isNewsActive || guideExpanded;
 
   const isToolkitPage =
     pathname === "/tools/social-listening" ||
@@ -64,8 +64,8 @@ export default function DashboardLayout({
     pathname.startsWith("/tools/kol-pricer/") ||
     isNewsActive;
 
-  // Auto-expand toolkit when on a toolkit page
-  const shouldExpandToolkit = isToolkitPage || toolkitExpanded;
+  // Always show Toolkit and Playbook when logged in (no auto-hide)
+  const shouldExpandToolkit = true;
 
   useEffect(() => {
     if (!isLoading && !user) {
