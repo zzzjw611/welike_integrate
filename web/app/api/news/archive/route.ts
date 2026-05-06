@@ -1,25 +1,26 @@
 import { NextResponse } from "next/server";
-import fs from "node:fs/promises";
-import path from "node:path";
+import { listContentFiles, readContentFile } from "@/lib/github-storage";
 import matter from "gray-matter";
-import { listIssues } from "@/lib/ai-marketer-news";
 
-export const dynamic = "force-static";
+export const dynamic = "force-dynamic";
 
 export async function GET() {
   try {
-    const all = await listIssues();
+    const all = await listContentFiles();
     const issues: { date: string; published: boolean }[] = [];
 
     for (const date of all) {
-      const filePath = path.join(process.cwd(), "content", `${date}.md`);
       try {
-        const raw = await fs.readFile(filePath, "utf8");
-        const { data } = matter(raw);
-        issues.push({
-          date,
-          published: data.published !== false,
-        });
+        const raw = await readContentFile(date);
+        if (raw) {
+          const { data } = matter(raw);
+          issues.push({
+            date,
+            published: data.published !== false,
+          });
+        } else {
+          issues.push({ date, published: false });
+        }
       } catch {
         issues.push({ date, published: false });
       }

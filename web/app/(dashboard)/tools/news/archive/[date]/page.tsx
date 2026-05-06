@@ -1,10 +1,8 @@
-import { notFound } from "next/navigation";
-import {
-  getIssueByDate,
-  getAdjacentIssues,
-  getPreviousIssueSummaries,
-  listPublishedIssues,
-} from "@/lib/ai-marketer-news";
+"use client";
+
+import { useEffect, useState } from "react";
+import { useParams } from "next/navigation";
+import type { Issue } from "@/lib/ai-marketer-news";
 import Masthead from "@/components/ai-marketer-news/Masthead";
 import HighlightSummary from "@/components/ai-marketer-news/HighlightSummary";
 import DailyBrief from "@/components/ai-marketer-news/DailyBrief";
@@ -18,24 +16,71 @@ import BackToTop from "@/components/ai-marketer-news/BackToTop";
 import DatePicker from "@/components/ai-marketer-news/DatePicker";
 import GuideButton from "@/components/ai-marketer-news/GuideButton";
 
-export async function generateStaticParams() {
-  const dates = await listPublishedIssues();
-  return dates.map((date) => ({ date }));
-}
+export default function ArchivePage() {
+  const params = useParams();
+  const date = params.date as string;
 
-export default async function ArchivePage({
-  params,
-}: {
-  params: Promise<{ date: string }>;
-}) {
-  const { date } = await params;
-  const issue = await getIssueByDate(date);
-  if (!issue) notFound();
+  const [issue, setIssue] = useState<Issue | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [prev, setPrev] = useState<string | null>(null);
+  const [next, setNext] = useState<string | null>(null);
+  const [issues, setIssues] = useState<string[]>([]);
+  const [pastSummaries, setPastSummaries] = useState<any[]>([]);
 
-  const { prev, next } = await getAdjacentIssues(date);
-  const issues = await listPublishedIssues();
+  useEffect(() => {
+    async function fetchData() {
+      setLoading(true);
+      try {
+        // Fetch issue data from API (reads from GitHub, includes draft content)
+        const res = await fetch(`/api/news/archive/${date}`);
+        if (!res.ok) {
+          setIssue(null);
+          return;
+        }
+        const data = await res.json();
+        setIssue(data.issue);
+
+        // Fetch all published issues for navigation
+        const pubRes = await fetch("/api/news/archive");
+        if (pubRes.ok) {
+          const pubData = await pubRes.json();
+          const dates = (pubData.data || []).map((d: any) => d.date);
+          setIssues(dates);
+
+          const idx = dates.indexOf(date);
+          setPrev(idx < dates.length - 1 ? dates[idx + 1] : null);
+          setNext(idx > 0 ? dates[idx - 1] : null);
+        }
+      } catch (err) {
+        console.error("Failed to fetch issue:", err);
+        setIssue(null);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    fetchData();
+  }, [date]);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-surface-950 flex items-center justify-center">
+        <div className="h-8 w-8 border-2 border-brand-500 border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
+
+  if (!issue) {
+    return (
+      <div className="min-h-screen bg-surface-950 flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-surface-500 text-sm">Issue not found</p>
+        </div>
+      </div>
+    );
+  }
+
   const isLatest = issues.length > 0 && issues[0] === date;
-  const pastSummaries = await getPreviousIssueSummaries(date, 6);
 
   return (
     <div
