@@ -88,6 +88,7 @@ export default function AdminNewsPage() {
   const [publishSuccess, setPublishSuccess] = useState<string | null>(null);
   const [publishCountdown, setPublishCountdown] = useState(0);
   const [publishAction, setPublishAction] = useState<"publish" | "unpublish">("publish");
+  const [publishRedirectUrl, setPublishRedirectUrl] = useState<string | null>(null);
   const [editSuccess, setEditSuccess] = useState<string | null>(null);
   const [editNeedsRepublish, setEditNeedsRepublish] = useState(false);
 
@@ -136,9 +137,13 @@ export default function AdminNewsPage() {
       return () => clearTimeout(timer);
     }
     if (publishSuccess && publishCountdown === 0) {
-      window.location.href = "/tools/news";
+      const url = publishRedirectUrl || "/tools/news";
+      setPublishSuccess(null);
+      setPublishCountdown(0);
+      setPublishRedirectUrl(null);
+      window.open(url, "_blank");
     }
-  }, [publishSuccess, publishCountdown]);
+  }, [publishSuccess, publishCountdown, publishRedirectUrl]);
 
   if (authLoading) {
     return (
@@ -168,7 +173,7 @@ export default function AdminNewsPage() {
     );
   }
 
-  const handlePublish = async (date: string, published: boolean) => {
+  const handlePublish = async (date: string, published: boolean, openInNewTab = true) => {
     setPublishing(date);
     try {
       const res = await fetch("/api/news/publish", {
@@ -183,8 +188,13 @@ export default function AdminNewsPage() {
       }
 
       setPublishAction(published ? "publish" : "unpublish");
-      // Open the archive page in a new tab (reads directly from GitHub API, no Vercel deploy needed)
-      window.open(`/tools/news/archive/${date}`, "_blank");
+      setPublishSuccess(date);
+      setPublishCountdown(5);
+      setPublishRedirectUrl(`/tools/news/archive/${date}`);
+
+      if (openInNewTab) {
+        window.open(`/tools/news/archive/${date}`, "_blank");
+      }
     } catch (err) {
       alert(err instanceof Error ? err.message : "Failed to publish");
     } finally {
@@ -736,7 +746,7 @@ export default function AdminNewsPage() {
                 <button
                   onClick={() => {
                     setEditSuccess(null);
-                    handlePublish(editSuccess, true);
+                    handlePublish(editSuccess, true, false);
                   }}
                   className="inline-flex items-center gap-2 text-sm text-white bg-green-500 hover:bg-green-400 px-4 py-2 rounded-lg transition-colors"
                 >
