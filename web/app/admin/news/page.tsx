@@ -165,10 +165,6 @@ export default function AdminNewsPage() {
       }
 
       setPublishSuccess(date);
-      // Wait 3 seconds then redirect to WeLike platform
-      setTimeout(() => {
-        window.location.href = "https://welike-integrate.vercel.app";
-      }, 3000);
     } catch (err) {
       alert(err instanceof Error ? err.message : "Failed to publish");
     } finally {
@@ -650,13 +646,26 @@ export default function AdminNewsPage() {
             </h3>
             <p className="text-sm text-surface-400 mb-6">
               {lang === "zh"
-                ? "新闻正在同步到网页，几秒后将自动跳转到 WeLike 平台..."
-                : "News is syncing to the website. Redirecting to WeLike platform..."}
+                ? "新闻正在同步到网页..."
+                : "News is syncing to the website..."}
             </p>
-            <div className="flex justify-center">
-              <div className="h-1.5 w-32 bg-surface-800 rounded-full overflow-hidden">
-                <div className="h-full bg-green-500 rounded-full animate-pulse" />
-              </div>
+            <div className="flex items-center justify-center gap-3">
+              <button
+                onClick={() => setPublishSuccess(null)}
+                className="inline-flex items-center gap-2 text-sm text-surface-300 hover:text-white bg-surface-800 hover:bg-surface-700 px-4 py-2 rounded-lg transition-colors"
+              >
+                <Edit3 className="h-4 w-4" />
+                {lang === "zh" ? "继续编辑" : "Continue Editing"}
+              </button>
+              <a
+                href="https://welike-integrate.vercel.app"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 text-sm text-white bg-brand-500 hover:bg-brand-400 px-4 py-2 rounded-lg transition-colors"
+              >
+                <ExternalLink className="h-4 w-4" />
+                {lang === "zh" ? "前往首页" : "Go to Home"}
+              </a>
             </div>
           </div>
         </div>
