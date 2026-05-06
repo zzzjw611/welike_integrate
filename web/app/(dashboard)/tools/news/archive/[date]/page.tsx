@@ -34,8 +34,8 @@ async function fetchFromGitHub(date: string, skipCache = false): Promise<Issue |
     }
   }
 
-  // Try "content" branch first (for edits), fall back to "master" branch
-  const branches = ["content", "master"];
+  // Try "master" branch first (has latest generated content), fall back to "content" branch (for edits)
+  const branches = ["master", "content"];
   for (const branch of branches) {
     try {
       const res = await fetch(
