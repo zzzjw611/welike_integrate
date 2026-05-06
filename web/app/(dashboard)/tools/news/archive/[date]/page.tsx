@@ -90,9 +90,53 @@ export default function ArchivePage() {
     async function fetchData() {
       setLoading(true);
       try {
-        // Check if URL has cache-busting param (from admin preview)
-        const skipCache = typeof window !== "undefined" && window.location.search.includes("t=");
-        // Fetch issue data directly from GitHub API (always latest, no Vercel deploy delay)
+        // Admin preview is keyed by ?draft=1 (instant, reads localStorage) and
+        // ?t=... (cache-bust fallback that reads GitHub content branch first).
+        const search = typeof window !== "undefined" ? window.location.search : "";
+        const isDraft = search.includes("draft=1");
+        const skipCache = isDraft || search.includes("t=");
+
+        // 1) Instant path: when admin clicks Preview right after Save, the
+        //    just-edited issue is sitting in localStorage. Render it without
+        //    any network roundtrip — no GitHub commit lag, no Vercel rebuild.
+        if (isDraft && typeof window !== "undefined") {
+          try {
+            const draftRaw = localStorage.getItem(`news-draft-${date}`);
+            if (draftRaw) {
+              const parsed = JSON.parse(draftRaw) as {
+                data: Omit<Issue, "daily_case"> & { daily_case: Omit<Issue["daily_case"], "bodyHtml"> };
+                ts: number;
+              };
+              // Drop drafts older than 30 minutes — admin probably moved on
+              if (Date.now() - parsed.ts < 30 * 60_000) {
+                setIssue({
+                  ...parsed.data,
+                  daily_case: { ...parsed.data.daily_case, bodyHtml: "" },
+                });
+                setLoading(false);
+                // Still fetch the published-issue list for nav (cheap, non-blocking)
+                fetch("/api/news/archive")
+                  .then((r) => (r.ok ? r.json() : null))
+                  .then((d) => {
+                    if (!d) return;
+                    const dates = (d.issues || []).map((x: any) => x.date);
+                    setIssues(dates);
+                    const idx = dates.indexOf(date);
+                    setPrev(idx < dates.length - 1 ? dates[idx + 1] : null);
+                    setNext(idx > 0 ? dates[idx - 1] : null);
+                  })
+                  .catch(() => {});
+                return;
+              }
+            }
+          } catch {
+            // Bad JSON / disabled storage — fall through to GitHub fetch
+          }
+        }
+
+        // 2) Fallback: hit the GitHub API directly. With skipCache=true the
+        //    fetcher reads the `content` branch first (where edits live) before
+        //    falling back to `master` — still no Vercel deploy involved.
         const issueData = await fetchFromGitHub(date, skipCache);
         setIssue(issueData);
 

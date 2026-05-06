@@ -85,7 +85,7 @@ export default function AdminNewsPage() {
   const [editLoading, setEditLoading] = useState(false);
   const [editSaving, setEditSaving] = useState(false);
   const [publishSuccess, setPublishSuccess] = useState<string | null>(null);
-  const [publishCountdown, setPublishCountdown] = useState(0);
+  const [publishElapsed, setPublishElapsed] = useState(0); // seconds elapsed waiting for deploy
   const [publishAction, setPublishAction] = useState<"publish" | "unpublish">("publish");
   const [publishRedirectUrl, setPublishRedirectUrl] = useState<string | null>(null);
   const [editSuccess, setEditSuccess] = useState<string | null>(null);
@@ -172,15 +172,20 @@ export default function AdminNewsPage() {
               const statusData = await statusRes.json();
               const latestStatus = statusData[0];
               if (latestStatus?.state === "success") {
-                // Vercel has deployed the latest commit, redirect now
+                // Vercel has deployed the latest commit. The published page now
+                // shows the new content, so the localStorage draft is stale —
+                // drop it and redirect the admin to the live page.
                 if (!cancelled) {
+                  const url = publishRedirectUrl || "/tools/news";
+                  if (publishPollDate) {
+                    try { localStorage.removeItem(`news-draft-${publishPollDate}`); } catch {}
+                  }
                   setPublishPolling(false);
                   setPublishPollDate(null);
                   setPublishSuccess(null);
-                  setPublishCountdown(0);
+                  setPublishElapsed(0);
                   setPublishRedirectUrl(null);
-                  const url = publishRedirectUrl || "/tools/news";
-                  window.open(url, "_blank");
+                  window.location.href = url;
                 }
                 return;
               }
@@ -204,15 +209,15 @@ export default function AdminNewsPage() {
     };
   }, [publishPolling, publishPollDate, publishRedirectUrl]);
 
-  // Countdown display (visual only, actual redirect is handled by polling)
+  // Elapsed-seconds counter for the publish toast — increments while we wait
+  // for the Vercel deployment to go green. Actual redirect is handled by polling.
   useEffect(() => {
-    if (publishSuccess && publishCountdown > 0) {
-      const timer = setTimeout(() => {
-        setPublishCountdown(publishCountdown - 1);
-      }, 1000);
-      return () => clearTimeout(timer);
-    }
-  }, [publishSuccess, publishCountdown]);
+    if (!publishSuccess || !publishPolling) return;
+    const timer = setInterval(() => {
+      setPublishElapsed((s) => s + 1);
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [publishSuccess, publishPolling]);
 
   if (authLoading) {
     return (
@@ -242,7 +247,7 @@ export default function AdminNewsPage() {
     );
   }
 
-  const handlePublish = async (date: string, published: boolean, openInNewTab = true) => {
+  const handlePublish = async (date: string, published: boolean) => {
     setPublishing(date);
     try {
       const res = await fetch("/api/news/publish", {
@@ -258,19 +263,17 @@ export default function AdminNewsPage() {
 
       setPublishAction(published ? "publish" : "unpublish");
       setPublishSuccess(date);
-      setPublishCountdown(60);
+      setPublishElapsed(0);
       setPublishRedirectUrl(`/tools/news/archive/${date}`);
 
       // Refresh the list to show updated published status immediately
       await fetchNews();
 
-      if (openInNewTab) {
-        window.open(`/tools/news/archive/${date}`, "_blank");
-      } else {
-        // Start polling GitHub API to check when file is updated, then redirect
-        setPublishPolling(true);
-        setPublishPollDate(date);
-      }
+      // Always poll GitHub for Vercel deploy completion, then redirect — never
+      // open the archive tab pre-deploy or the admin would see the old version.
+      // Unpublish writes to master too, so we wait for that deploy as well.
+      setPublishPolling(true);
+      setPublishPollDate(date);
     } catch (err) {
       alert(err instanceof Error ? err.message : "Failed to publish");
     } finally {
@@ -354,8 +357,9 @@ export default function AdminNewsPage() {
   };
 
   const handlePreview = (date: string) => {
-    // Add cache-busting param to skip the 10s in-memory cache in the preview page
-    window.open(`/tools/news/archive/${date}?t=${Date.now()}`, "_blank");
+    // ?draft=1 → preview page reads localStorage first (instant, no GitHub roundtrip)
+    // ?t=...  → also bypasses the 10s in-memory cache as a fallback
+    window.open(`/tools/news/archive/${date}?draft=1&t=${Date.now()}`, "_blank");
   };
 
   const handleEdit = async (date: string) => {
@@ -395,6 +399,18 @@ export default function AdminNewsPage() {
     if (!editData) return;
     setEditSaving(true);
     try {
+      // Stash a copy of the just-edited issue in localStorage so the preview
+      // page can render it instantly (no GitHub roundtrip, no Vercel deploy).
+      // The preview page reads this when the URL has ?draft=1.
+      try {
+        localStorage.setItem(
+          `news-draft-${editData.date}`,
+          JSON.stringify({ data: editData, ts: Date.now() })
+        );
+      } catch {
+        // localStorage may be unavailable (private mode / quota) — fall back to GitHub
+      }
+
       const res = await fetch("/api/news/edit", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
@@ -954,7 +970,9 @@ export default function AdminNewsPage() {
         )}
       </div>
 
-      {/* Publish / Unpublish Toast */}
+      {/* Publish / Unpublish Toast — shows a spinner + elapsed seconds while we
+          poll GitHub for the Vercel deploy. When the deploy goes green, the poll
+          effect redirects to the live archive page. */}
       {publishSuccess && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
           <div className="bg-surface-900 border border-surface-800 rounded-2xl p-8 mx-4 shadow-2xl text-center max-w-sm">
@@ -966,18 +984,32 @@ export default function AdminNewsPage() {
                 ? (lang === "zh" ? "发布成功！" : "Publish Success!")
                 : (lang === "zh" ? "已撤回！" : "Unpublished!")}
             </h3>
-            <p className="text-sm text-surface-400 mb-6">
-              {publishAction === "publish"
-                ? (lang === "zh"
-                    ? `即将跳转到 AI News 页面... (${publishCountdown}s)`
-                    : `Redirecting to AI News page... (${publishCountdown}s)`)
-                : (lang === "zh"
-                    ? "新闻已撤回，网站更新后将不再显示。"
-                    : "News has been unpublished. It will no longer show on the website after the next deploy.")}
+            <p className="text-sm text-surface-400 mb-2">
+              {lang === "zh"
+                ? "大概需要 ~60 秒同步到网页，部署完成后将自动跳转。"
+                : "Sync to the live site usually takes ~60s. You'll be redirected automatically when it's ready."}
             </p>
+            {publishPolling && (
+              <div className="flex items-center justify-center gap-2 text-xs text-surface-500 mb-6">
+                <div className="h-3.5 w-3.5 border-2 border-brand-500 border-t-transparent rounded-full animate-spin" />
+                <span>
+                  {lang === "zh"
+                    ? `等待 Vercel 部署中… (已等待 ${publishElapsed}s)`
+                    : `Waiting for Vercel deployment… (${publishElapsed}s elapsed)`}
+                </span>
+              </div>
+            )}
             <div className="flex items-center justify-center gap-3">
               <button
-                onClick={() => { setPublishSuccess(null); setPublishCountdown(0); }}
+                onClick={() => {
+                  // User chose to keep editing — stop the auto-redirect but the
+                  // deploy still finishes in the background. They can hit Preview
+                  // anytime to see the live (post-deploy) page.
+                  setPublishSuccess(null);
+                  setPublishElapsed(0);
+                  setPublishPolling(false);
+                  setPublishPollDate(null);
+                }}
                 className="inline-flex items-center gap-2 text-sm text-surface-300 hover:text-white bg-surface-800 hover:bg-surface-700 px-4 py-2 rounded-lg transition-colors"
               >
                 <Edit3 className="h-4 w-4" />
@@ -1016,7 +1048,7 @@ export default function AdminNewsPage() {
                 {lang === "zh" ? "继续编辑" : "Continue Editing"}
               </button>
               <button
-                onClick={() => { setEditSuccess(null); window.open(`/tools/news/archive/${editSuccess}?t=${Date.now()}`, "_blank"); }}
+                onClick={() => { setEditSuccess(null); window.open(`/tools/news/archive/${editSuccess}?draft=1&t=${Date.now()}`, "_blank"); }}
                 className="inline-flex items-center gap-2 text-sm text-white bg-brand-500 hover:bg-brand-400 px-4 py-2 rounded-lg transition-colors"
               >
                 <Eye className="h-4 w-4" />
@@ -1026,7 +1058,7 @@ export default function AdminNewsPage() {
                 <button
                   onClick={() => {
                     setEditSuccess(null);
-                    handlePublish(editSuccess, true, false);
+                    handlePublish(editSuccess, true);
                   }}
                   className="inline-flex items-center gap-2 text-sm text-white bg-green-500 hover:bg-green-400 px-4 py-2 rounded-lg transition-colors"
                 >
