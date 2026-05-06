@@ -128,7 +128,47 @@ export default function AdminNewsPage() {
     fetchNews();
   }, []);
 
-  // Countdown and redirect after publish
+  // Poll GitHub API to check if the file has been updated after publish
+  const [publishPolling, setPublishPolling] = useState(false);
+  const [publishPollDate, setPublishPollDate] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!publishPolling || !publishPollDate) return;
+
+    const poll = async () => {
+      try {
+        const res = await fetch(
+          `https://api.github.com/repos/zzzjw611/welike_integrate/contents/web/content/${publishPollDate}.md?ref=master`,
+          { headers: { Accept: "application/vnd.github.v3+json" } }
+        );
+        if (res.ok) {
+          const data = await res.json();
+          const raw = atob(data.content.replace(/\n/g, ""));
+          const { data: frontmatter } = matter(raw);
+          // Check if published_at matches what we expect (file has been updated)
+          if (frontmatter.published !== undefined) {
+            // File is updated, stop polling and redirect
+            setPublishPolling(false);
+            setPublishPollDate(null);
+            setPublishSuccess(null);
+            setPublishCountdown(0);
+            setPublishRedirectUrl(null);
+            const url = publishRedirectUrl || "/tools/news";
+            window.open(url, "_blank");
+            return;
+          }
+        }
+      } catch {
+        // Ignore errors, keep polling
+      }
+      // Poll again in 3 seconds
+      setTimeout(poll, 3000);
+    };
+
+    poll();
+  }, [publishPolling, publishPollDate, publishRedirectUrl]);
+
+  // Countdown display (visual only, actual redirect is handled by polling)
   useEffect(() => {
     if (publishSuccess && publishCountdown > 0) {
       const timer = setTimeout(() => {
@@ -136,14 +176,7 @@ export default function AdminNewsPage() {
       }, 1000);
       return () => clearTimeout(timer);
     }
-    if (publishSuccess && publishCountdown === 0) {
-      const url = publishRedirectUrl || "/tools/news";
-      setPublishSuccess(null);
-      setPublishCountdown(0);
-      setPublishRedirectUrl(null);
-      window.open(url, "_blank");
-    }
-  }, [publishSuccess, publishCountdown, publishRedirectUrl]);
+  }, [publishSuccess, publishCountdown]);
 
   if (authLoading) {
     return (
@@ -194,6 +227,10 @@ export default function AdminNewsPage() {
 
       if (openInNewTab) {
         window.open(`/tools/news/archive/${date}`, "_blank");
+      } else {
+        // Start polling GitHub API to check when file is updated, then redirect
+        setPublishPolling(true);
+        setPublishPollDate(date);
       }
     } catch (err) {
       alert(err instanceof Error ? err.message : "Failed to publish");
