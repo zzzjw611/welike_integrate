@@ -182,7 +182,7 @@ export default function AdminNewsPage() {
 
       setPublishAction(published ? "publish" : "unpublish");
       setPublishSuccess(date);
-      setPublishCountdown(published ? 60 : 0);
+      setPublishCountdown(published ? 5 : 0);
     } catch (err) {
       alert(err instanceof Error ? err.message : "Failed to publish");
     } finally {
@@ -668,8 +668,8 @@ export default function AdminNewsPage() {
             <p className="text-sm text-surface-400 mb-6">
               {publishAction === "publish"
                 ? (lang === "zh"
-                    ? `网站需要约 1 分钟更新，更新后将自动跳转到 AI News 页面... (${publishCountdown}s)`
-                    : `The website needs about 1 minute to update. Redirecting to AI News page... (${publishCountdown}s)`)
+                    ? `即将跳转到 AI News 页面... (${publishCountdown}s)`
+                    : `Redirecting to AI News page... (${publishCountdown}s)`)
                 : (lang === "zh"
                     ? "新闻已撤回，网站更新后将不再显示。"
                     : "News has been unpublished. It will no longer show on the website after the next deploy.")}
