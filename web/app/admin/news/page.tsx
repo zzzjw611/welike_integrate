@@ -807,7 +807,7 @@ export default function AdminNewsPage() {
                 {lang === "zh" ? "继续编辑" : "Continue Editing"}
               </button>
               <button
-                onClick={() => { setEditSuccess(null); window.open(`/tools/news/archive/${editSuccess}`, "_blank"); }}
+                onClick={() => { setEditSuccess(null); window.open(`/tools/news/archive/${editSuccess}?t=${Date.now()}`, "_blank"); }}
                 className="inline-flex items-center gap-2 text-sm text-white bg-brand-500 hover:bg-brand-400 px-4 py-2 rounded-lg transition-colors"
               >
                 <Eye className="h-4 w-4" />

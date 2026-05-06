@@ -25,11 +25,13 @@ const GITHUB_BRANCH = "master";
 const cache = new Map<string, { data: Issue; ts: number }>();
 const CACHE_TTL = 10_000; // 10 seconds
 
-async function fetchFromGitHub(date: string): Promise<Issue | null> {
-  // Check cache first
-  const cached = cache.get(date);
-  if (cached && Date.now() - cached.ts < CACHE_TTL) {
-    return cached.data;
+async function fetchFromGitHub(date: string, skipCache = false): Promise<Issue | null> {
+  // Check cache first (unless skipCache is true, e.g. from admin preview)
+  if (!skipCache) {
+    const cached = cache.get(date);
+    if (cached && Date.now() - cached.ts < CACHE_TTL) {
+      return cached.data;
+    }
   }
 
   try {
@@ -67,6 +69,7 @@ async function fetchFromGitHub(date: string): Promise<Issue | null> {
 export default function ArchivePage() {
   const params = useParams();
   const date = params.date as string;
+  const [cacheBust, setCacheBust] = useState(0);
 
   const [issue, setIssue] = useState<Issue | null>(null);
   const [loading, setLoading] = useState(true);
@@ -79,8 +82,10 @@ export default function ArchivePage() {
     async function fetchData() {
       setLoading(true);
       try {
+        // Check if URL has cache-busting param (from admin preview)
+        const skipCache = typeof window !== "undefined" && window.location.search.includes("t=");
         // Fetch issue data directly from GitHub API (always latest, no Vercel deploy delay)
-        const issueData = await fetchFromGitHub(date);
+        const issueData = await fetchFromGitHub(date, skipCache);
         setIssue(issueData);
 
         // Fetch all published issues for navigation
