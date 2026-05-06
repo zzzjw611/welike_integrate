@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import matter from "gray-matter";
+import { ArrowLeft, Send, Eye } from "lucide-react";
 import type { Issue } from "@/lib/ai-marketer-news";
 import Masthead from "@/components/ai-marketer-news/Masthead";
 import HighlightSummary from "@/components/ai-marketer-news/HighlightSummary";
@@ -85,6 +86,8 @@ export default function ArchivePage() {
   const [next, setNext] = useState<string | null>(null);
   const [issues, setIssues] = useState<string[]>([]);
   const [pastSummaries, setPastSummaries] = useState<any[]>([]);
+  // Admin draft preview (?draft=1) — render the editor bar with Exit + Publish
+  const [isDraftPreview, setIsDraftPreview] = useState(false);
 
   useEffect(() => {
     async function fetchData() {
@@ -95,6 +98,7 @@ export default function ArchivePage() {
         const search = typeof window !== "undefined" ? window.location.search : "";
         const isDraft = search.includes("draft=1");
         const skipCache = isDraft || search.includes("t=");
+        setIsDraftPreview(isDraft);
 
         // 1) Instant path: when admin clicks Preview right after Save, the
         //    just-edited issue is sitting in localStorage. Render it without
@@ -190,6 +194,46 @@ export default function ArchivePage() {
           "radial-gradient(ellipse 900px 600px at 10% 0%,rgba(0,245,160,.055) 0%,transparent 65%),radial-gradient(ellipse 700px 500px at 90% 100%,rgba(90,171,255,.05) 0%,transparent 60%),#07090d",
       }}
     >
+      {/* Admin draft preview bar — only visible when URL has ?draft=1.
+          Exit Preview returns to /admin/news and re-shows the post-save toast
+          (Continue Editing / Preview / Republish). Publish hands off to the
+          admin page so we don't duplicate the publish-and-poll-deploy flow. */}
+      {isDraftPreview && (
+        <div className="sticky top-0 z-40 bg-surface-900/95 backdrop-blur-md border-b border-surface-800">
+          <div className="mx-auto max-w-6xl px-6 py-3 flex items-center justify-between gap-4">
+            <div className="flex items-center gap-2 min-w-0">
+              <span className="inline-flex items-center gap-1.5 text-[11px] font-medium text-brand-500 bg-brand-500/10 px-2 py-0.5 rounded-full">
+                <Eye className="h-3 w-3" />
+                Draft Preview
+              </span>
+              <span className="text-xs text-surface-500 truncate">
+                {date} — admin view, not visible to public
+              </span>
+            </div>
+            <div className="flex items-center gap-2 flex-shrink-0">
+              <button
+                onClick={() => {
+                  window.location.href = `/admin/news?resume=${encodeURIComponent(date)}`;
+                }}
+                className="inline-flex items-center gap-1.5 text-xs text-surface-300 hover:text-white bg-surface-800 hover:bg-surface-700 px-3 py-1.5 rounded-lg transition-colors"
+              >
+                <ArrowLeft className="h-3.5 w-3.5" />
+                Exit Preview
+              </button>
+              <button
+                onClick={() => {
+                  window.location.href = `/admin/news?publish=${encodeURIComponent(date)}`;
+                }}
+                className="inline-flex items-center gap-1.5 text-xs text-white bg-brand-500 hover:bg-brand-400 px-3 py-1.5 rounded-lg transition-colors"
+              >
+                <Send className="h-3.5 w-3.5" />
+                Publish
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Top bar with IssueSwitcher + DatePicker */}
       <div className="flex items-center justify-between gap-4 mb-8">
         <div className="flex-1 min-w-0">

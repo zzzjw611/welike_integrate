@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useLang } from "@/lib/use-lang";
 import { useAuth } from "@/lib/auth-context";
@@ -129,6 +129,38 @@ export default function AdminNewsPage() {
   useEffect(() => {
     fetchNews();
   }, []);
+
+  // Handle ?resume=<date> and ?publish=<date> from the preview-page bar.
+  // Runs once after auth + first fetchNews complete so the row data is available.
+  const queryHandledRef = useRef(false);
+  useEffect(() => {
+    if (loading || authLoading || !user || queryHandledRef.current) return;
+    if (typeof window === "undefined") return;
+
+    const params = new URLSearchParams(window.location.search);
+    const resumeDate = params.get("resume");
+    const publishDate = params.get("publish");
+    if (!resumeDate && !publishDate) return;
+
+    queryHandledRef.current = true;
+    // Strip the query so a refresh doesn't re-trigger the action
+    window.history.replaceState({}, "", "/admin/news");
+
+    if (resumeDate) {
+      // Re-show the post-save toast with Continue Editing / Preview / Republish.
+      const item = newsItems.find((n) => n.date === resumeDate);
+      setEditNeedsRepublish(item?.published ?? false);
+      // Mark as edited so the row also surfaces a Republish button
+      setEditedDates((prev) => new Set(prev).add(resumeDate));
+      setEditSuccess(resumeDate);
+    } else if (publishDate) {
+      // Reuse the existing publish flow — toast, deploy poll, redirect on green
+      handlePublish(publishDate, true);
+    }
+    // handlePublish is defined later in the component; the callback only runs
+    // after render so the closure resolves it correctly.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loading, authLoading, user, newsItems]);
 
   // Poll Vercel deployment status after publish
   const [publishPolling, setPublishPolling] = useState(false);
