@@ -39,7 +39,7 @@ async function fetchFromGitHub(date: string): Promise<Issue | null> {
     );
     if (!res.ok) return null;
     const data = await res.json();
-    const raw = atob(data.content);
+    const raw = atob(data.content.replace(/\n/g, ""));
     const { data: frontmatter } = matter(raw);
     const issue: Issue = {
       date: date,
