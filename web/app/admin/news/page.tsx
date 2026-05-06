@@ -33,9 +33,6 @@ export default function AdminNewsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [publishing, setPublishing] = useState<string | null>(null);
-  const [expandedDate, setExpandedDate] = useState<string | null>(null);
-  const [previewContent, setPreviewContent] = useState<string>("");
-  const [previewLoading, setPreviewLoading] = useState(false);
 
   const fetchNews = async () => {
     setLoading(true);
@@ -127,33 +124,8 @@ export default function AdminNewsPage() {
     }
   };
 
-  const handlePreview = async (date: string) => {
-    if (expandedDate === date) {
-      setExpandedDate(null);
-      setPreviewContent("");
-      return;
-    }
-
-    setExpandedDate(date);
-    setPreviewLoading(true);
-    try {
-      const res = await fetch(`/api/news/archive/${date}`);
-      if (!res.ok) throw new Error("Failed to fetch issue");
-      const data = await res.json();
-      setPreviewContent(
-        data.issue
-          ? `#${data.issue.issueNumber || "?"} - ${data.issue.date}\n\n` +
-            `Briefs: ${(data.issue.briefs || []).length}\n` +
-            `Insights: ${(data.issue.growth_insights || []).length}\n` +
-            `Launches: ${(data.issue.launches || []).length}\n` +
-            `Case: ${data.issue.daily_case?.company || "N/A"}`
-          : "No content"
-      );
-    } catch (err) {
-      setPreviewContent("Failed to load preview");
-    } finally {
-      setPreviewLoading(false);
-    }
+  const handlePreview = (date: string) => {
+    window.open(`/tools/news/archive/${date}`, "_blank");
   };
 
   const formatDate = (dateStr: string) => {
@@ -307,20 +279,6 @@ export default function AdminNewsPage() {
                   </div>
                 </div>
 
-                {/* Preview Content */}
-                {expandedDate === item.date && (
-                  <div className="border-t border-surface-800 px-5 py-4">
-                    {previewLoading ? (
-                      <div className="flex items-center justify-center py-8">
-                        <div className="h-6 w-6 border-2 border-brand-500 border-t-transparent rounded-full animate-spin" />
-                      </div>
-                    ) : (
-                      <pre className="text-sm text-surface-300 whitespace-pre-wrap font-mono bg-surface-950 rounded-lg p-4 border border-surface-800">
-                        {previewContent}
-                      </pre>
-                    )}
-                  </div>
-                )}
               </div>
             ))}
           </div>
