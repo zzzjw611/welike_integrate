@@ -181,8 +181,8 @@ export default function AdminNewsPage() {
       }
 
       setPublishAction(published ? "publish" : "unpublish");
-      // Redirect immediately to /tools/news (it reads directly from GitHub API, no need to wait for Vercel deploy)
-      window.location.href = "/tools/news";
+      // Redirect to the archive page which reads directly from GitHub API (no Vercel deploy needed)
+      window.location.href = `/tools/news/archive/${date}`;
     } catch (err) {
       alert(err instanceof Error ? err.message : "Failed to publish");
     } finally {
