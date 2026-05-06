@@ -28,9 +28,9 @@ export async function PUT(request: Request) {
     // Reconstruct the markdown file
     const newContent = matter.stringify(body || "", mergedFrontmatter);
 
-    // Write to master branch directly
-    // Preview reads from GitHub API, so no Vercel deploy needed to see changes
-    await writeContentFileToBranch(date, newContent, `chore: edit AI news for ${date}`, "master");
+    // Write to "content" branch to avoid triggering Vercel deployment
+    // Preview reads directly from GitHub API (content branch first when ?t= param present), no deploy needed
+    await writeContentFileToBranch(date, newContent, `chore: edit AI news for ${date}`, "content");
 
     return NextResponse.json({ success: true, date });
   } catch (err) {
