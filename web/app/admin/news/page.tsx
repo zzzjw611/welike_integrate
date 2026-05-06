@@ -290,21 +290,64 @@ export default function AdminNewsPage() {
 
       if (!res.ok) {
         const data = await res.json();
-        throw new Error(data.error || "Failed to generate");
+        throw new Error(data.error || "Failed to trigger generation");
       }
 
       const data = await res.json();
       setGenerateResult(
         lang === "zh"
-          ? `✅ 已生成第 ${data.issueNumber} 期 (${data.date})`
-          : `✅ Issue #${data.issueNumber} generated (${data.date})`
+          ? `⏳ 生成已启动 (${data.date})，等待完成...`
+          : `⏳ Generation started (${data.date}), waiting for completion...`
       );
-      await fetchNews();
+
+      // Poll for the file to appear (check every 10 seconds, up to 3 minutes)
+      let attempts = 0;
+      const maxAttempts = 18;
+      const poll = async (): Promise<void> => {
+        attempts++;
+        try {
+          const checkRes = await fetch("/api/news/publish");
+          if (checkRes.ok) {
+            const checkData = await checkRes.json();
+            const items: NewsItem[] = (checkData.data || []).map(
+              (item: { date: string; published: boolean; published_at?: string }) => ({
+                date: item.date,
+                published: item.published,
+                published_at: item.published_at || null,
+              })
+            );
+            const found = items.find((item) => item.date === today);
+            if (found) {
+              setGenerateResult(
+                lang === "zh"
+                  ? `✅ 已生成 ${today} 的新闻！`
+                  : `✅ News generated for ${today}!`
+              );
+              setNewsItems(items);
+              setGenerating(false);
+              return;
+            }
+          }
+        } catch {
+          // Ignore errors, keep polling
+        }
+        if (attempts < maxAttempts) {
+          setTimeout(poll, 10000);
+        } else {
+          setGenerateResult(
+            lang === "zh"
+              ? `⚠️ 生成已触发，但尚未完成。请稍后刷新页面查看。`
+              : `⚠️ Generation triggered but not yet complete. Refresh later.`
+          );
+          setGenerating(false);
+        }
+      };
+
+      poll();
     } catch (err) {
       setGenerateResult(
-        err instanceof Error ? `❌ ${err.message}` : "❌ Failed to generate"
+        err instanceof Error ? `❌ ${err.message}` : "❌ Failed to trigger generation"
       );
-    } finally {
       setGenerating(false);
     }
   };
