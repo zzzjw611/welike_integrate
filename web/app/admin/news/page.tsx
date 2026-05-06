@@ -86,6 +86,7 @@ export default function AdminNewsPage() {
   const [editSaving, setEditSaving] = useState(false);
   const [publishSuccess, setPublishSuccess] = useState<string | null>(null);
   const [publishCountdown, setPublishCountdown] = useState(0);
+  const [editSuccess, setEditSuccess] = useState<string | null>(null);
 
   const fetchNews = async () => {
     setLoading(true);
@@ -239,6 +240,7 @@ export default function AdminNewsPage() {
 
       setEditing(null);
       setEditData(null);
+      setEditSuccess(editData.date);
       await fetchNews();
     } catch (err) {
       alert(err instanceof Error ? err.message : "Failed to save edit");
@@ -671,6 +673,41 @@ export default function AdminNewsPage() {
               >
                 <Edit3 className="h-4 w-4" />
                 {lang === "zh" ? "继续编辑" : "Continue Editing"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Success Toast */}
+      {editSuccess && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+          <div className="bg-surface-900 border border-surface-800 rounded-2xl p-8 mx-4 shadow-2xl text-center max-w-sm">
+            <div className="h-16 w-16 rounded-full bg-brand-500/20 flex items-center justify-center mx-auto mb-4">
+              <CheckCircle className="h-8 w-8 text-brand-400" />
+            </div>
+            <h3 className="text-lg font-semibold text-white mb-2">
+              {lang === "zh" ? "保存成功！" : "Saved Successfully!"}
+            </h3>
+            <p className="text-sm text-surface-400 mb-6">
+              {lang === "zh"
+                ? "编辑已保存到 GitHub，预览将显示最新版本"
+                : "Changes saved to GitHub. Preview will show the latest version."}
+            </p>
+            <div className="flex items-center justify-center gap-3">
+              <button
+                onClick={() => setEditSuccess(null)}
+                className="inline-flex items-center gap-2 text-sm text-surface-300 hover:text-white bg-surface-800 hover:bg-surface-700 px-4 py-2 rounded-lg transition-colors"
+              >
+                <Edit3 className="h-4 w-4" />
+                {lang === "zh" ? "继续编辑" : "Continue Editing"}
+              </button>
+              <button
+                onClick={() => { setEditSuccess(null); window.open(`/tools/news/archive/${editSuccess}`, "_blank"); }}
+                className="inline-flex items-center gap-2 text-sm text-white bg-brand-500 hover:bg-brand-400 px-4 py-2 rounded-lg transition-colors"
+              >
+                <Eye className="h-4 w-4" />
+                {lang === "zh" ? "预览" : "Preview"}
               </button>
             </div>
           </div>
