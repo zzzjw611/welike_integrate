@@ -15,6 +15,9 @@ import {
   Edit3,
   X,
   Save,
+  Plus,
+  Trash2,
+  GripVertical,
 } from "lucide-react";
 
 interface NewsItem {
@@ -22,14 +25,51 @@ interface NewsItem {
   issueNumber?: number;
   published: boolean;
   published_at: string | null;
-  title?: string;
-  briefCount?: number;
 }
 
-interface EditData {
+interface Brief {
+  title: string;
+  summary: string;
+  source: string;
+  url: string;
+  soWhat: string;
+}
+
+interface GrowthInsight {
+  author: string;
+  handle: string;
+  platform: string;
+  quote: string;
+  url: string;
+  commentary: string;
+}
+
+interface Launch {
+  product: string;
+  company: string;
+  category: string;
+  tag: string;
+  summary: string;
+  url: string;
+  metric: string;
+}
+
+interface DailyCase {
+  company: string;
+  title: string;
+  deck: string;
+  metrics: string[];
+}
+
+interface IssueData {
   date: string;
-  frontmatter: Record<string, unknown>;
-  body: string;
+  issueNumber: number;
+  editor: string;
+  highlight: { bullets: string[] };
+  briefs: Brief[];
+  growth_insights: GrowthInsight[];
+  launches: Launch[];
+  daily_case: DailyCase;
 }
 
 export default function AdminNewsPage() {
@@ -41,10 +81,9 @@ export default function AdminNewsPage() {
   const [error, setError] = useState("");
   const [publishing, setPublishing] = useState<string | null>(null);
   const [editing, setEditing] = useState<string | null>(null);
-  const [editData, setEditData] = useState<EditData | null>(null);
+  const [editData, setEditData] = useState<IssueData | null>(null);
   const [editLoading, setEditLoading] = useState(false);
   const [editSaving, setEditSaving] = useState(false);
-  const [editRaw, setEditRaw] = useState("");
 
   const fetchNews = async () => {
     setLoading(true);
@@ -72,7 +111,6 @@ export default function AdminNewsPage() {
     }
   };
 
-  // Redirect to login if not authenticated
   useEffect(() => {
     if (!authLoading && !user) {
       router.push("/login");
@@ -127,9 +165,7 @@ export default function AdminNewsPage() {
 
       await fetchNews();
     } catch (err) {
-      alert(
-        err instanceof Error ? err.message : "Failed to publish"
-      );
+      alert(err instanceof Error ? err.message : "Failed to publish");
     } finally {
       setPublishing(null);
     }
@@ -146,22 +182,18 @@ export default function AdminNewsPage() {
       const res = await fetch(`/api/news/archive/${date}`);
       if (!res.ok) throw new Error("Failed to fetch issue");
       const data = await res.json();
-
-      // Reconstruct the raw markdown from the issue data
       const issue = data.issue;
-      const frontmatter: Record<string, unknown> = {
-        date: issue.date,
-        issueNumber: issue.issueNumber,
-        editor: issue.editor,
-        highlight: issue.highlight,
-        briefs: issue.briefs,
-        growth_insights: issue.growth_insights,
-        launches: issue.launches,
-        daily_case: issue.daily_case,
-      };
 
-      setEditData({ date, frontmatter, body: "" });
-      setEditRaw(JSON.stringify(frontmatter, null, 2));
+      setEditData({
+        date: issue.date,
+        issueNumber: issue.issueNumber || 0,
+        editor: issue.editor || "JE Labs",
+        highlight: issue.highlight || { bullets: ["", "", "", ""] },
+        briefs: issue.briefs || [],
+        growth_insights: issue.growth_insights || [],
+        launches: issue.launches || [],
+        daily_case: issue.daily_case || { company: "", title: "", deck: "", metrics: [""] },
+      });
     } catch (err) {
       alert("Failed to load issue for editing");
       setEditing(null);
@@ -174,16 +206,13 @@ export default function AdminNewsPage() {
     if (!editData) return;
     setEditSaving(true);
     try {
-      // Parse the edited JSON
-      const frontmatter = JSON.parse(editRaw);
-
       const res = await fetch("/api/news/edit", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           date: editData.date,
-          frontmatter,
-          body: editData.body,
+          frontmatter: editData,
+          body: "",
         }),
       });
 
@@ -196,12 +225,15 @@ export default function AdminNewsPage() {
       setEditData(null);
       await fetchNews();
     } catch (err) {
-      alert(
-        err instanceof Error ? err.message : "Failed to save edit"
-      );
+      alert(err instanceof Error ? err.message : "Failed to save edit");
     } finally {
       setEditSaving(false);
     }
+  };
+
+  const updateField = <K extends keyof IssueData>(key: K, value: IssueData[K]) => {
+    if (!editData) return;
+    setEditData({ ...editData, [key]: value });
   };
 
   const formatDate = (dateStr: string) => {
@@ -213,6 +245,255 @@ export default function AdminNewsPage() {
       year: "numeric",
     });
   };
+
+  // ===== Edit Form Components =====
+
+  const renderBriefEditor = (brief: Brief, index: number) => (
+    <div key={index} className="bg-surface-950 rounded-xl p-4 border border-surface-800 space-y-3">
+      <div className="flex items-center justify-between">
+        <span className="text-xs font-medium text-brand-500">Brief #{index + 1}</span>
+        <button
+          onClick={() => {
+            const briefs = editData!.briefs.filter((_, i) => i !== index);
+            updateField("briefs", briefs);
+          }}
+          className="text-red-400 hover:text-red-300 p-1"
+        >
+          <Trash2 className="h-3.5 w-3.5" />
+        </button>
+      </div>
+      <input
+        className="w-full bg-surface-900 text-white text-sm border border-surface-700 rounded-lg px-3 py-2 focus:outline-none focus:border-brand-500/50"
+        placeholder="Title"
+        value={brief.title}
+        onChange={(e) => {
+          const briefs = [...editData!.briefs];
+          briefs[index] = { ...brief, title: e.target.value };
+          updateField("briefs", briefs);
+        }}
+      />
+      <textarea
+        className="w-full bg-surface-900 text-white text-sm border border-surface-700 rounded-lg px-3 py-2 focus:outline-none focus:border-brand-500/50 resize-none"
+        placeholder="Summary"
+        rows={2}
+        value={brief.summary}
+        onChange={(e) => {
+          const briefs = [...editData!.briefs];
+          briefs[index] = { ...brief, summary: e.target.value };
+          updateField("briefs", briefs);
+        }}
+      />
+      <div className="grid grid-cols-2 gap-3">
+        <input
+          className="bg-surface-900 text-white text-sm border border-surface-700 rounded-lg px-3 py-2 focus:outline-none focus:border-brand-500/50"
+          placeholder="Source (e.g. TechCrunch)"
+          value={brief.source}
+          onChange={(e) => {
+            const briefs = [...editData!.briefs];
+            briefs[index] = { ...brief, source: e.target.value };
+            updateField("briefs", briefs);
+          }}
+        />
+        <input
+          className="bg-surface-900 text-white text-sm border border-surface-700 rounded-lg px-3 py-2 focus:outline-none focus:border-brand-500/50"
+          placeholder="URL"
+          value={brief.url}
+          onChange={(e) => {
+            const briefs = [...editData!.briefs];
+            briefs[index] = { ...brief, url: e.target.value };
+            updateField("briefs", briefs);
+          }}
+        />
+      </div>
+      <textarea
+        className="w-full bg-surface-900 text-white text-sm border border-surface-700 rounded-lg px-3 py-2 focus:outline-none focus:border-brand-500/50 resize-none"
+        placeholder="So What? (why this matters for marketers)"
+        rows={1}
+        value={brief.soWhat}
+        onChange={(e) => {
+          const briefs = [...editData!.briefs];
+          briefs[index] = { ...brief, soWhat: e.target.value };
+          updateField("briefs", briefs);
+        }}
+      />
+    </div>
+  );
+
+  const renderInsightEditor = (insight: GrowthInsight, index: number) => (
+    <div key={index} className="bg-surface-950 rounded-xl p-4 border border-surface-800 space-y-3">
+      <div className="flex items-center justify-between">
+        <span className="text-xs font-medium text-purple-500">Insight #{index + 1}</span>
+        <button
+          onClick={() => {
+            const insights = editData!.growth_insights.filter((_, i) => i !== index);
+            updateField("growth_insights", insights);
+          }}
+          className="text-red-400 hover:text-red-300 p-1"
+        >
+          <Trash2 className="h-3.5 w-3.5" />
+        </button>
+      </div>
+      <div className="grid grid-cols-3 gap-3">
+        <input
+          className="bg-surface-900 text-white text-sm border border-surface-700 rounded-lg px-3 py-2 focus:outline-none focus:border-brand-500/50"
+          placeholder="Author"
+          value={insight.author}
+          onChange={(e) => {
+            const insights = [...editData!.growth_insights];
+            insights[index] = { ...insight, author: e.target.value };
+            updateField("growth_insights", insights);
+          }}
+        />
+        <input
+          className="bg-surface-900 text-white text-sm border border-surface-700 rounded-lg px-3 py-2 focus:outline-none focus:border-brand-500/50"
+          placeholder="Handle (e.g. @handle)"
+          value={insight.handle}
+          onChange={(e) => {
+            const insights = [...editData!.growth_insights];
+            insights[index] = { ...insight, handle: e.target.value };
+            updateField("growth_insights", insights);
+          }}
+        />
+        <input
+          className="bg-surface-900 text-white text-sm border border-surface-700 rounded-lg px-3 py-2 focus:outline-none focus:border-brand-500/50"
+          placeholder="Platform"
+          value={insight.platform}
+          onChange={(e) => {
+            const insights = [...editData!.growth_insights];
+            insights[index] = { ...insight, platform: e.target.value };
+            updateField("growth_insights", insights);
+          }}
+        />
+      </div>
+      <textarea
+        className="w-full bg-surface-900 text-white text-sm border border-surface-700 rounded-lg px-3 py-2 focus:outline-none focus:border-brand-500/50 resize-none"
+        placeholder="Quote"
+        rows={3}
+        value={insight.quote}
+        onChange={(e) => {
+          const insights = [...editData!.growth_insights];
+          insights[index] = { ...insight, quote: e.target.value };
+          updateField("growth_insights", insights);
+        }}
+      />
+      <div className="grid grid-cols-2 gap-3">
+        <input
+          className="bg-surface-900 text-white text-sm border border-surface-700 rounded-lg px-3 py-2 focus:outline-none focus:border-brand-500/50"
+          placeholder="URL"
+          value={insight.url}
+          onChange={(e) => {
+            const insights = [...editData!.growth_insights];
+            insights[index] = { ...insight, url: e.target.value };
+            updateField("growth_insights", insights);
+          }}
+        />
+        <input
+          className="bg-surface-900 text-white text-sm border border-surface-700 rounded-lg px-3 py-2 focus:outline-none focus:border-brand-500/50"
+          placeholder="Commentary"
+          value={insight.commentary}
+          onChange={(e) => {
+            const insights = [...editData!.growth_insights];
+            insights[index] = { ...insight, commentary: e.target.value };
+            updateField("growth_insights", insights);
+          }}
+        />
+      </div>
+    </div>
+  );
+
+  const renderLaunchEditor = (launch: Launch, index: number) => (
+    <div key={index} className="bg-surface-950 rounded-xl p-4 border border-surface-800 space-y-3">
+      <div className="flex items-center justify-between">
+        <span className="text-xs font-medium text-orange-500">Launch #{index + 1}</span>
+        <button
+          onClick={() => {
+            const launches = editData!.launches.filter((_, i) => i !== index);
+            updateField("launches", launches);
+          }}
+          className="text-red-400 hover:text-red-300 p-1"
+        >
+          <Trash2 className="h-3.5 w-3.5" />
+        </button>
+      </div>
+      <div className="grid grid-cols-2 gap-3">
+        <input
+          className="bg-surface-900 text-white text-sm border border-surface-700 rounded-lg px-3 py-2 focus:outline-none focus:border-brand-500/50"
+          placeholder="Product name"
+          value={launch.product}
+          onChange={(e) => {
+            const launches = [...editData!.launches];
+            launches[index] = { ...launch, product: e.target.value };
+            updateField("launches", launches);
+          }}
+        />
+        <input
+          className="bg-surface-900 text-white text-sm border border-surface-700 rounded-lg px-3 py-2 focus:outline-none focus:border-brand-500/50"
+          placeholder="Company"
+          value={launch.company}
+          onChange={(e) => {
+            const launches = [...editData!.launches];
+            launches[index] = { ...launch, company: e.target.value };
+            updateField("launches", launches);
+          }}
+        />
+      </div>
+      <div className="grid grid-cols-2 gap-3">
+        <input
+          className="bg-surface-900 text-white text-sm border border-surface-700 rounded-lg px-3 py-2 focus:outline-none focus:border-brand-500/50"
+          placeholder="Category"
+          value={launch.category}
+          onChange={(e) => {
+            const launches = [...editData!.launches];
+            launches[index] = { ...launch, category: e.target.value };
+            updateField("launches", launches);
+          }}
+        />
+        <input
+          className="bg-surface-900 text-white text-sm border border-surface-700 rounded-lg px-3 py-2 focus:outline-none focus:border-brand-500/50"
+          placeholder="Tag (Rising / Big AI / Funded)"
+          value={launch.tag}
+          onChange={(e) => {
+            const launches = [...editData!.launches];
+            launches[index] = { ...launch, tag: e.target.value };
+            updateField("launches", launches);
+          }}
+        />
+      </div>
+      <textarea
+        className="w-full bg-surface-900 text-white text-sm border border-surface-700 rounded-lg px-3 py-2 focus:outline-none focus:border-brand-500/50 resize-none"
+        placeholder="Summary"
+        rows={2}
+        value={launch.summary}
+        onChange={(e) => {
+          const launches = [...editData!.launches];
+          launches[index] = { ...launch, summary: e.target.value };
+          updateField("launches", launches);
+        }}
+      />
+      <div className="grid grid-cols-2 gap-3">
+        <input
+          className="bg-surface-900 text-white text-sm border border-surface-700 rounded-lg px-3 py-2 focus:outline-none focus:border-brand-500/50"
+          placeholder="URL"
+          value={launch.url}
+          onChange={(e) => {
+            const launches = [...editData!.launches];
+            launches[index] = { ...launch, url: e.target.value };
+            updateField("launches", launches);
+          }}
+        />
+        <input
+          className="bg-surface-900 text-white text-sm border border-surface-700 rounded-lg px-3 py-2 focus:outline-none focus:border-brand-500/50"
+          placeholder="Metric (e.g. 500+ upvotes)"
+          value={launch.metric}
+          onChange={(e) => {
+            const launches = [...editData!.launches];
+            launches[index] = { ...launch, metric: e.target.value };
+            updateField("launches", launches);
+          }}
+        />
+      </div>
+    </div>
+  );
 
   return (
     <div className="min-h-screen bg-surface-950">
@@ -268,7 +549,6 @@ export default function AdminNewsPage() {
                 key={item.date}
                 className="rounded-xl border border-surface-800 bg-surface-900 overflow-hidden hover:border-surface-700 transition-colors"
               >
-                {/* Card Header */}
                 <div className="flex items-center justify-between p-5">
                   <div className="flex items-center gap-4 flex-1 min-w-0">
                     <div
@@ -297,12 +577,8 @@ export default function AdminNewsPage() {
                       </div>
                       <p className="text-xs text-surface-500 mt-0.5">
                         {item.published_at
-                          ? `${lang === "zh" ? "发布于" : "Published at"}: ${new Date(
-                              item.published_at
-                            ).toLocaleString()}`
-                          : lang === "zh"
-                          ? "等待审核发布"
-                          : "Awaiting review"}
+                          ? `${lang === "zh" ? "发布于" : "Published at"}: ${new Date(item.published_at).toLocaleString()}`
+                          : lang === "zh" ? "等待审核发布" : "Awaiting review"}
                       </p>
                     </div>
                   </div>
@@ -315,7 +591,6 @@ export default function AdminNewsPage() {
                       <Edit3 className="h-3.5 w-3.5" />
                       {lang === "zh" ? "编辑" : "Edit"}
                     </button>
-
                     <button
                       onClick={() => handlePreview(item.date)}
                       className="inline-flex items-center gap-1.5 text-xs text-surface-400 hover:text-white bg-surface-800 hover:bg-surface-700 px-3 py-1.5 rounded-lg transition-colors"
@@ -323,7 +598,6 @@ export default function AdminNewsPage() {
                       <Eye className="h-3.5 w-3.5" />
                       {lang === "zh" ? "预览" : "Preview"}
                     </button>
-
                     {item.published ? (
                       <button
                         onClick={() => handlePublish(item.date, false)}
@@ -331,11 +605,7 @@ export default function AdminNewsPage() {
                         className="inline-flex items-center gap-1.5 text-xs text-yellow-400 hover:text-yellow-300 bg-yellow-500/10 hover:bg-yellow-500/20 px-3 py-1.5 rounded-lg transition-colors disabled:opacity-50"
                       >
                         <EyeOff className="h-3.5 w-3.5" />
-                        {publishing === item.date
-                          ? "..."
-                          : lang === "zh"
-                          ? "撤回"
-                          : "Unpublish"}
+                        {publishing === item.date ? "..." : lang === "zh" ? "撤回" : "Unpublish"}
                       </button>
                     ) : (
                       <button
@@ -344,14 +614,9 @@ export default function AdminNewsPage() {
                         className="inline-flex items-center gap-1.5 text-xs text-brand-500 hover:text-brand-400 bg-brand-500/10 hover:bg-brand-500/20 px-3 py-1.5 rounded-lg transition-colors disabled:opacity-50"
                       >
                         <Send className="h-3.5 w-3.5" />
-                        {publishing === item.date
-                          ? "..."
-                          : lang === "zh"
-                          ? "发布"
-                          : "Publish"}
+                        {publishing === item.date ? "..." : lang === "zh" ? "发布" : "Publish"}
                       </button>
                     )}
-
                     <a
                       href={`/tools/news/archive/${item.date}`}
                       target="_blank"
@@ -386,30 +651,196 @@ export default function AdminNewsPage() {
             </div>
 
             {/* Modal Body */}
-            <div className="flex-1 overflow-auto p-6">
+            <div className="flex-1 overflow-auto p-6 space-y-6">
               {editLoading ? (
                 <div className="flex items-center justify-center py-20">
                   <div className="h-8 w-8 border-2 border-brand-500 border-t-transparent rounded-full animate-spin" />
                 </div>
               ) : (
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <label className="text-sm font-medium text-surface-400">
-                      {lang === "zh" ? "编辑 JSON 数据" : "Edit JSON Data"}
-                    </label>
-                    <span className="text-xs text-surface-600">
-                      {lang === "zh"
-                        ? "修改后点击保存，发布状态不受影响"
-                        : "Changes are saved; publish state is preserved"}
-                    </span>
+                <>
+                  {/* Issue Number & Editor */}
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-xs font-medium text-surface-500 mb-1.5">
+                        {lang === "zh" ? "期号" : "Issue Number"}
+                      </label>
+                      <input
+                        className="w-full bg-surface-950 text-white text-sm border border-surface-700 rounded-lg px-3 py-2 focus:outline-none focus:border-brand-500/50"
+                        type="number"
+                        value={editData.issueNumber}
+                        onChange={(e) => updateField("issueNumber", parseInt(e.target.value) || 0)}
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-surface-500 mb-1.5">
+                        {lang === "zh" ? "编辑" : "Editor"}
+                      </label>
+                      <input
+                        className="w-full bg-surface-950 text-white text-sm border border-surface-700 rounded-lg px-3 py-2 focus:outline-none focus:border-brand-500/50"
+                        value={editData.editor}
+                        onChange={(e) => updateField("editor", e.target.value)}
+                      />
+                    </div>
                   </div>
-                  <textarea
-                    value={editRaw}
-                    onChange={(e) => setEditRaw(e.target.value)}
-                    className="w-full h-[500px] bg-surface-950 text-surface-200 text-sm font-mono border border-surface-800 rounded-xl p-4 focus:outline-none focus:border-brand-500/50 focus:ring-1 focus:ring-brand-500/20 resize-none"
-                    spellCheck={false}
-                  />
-                </div>
+
+                  {/* Highlights */}
+                  <div>
+                    <label className="block text-xs font-medium text-surface-500 mb-1.5">
+                      {lang === "zh" ? "高亮摘要" : "Highlights"}
+                    </label>
+                    <div className="space-y-2">
+                      {editData.highlight.bullets.map((bullet, i) => (
+                        <input
+                          key={i}
+                          className="w-full bg-surface-950 text-white text-sm border border-surface-700 rounded-lg px-3 py-2 focus:outline-none focus:border-brand-500/50"
+                          value={bullet}
+                          onChange={(e) => {
+                            const bullets = [...editData.highlight.bullets];
+                            bullets[i] = e.target.value;
+                            updateField("highlight", { bullets });
+                          }}
+                          placeholder={`Highlight ${i + 1}`}
+                        />
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Briefs */}
+                  <div>
+                    <div className="flex items-center justify-between mb-2">
+                      <label className="text-xs font-medium text-surface-500">
+                        {lang === "zh" ? "新闻简报" : "Briefs"}
+                      </label>
+                      <button
+                        onClick={() => {
+                          const briefs = [...editData.briefs, { title: "", summary: "", source: "", url: "", soWhat: "" }];
+                          updateField("briefs", briefs);
+                        }}
+                        className="inline-flex items-center gap-1 text-xs text-brand-500 hover:text-brand-400"
+                      >
+                        <Plus className="h-3 w-3" />
+                        {lang === "zh" ? "添加" : "Add"}
+                      </button>
+                    </div>
+                    <div className="space-y-3">
+                      {editData.briefs.map((brief, i) => renderBriefEditor(brief, i))}
+                    </div>
+                  </div>
+
+                  {/* Growth Insights */}
+                  <div>
+                    <div className="flex items-center justify-between mb-2">
+                      <label className="text-xs font-medium text-surface-500">
+                        {lang === "zh" ? "专家观点" : "Growth Insights"}
+                      </label>
+                      <button
+                        onClick={() => {
+                          const insights = [...editData.growth_insights, { author: "", handle: "", platform: "", quote: "", url: "", commentary: "" }];
+                          updateField("growth_insights", insights);
+                        }}
+                        className="inline-flex items-center gap-1 text-xs text-brand-500 hover:text-brand-400"
+                      >
+                        <Plus className="h-3 w-3" />
+                        {lang === "zh" ? "添加" : "Add"}
+                      </button>
+                    </div>
+                    <div className="space-y-3">
+                      {editData.growth_insights.map((insight, i) => renderInsightEditor(insight, i))}
+                    </div>
+                  </div>
+
+                  {/* Launches */}
+                  <div>
+                    <div className="flex items-center justify-between mb-2">
+                      <label className="text-xs font-medium text-surface-500">
+                        {lang === "zh" ? "产品发布" : "Launches"}
+                      </label>
+                      <button
+                        onClick={() => {
+                          const launches = [...editData.launches, { product: "", company: "", category: "", tag: "Rising", summary: "", url: "", metric: "" }];
+                          updateField("launches", launches);
+                        }}
+                        className="inline-flex items-center gap-1 text-xs text-brand-500 hover:text-brand-400"
+                      >
+                        <Plus className="h-3 w-3" />
+                        {lang === "zh" ? "添加" : "Add"}
+                      </button>
+                    </div>
+                    <div className="space-y-3">
+                      {editData.launches.map((launch, i) => renderLaunchEditor(launch, i))}
+                    </div>
+                  </div>
+
+                  {/* Daily Case */}
+                  <div>
+                    <label className="block text-xs font-medium text-surface-500 mb-2">
+                      {lang === "zh" ? "案例研究" : "Daily Case"}
+                    </label>
+                    <div className="bg-surface-950 rounded-xl p-4 border border-surface-800 space-y-3">
+                      <div className="grid grid-cols-2 gap-3">
+                        <input
+                          className="bg-surface-900 text-white text-sm border border-surface-700 rounded-lg px-3 py-2 focus:outline-none focus:border-brand-500/50"
+                          placeholder="Company"
+                          value={editData.daily_case.company}
+                          onChange={(e) => updateField("daily_case", { ...editData.daily_case, company: e.target.value })}
+                        />
+                        <input
+                          className="bg-surface-900 text-white text-sm border border-surface-700 rounded-lg px-3 py-2 focus:outline-none focus:border-brand-500/50"
+                          placeholder="Title"
+                          value={editData.daily_case.title}
+                          onChange={(e) => updateField("daily_case", { ...editData.daily_case, title: e.target.value })}
+                        />
+                      </div>
+                      <textarea
+                        className="w-full bg-surface-900 text-white text-sm border border-surface-700 rounded-lg px-3 py-2 focus:outline-none focus:border-brand-500/50 resize-none"
+                        placeholder="Deck (2-3 sentence overview)"
+                        rows={2}
+                        value={editData.daily_case.deck}
+                        onChange={(e) => updateField("daily_case", { ...editData.daily_case, deck: e.target.value })}
+                      />
+                      <div>
+                        <label className="block text-xs text-surface-500 mb-1">
+                          {lang === "zh" ? "指标" : "Metrics"}
+                        </label>
+                        <div className="space-y-2">
+                          {editData.daily_case.metrics.map((metric, i) => (
+                            <div key={i} className="flex items-center gap-2">
+                              <input
+                                className="flex-1 bg-surface-900 text-white text-sm border border-surface-700 rounded-lg px-3 py-2 focus:outline-none focus:border-brand-500/50"
+                                value={metric}
+                                onChange={(e) => {
+                                  const metrics = [...editData.daily_case.metrics];
+                                  metrics[i] = e.target.value;
+                                  updateField("daily_case", { ...editData.daily_case, metrics });
+                                }}
+                                placeholder={`Metric ${i + 1}`}
+                              />
+                              <button
+                                onClick={() => {
+                                  const metrics = editData.daily_case.metrics.filter((_, j) => j !== i);
+                                  updateField("daily_case", { ...editData.daily_case, metrics });
+                                }}
+                                className="text-red-400 hover:text-red-300 p-1"
+                              >
+                                <X className="h-3.5 w-3.5" />
+                              </button>
+                            </div>
+                          ))}
+                          <button
+                            onClick={() => {
+                              const metrics = [...editData.daily_case.metrics, ""];
+                              updateField("daily_case", { ...editData.daily_case, metrics });
+                            }}
+                            className="inline-flex items-center gap-1 text-xs text-brand-500 hover:text-brand-400"
+                          >
+                            <Plus className="h-3 w-3" />
+                            {lang === "zh" ? "添加指标" : "Add metric"}
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </>
               )}
             </div>
 
