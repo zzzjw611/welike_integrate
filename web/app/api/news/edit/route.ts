@@ -28,7 +28,9 @@ export async function PUT(request: Request) {
     // Reconstruct the markdown file
     const newContent = matter.stringify(body || "", mergedFrontmatter);
 
-    await writeContentFile(date, newContent, `chore: edit AI news for ${date}`);
+    // Use [skip vercel] to avoid triggering a Vercel deployment for edits
+    // (preview reads directly from GitHub API, no deploy needed)
+    await writeContentFile(date, newContent, `chore: edit AI news for ${date} [skip vercel]`);
 
     return NextResponse.json({ success: true, date });
   } catch (err) {
