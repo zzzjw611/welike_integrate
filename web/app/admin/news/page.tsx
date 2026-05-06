@@ -9,11 +9,12 @@ import {
   CheckCircle,
   Clock,
   ExternalLink,
-  ChevronDown,
-  ChevronUp,
   Send,
   FileText,
   LogIn,
+  Edit3,
+  X,
+  Save,
 } from "lucide-react";
 
 interface NewsItem {
@@ -25,6 +26,12 @@ interface NewsItem {
   briefCount?: number;
 }
 
+interface EditData {
+  date: string;
+  frontmatter: Record<string, unknown>;
+  body: string;
+}
+
 export default function AdminNewsPage() {
   const lang = useLang();
   const router = useRouter();
@@ -33,6 +40,11 @@ export default function AdminNewsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [publishing, setPublishing] = useState<string | null>(null);
+  const [editing, setEditing] = useState<string | null>(null);
+  const [editData, setEditData] = useState<EditData | null>(null);
+  const [editLoading, setEditLoading] = useState(false);
+  const [editSaving, setEditSaving] = useState(false);
+  const [editRaw, setEditRaw] = useState("");
 
   const fetchNews = async () => {
     setLoading(true);
@@ -113,7 +125,6 @@ export default function AdminNewsPage() {
         throw new Error(data.error || "Failed to publish");
       }
 
-      // Refresh the list
       await fetchNews();
     } catch (err) {
       alert(
@@ -126,6 +137,71 @@ export default function AdminNewsPage() {
 
   const handlePreview = (date: string) => {
     window.open(`/tools/news/archive/${date}`, "_blank");
+  };
+
+  const handleEdit = async (date: string) => {
+    setEditing(date);
+    setEditLoading(true);
+    try {
+      const res = await fetch(`/api/news/archive/${date}`);
+      if (!res.ok) throw new Error("Failed to fetch issue");
+      const data = await res.json();
+
+      // Reconstruct the raw markdown from the issue data
+      const issue = data.issue;
+      const frontmatter: Record<string, unknown> = {
+        date: issue.date,
+        issueNumber: issue.issueNumber,
+        editor: issue.editor,
+        highlight: issue.highlight,
+        briefs: issue.briefs,
+        growth_insights: issue.growth_insights,
+        launches: issue.launches,
+        daily_case: issue.daily_case,
+      };
+
+      setEditData({ date, frontmatter, body: "" });
+      setEditRaw(JSON.stringify(frontmatter, null, 2));
+    } catch (err) {
+      alert("Failed to load issue for editing");
+      setEditing(null);
+    } finally {
+      setEditLoading(false);
+    }
+  };
+
+  const handleSaveEdit = async () => {
+    if (!editData) return;
+    setEditSaving(true);
+    try {
+      // Parse the edited JSON
+      const frontmatter = JSON.parse(editRaw);
+
+      const res = await fetch("/api/news/edit", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          date: editData.date,
+          frontmatter,
+          body: editData.body,
+        }),
+      });
+
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || "Failed to save");
+      }
+
+      setEditing(null);
+      setEditData(null);
+      await fetchNews();
+    } catch (err) {
+      alert(
+        err instanceof Error ? err.message : "Failed to save edit"
+      );
+    } finally {
+      setEditSaving(false);
+    }
   };
 
   const formatDate = (dateStr: string) => {
@@ -233,6 +309,14 @@ export default function AdminNewsPage() {
 
                   <div className="flex items-center gap-2 flex-shrink-0 ml-4">
                     <button
+                      onClick={() => handleEdit(item.date)}
+                      className="inline-flex items-center gap-1.5 text-xs text-surface-400 hover:text-white bg-surface-800 hover:bg-surface-700 px-3 py-1.5 rounded-lg transition-colors"
+                    >
+                      <Edit3 className="h-3.5 w-3.5" />
+                      {lang === "zh" ? "编辑" : "Edit"}
+                    </button>
+
+                    <button
                       onClick={() => handlePreview(item.date)}
                       className="inline-flex items-center gap-1.5 text-xs text-surface-400 hover:text-white bg-surface-800 hover:bg-surface-700 px-3 py-1.5 rounded-lg transition-colors"
                     >
@@ -278,12 +362,79 @@ export default function AdminNewsPage() {
                     </a>
                   </div>
                 </div>
-
               </div>
             ))}
           </div>
         )}
       </div>
+
+      {/* Edit Modal */}
+      {editing && editData && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+          <div className="bg-surface-900 border border-surface-800 rounded-2xl w-full max-w-4xl max-h-[90vh] flex flex-col mx-4 shadow-2xl">
+            {/* Modal Header */}
+            <div className="flex items-center justify-between px-6 py-4 border-b border-surface-800">
+              <h2 className="text-lg font-semibold text-white">
+                {lang === "zh" ? "编辑新闻" : "Edit News"} — {editData.date}
+              </h2>
+              <button
+                onClick={() => { setEditing(null); setEditData(null); }}
+                className="text-surface-500 hover:text-white p-1 rounded-lg transition-colors"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            {/* Modal Body */}
+            <div className="flex-1 overflow-auto p-6">
+              {editLoading ? (
+                <div className="flex items-center justify-center py-20">
+                  <div className="h-8 w-8 border-2 border-brand-500 border-t-transparent rounded-full animate-spin" />
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <label className="text-sm font-medium text-surface-400">
+                      {lang === "zh" ? "编辑 JSON 数据" : "Edit JSON Data"}
+                    </label>
+                    <span className="text-xs text-surface-600">
+                      {lang === "zh"
+                        ? "修改后点击保存，发布状态不受影响"
+                        : "Changes are saved; publish state is preserved"}
+                    </span>
+                  </div>
+                  <textarea
+                    value={editRaw}
+                    onChange={(e) => setEditRaw(e.target.value)}
+                    className="w-full h-[500px] bg-surface-950 text-surface-200 text-sm font-mono border border-surface-800 rounded-xl p-4 focus:outline-none focus:border-brand-500/50 focus:ring-1 focus:ring-brand-500/20 resize-none"
+                    spellCheck={false}
+                  />
+                </div>
+              )}
+            </div>
+
+            {/* Modal Footer */}
+            <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-surface-800">
+              <button
+                onClick={() => { setEditing(null); setEditData(null); }}
+                className="text-sm text-surface-400 hover:text-white bg-surface-800 hover:bg-surface-700 px-4 py-2 rounded-lg transition-colors"
+              >
+                {lang === "zh" ? "取消" : "Cancel"}
+              </button>
+              <button
+                onClick={handleSaveEdit}
+                disabled={editSaving || editLoading}
+                className="inline-flex items-center gap-2 text-sm text-white bg-brand-500 hover:bg-brand-400 px-4 py-2 rounded-lg transition-colors disabled:opacity-50"
+              >
+                <Save className="h-4 w-4" />
+                {editSaving
+                  ? (lang === "zh" ? "保存中..." : "Saving...")
+                  : (lang === "zh" ? "保存" : "Save")}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
