@@ -19,6 +19,7 @@ import {
   Plus,
   Trash2,
   GripVertical,
+  Sparkles,
 } from "lucide-react";
 
 interface NewsItem {
@@ -92,6 +93,8 @@ export default function AdminNewsPage() {
   const [editSuccess, setEditSuccess] = useState<string | null>(null);
   const [editNeedsRepublish, setEditNeedsRepublish] = useState(false);
   const [editedDates, setEditedDates] = useState<Set<string>>(new Set());
+  const [generating, setGenerating] = useState(false);
+  const [generateResult, setGenerateResult] = useState<string | null>(null);
 
   const fetchNews = async () => {
     setLoading(true);
@@ -271,6 +274,38 @@ export default function AdminNewsPage() {
       alert(err instanceof Error ? err.message : "Failed to publish");
     } finally {
       setPublishing(null);
+    }
+  };
+
+  const handleGenerate = async () => {
+    setGenerating(true);
+    setGenerateResult(null);
+    try {
+      const today = new Date().toISOString().slice(0, 10);
+      const res = await fetch("/api/news/generate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ date: today }),
+      });
+
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || "Failed to generate");
+      }
+
+      const data = await res.json();
+      setGenerateResult(
+        lang === "zh"
+          ? `✅ 已生成第 ${data.issueNumber} 期 (${data.date})`
+          : `✅ Issue #${data.issueNumber} generated (${data.date})`
+      );
+      await fetchNews();
+    } catch (err) {
+      setGenerateResult(
+        err instanceof Error ? `❌ ${err.message}` : "❌ Failed to generate"
+      );
+    } finally {
+      setGenerating(false);
     }
   };
 
@@ -626,12 +661,27 @@ export default function AdminNewsPage() {
                   : "Review, edit, and publish AI news issues"}
               </p>
             </div>
-            <button
-              onClick={fetchNews}
-              className="text-sm text-surface-400 hover:text-white bg-surface-900 border border-surface-800 px-3 py-1.5 rounded-lg transition-colors"
-            >
-              {lang === "zh" ? "刷新" : "Refresh"}
-            </button>
+            <div className="flex items-center gap-3">
+              {generateResult && (
+                <span className="text-xs text-surface-400">{generateResult}</span>
+              )}
+              <button
+                onClick={handleGenerate}
+                disabled={generating}
+                className="inline-flex items-center gap-1.5 text-sm text-purple-400 hover:text-purple-300 bg-purple-500/10 hover:bg-purple-500/20 px-3 py-1.5 rounded-lg transition-colors disabled:opacity-50"
+              >
+                <Sparkles className={`h-4 w-4 ${generating ? "animate-spin" : ""}`} />
+                {generating
+                  ? (lang === "zh" ? "生成中..." : "Generating...")
+                  : (lang === "zh" ? "立即生成" : "Generate Now")}
+              </button>
+              <button
+                onClick={fetchNews}
+                className="text-sm text-surface-400 hover:text-white bg-surface-900 border border-surface-800 px-3 py-1.5 rounded-lg transition-colors"
+              >
+                {lang === "zh" ? "刷新" : "Refresh"}
+              </button>
+            </div>
           </div>
         </div>
       </div>
