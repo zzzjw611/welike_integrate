@@ -351,7 +351,8 @@ export default function AdminNewsPage() {
   };
 
   const handlePreview = (date: string) => {
-    window.open(`/tools/news/archive/${date}`, "_blank");
+    // Add cache-busting param to skip the 10s in-memory cache in the preview page
+    window.open(`/tools/news/archive/${date}?t=${Date.now()}`, "_blank");
   };
 
   const handleEdit = async (date: string) => {
