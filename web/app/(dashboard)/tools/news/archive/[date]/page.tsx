@@ -44,7 +44,9 @@ async function fetchFromGitHub(date: string, skipCache = false): Promise<Issue |
       );
       if (!res.ok) continue;
       const data = await res.json();
-      const raw = atob(data.content.replace(/\n/g, ""));
+      // Use fetch to get raw content with proper encoding (avoids atob UTF-8 issues)
+      const rawRes = await fetch(data.download_url);
+      const raw = await rawRes.text();
       const { data: frontmatter } = matter(raw);
       const issue: Issue = {
         date: date,
@@ -97,7 +99,7 @@ export default function ArchivePage() {
         const pubRes = await fetch("/api/news/archive");
         if (pubRes.ok) {
           const pubData = await pubRes.json();
-          const dates = (pubData.data || []).map((d: any) => d.date);
+          const dates = (pubData.issues || []).map((d: any) => d.date);
           setIssues(dates);
 
           const idx = dates.indexOf(date);
