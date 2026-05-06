@@ -76,10 +76,21 @@ async function commitFile(
   }
 }
 
-export async function readContentFile(date: string): Promise<string | null> {
+export async function readContentFile(date: string, branch?: string): Promise<string | null> {
   const filePath = `${CONTENT_PATH}/${date}.md`;
-  const file = await getFile(filePath);
-  if (!file) return null;
+  const ref = branch || BRANCH;
+  const res = await fetch(
+    `https://api.github.com/repos/${OWNER}/${REPO}/contents/${filePath}?ref=${ref}`,
+    {
+      headers: {
+        Authorization: `Bearer ${GITHUB_TOKEN}`,
+        Accept: "application/vnd.github.v3+json",
+      },
+    }
+  );
+  if (res.status === 404) return null;
+  if (!res.ok) return null;
+  const file = await res.json();
   return Buffer.from(file.content, "base64").toString("utf8");
 }
 

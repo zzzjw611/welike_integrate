@@ -70,7 +70,13 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Missing date" }, { status: 400 });
     }
 
-    const raw = await readContentFile(date);
+    // First try to read from the "content" branch (where edits live), falling
+    // back to "master" (where generated/published issues live). This ensures
+    // that Republish picks up the latest edits instead of the stale master version.
+    let raw = await readContentFile(date, "content");
+    if (!raw) {
+      raw = await readContentFile(date, "master");
+    }
     if (!raw) {
       return NextResponse.json({ error: "Issue not found" }, { status: 404 });
     }
