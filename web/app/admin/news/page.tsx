@@ -774,18 +774,16 @@ export default function AdminNewsPage() {
                     </div>
 
                     <div className="flex items-center gap-2 flex-shrink-0 ml-4">
-                      {!todayItem && (
-                        <button
-                          onClick={handleGenerate}
-                          disabled={generating}
-                          className="inline-flex items-center gap-1.5 text-xs text-brand-500 hover:text-brand-400 bg-brand-500/10 hover:bg-brand-500/20 px-3 py-1.5 rounded-lg transition-colors disabled:opacity-50"
-                        >
-                          <Sparkles className={`h-3.5 w-3.5 ${generating ? "animate-spin" : ""}`} />
-                          {generating
-                            ? (lang === "zh" ? "生成中..." : "Generating...")
-                            : (lang === "zh" ? "立即生成" : "Generate Now")}
-                        </button>
-                      )}
+                      <button
+                        onClick={handleGenerate}
+                        disabled={generating}
+                        className="inline-flex items-center gap-1.5 text-xs text-brand-500 hover:text-brand-400 bg-brand-500/10 hover:bg-brand-500/20 px-3 py-1.5 rounded-lg transition-colors disabled:opacity-50"
+                      >
+                        <Sparkles className={`h-3.5 w-3.5 ${generating ? "animate-spin" : ""}`} />
+                        {generating
+                          ? (lang === "zh" ? "生成中..." : "Generating...")
+                          : (lang === "zh" ? "立即生成" : "Generate Now")}
+                      </button>
                       {todayItem && (
                         <>
                           <button
