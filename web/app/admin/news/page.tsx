@@ -261,6 +261,9 @@ export default function AdminNewsPage() {
       setPublishCountdown(60);
       setPublishRedirectUrl(`/tools/news/archive/${date}`);
 
+      // Refresh the list to show updated published status immediately
+      await fetchNews();
+
       if (openInNewTab) {
         window.open(`/tools/news/archive/${date}`, "_blank");
       } else {
