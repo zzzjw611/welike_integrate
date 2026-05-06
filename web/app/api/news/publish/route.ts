@@ -1,22 +1,20 @@
 import { NextRequest, NextResponse } from "next/server";
-import fs from "node:fs/promises";
-import path from "node:path";
 import matter from "gray-matter";
+import { readContentFile, writeContentFile, listContentFiles } from "@/lib/github-storage";
 
 export async function GET() {
   try {
-    const contentDir = path.join(process.cwd(), "content");
-    const files = await fs.readdir(contentDir);
-    const issues: { date: string; published: boolean }[] = [];
+    const dates = await listContentFiles();
+    const issues: { date: string; published: boolean; published_at: string | null }[] = [];
 
-    for (const file of files.sort().reverse()) {
-      if (!file.endsWith(".md")) continue;
-      const date = file.replace(/\.md$/, "");
-      const raw = await fs.readFile(path.join(contentDir, file), "utf8");
+    for (const date of dates) {
+      const raw = await readContentFile(date);
+      if (!raw) continue;
       const { data } = matter(raw);
       issues.push({
         date,
         published: data.published !== false,
+        published_at: data.published_at || null,
       });
     }
 
@@ -33,11 +31,8 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Missing date" }, { status: 400 });
     }
 
-    const filePath = path.join(process.cwd(), "content", `${date}.md`);
-    let raw: string;
-    try {
-      raw = await fs.readFile(filePath, "utf8");
-    } catch {
+    const raw = await readContentFile(date);
+    if (!raw) {
       return NextResponse.json({ error: "Issue not found" }, { status: 404 });
     }
 
@@ -50,7 +45,8 @@ export async function POST(req: NextRequest) {
     }
 
     const newRaw = matter.stringify(content, data);
-    await fs.writeFile(filePath, newRaw, "utf8");
+    const action = published ? "publish" : "unpublish";
+    await writeContentFile(date, newRaw, `chore: ${action} AI news for ${date}`);
 
     return NextResponse.json({ success: true, date, published });
   } catch (e) {

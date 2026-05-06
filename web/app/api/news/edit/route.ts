@@ -1,9 +1,6 @@
 import { NextResponse } from "next/server";
-import fs from "node:fs/promises";
-import path from "node:path";
 import matter from "gray-matter";
-
-const CONTENT_DIR = path.join(process.cwd(), "content");
+import { readContentFile, writeContentFile } from "@/lib/github-storage";
 
 export async function PUT(request: Request) {
   try {
@@ -13,16 +10,12 @@ export async function PUT(request: Request) {
       return NextResponse.json({ error: "Date is required" }, { status: 400 });
     }
 
-    const filePath = path.join(CONTENT_DIR, `${date}.md`);
-
     // Read existing file to preserve published state
+    const existing = await readContentFile(date);
     let existingPublished = false;
-    try {
-      const existing = await fs.readFile(filePath, "utf8");
+    if (existing) {
       const { data } = matter(existing);
       existingPublished = data.published === true;
-    } catch {
-      // File doesn't exist yet
     }
 
     // Build new frontmatter
@@ -35,7 +28,7 @@ export async function PUT(request: Request) {
     // Reconstruct the markdown file
     const newContent = matter.stringify(body || "", mergedFrontmatter);
 
-    await fs.writeFile(filePath, newContent, "utf8");
+    await writeContentFile(date, newContent, `chore: edit AI news for ${date}`);
 
     return NextResponse.json({ success: true, date });
   } catch (err) {
