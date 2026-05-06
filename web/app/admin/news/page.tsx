@@ -104,7 +104,7 @@ export default function AdminNewsPage() {
       if (!res.ok) throw new Error("Failed to fetch publishing status");
       const data = await res.json();
 
-      const items: NewsItem[] = (data.data || []).map(
+      const items: NewsItem[] = (data.issues || []).map(
         (item: { date: string; published: boolean; published_at?: string }) => ({
           date: item.date,
           published: item.published,
@@ -309,7 +309,7 @@ export default function AdminNewsPage() {
           const checkRes = await fetch("/api/news/publish");
           if (checkRes.ok) {
             const checkData = await checkRes.json();
-            const items: NewsItem[] = (checkData.data || []).map(
+            const items: NewsItem[] = (checkData.issues || []).map(
               (item: { date: string; published: boolean; published_at?: string }) => ({
                 date: item.date,
                 published: item.published,
@@ -367,7 +367,8 @@ export default function AdminNewsPage() {
       );
       if (!res.ok) throw new Error("Failed to fetch issue");
       const data = await res.json();
-      const raw = atob(data.content.replace(/\n/g, ""));
+      const rawRes = await fetch(data.download_url);
+      const raw = await rawRes.text();
       const { data: frontmatter } = matter(raw);
 
       setEditData({
