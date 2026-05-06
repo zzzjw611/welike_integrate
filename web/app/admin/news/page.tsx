@@ -293,19 +293,14 @@ export default function AdminNewsPage() {
         throw new Error(data.error || "Failed to publish");
       }
 
-      setPublishAction(published ? "publish" : "unpublish");
-      setPublishSuccess(date);
-      setPublishElapsed(0);
-      setPublishRedirectUrl(`/tools/news/archive/${date}`);
-
       // Refresh the list to show updated published status immediately
       await fetchNews();
 
-      // Always poll GitHub for Vercel deploy completion, then redirect — never
-      // open the archive tab pre-deploy or the admin would see the old version.
-      // Unpublish writes to master too, so we wait for that deploy as well.
-      setPublishPolling(true);
-      setPublishPollDate(date);
+      // Redirect immediately to the live page. Vercel deployment takes ~60s,
+      // but the page will show the old content until the deploy finishes.
+      // The user can simply refresh to see the new content once deployed.
+      // No need to wait with a spinner — the live page is still functional.
+      window.location.href = `/tools/news/archive/${date}`;
     } catch (err) {
       alert(err instanceof Error ? err.message : "Failed to publish");
     } finally {
