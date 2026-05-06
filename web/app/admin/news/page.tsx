@@ -91,6 +91,7 @@ export default function AdminNewsPage() {
   const [publishRedirectUrl, setPublishRedirectUrl] = useState<string | null>(null);
   const [editSuccess, setEditSuccess] = useState<string | null>(null);
   const [editNeedsRepublish, setEditNeedsRepublish] = useState(false);
+  const [editedDates, setEditedDates] = useState<Set<string>>(new Set());
 
   const fetchNews = async () => {
     setLoading(true);
@@ -335,6 +336,8 @@ export default function AdminNewsPage() {
       setEditData(null);
       setEditSuccess(editData.date);
       setEditNeedsRepublish(wasPublished);
+      // Mark this date as edited (needs republish to master branch)
+      setEditedDates((prev) => new Set(prev).add(editData.date));
       await fetchNews();
     } catch (err) {
       alert(err instanceof Error ? err.message : "Failed to save edit");
@@ -710,7 +713,16 @@ export default function AdminNewsPage() {
                       <Eye className="h-3.5 w-3.5" />
                       {lang === "zh" ? "预览" : "Preview"}
                     </button>
-                    {item.published ? (
+                    {item.published && editedDates.has(item.date) ? (
+                      <button
+                        onClick={() => handlePublish(item.date, true)}
+                        disabled={publishing === item.date}
+                        className="inline-flex items-center gap-1.5 text-xs text-green-400 hover:text-green-300 bg-green-500/10 hover:bg-green-500/20 px-3 py-1.5 rounded-lg transition-colors disabled:opacity-50"
+                      >
+                        <Send className="h-3.5 w-3.5" />
+                        {publishing === item.date ? "..." : lang === "zh" ? "重新发布" : "Republish"}
+                      </button>
+                    ) : item.published ? (
                       <button
                         onClick={() => handlePublish(item.date, false)}
                         disabled={publishing === item.date}
