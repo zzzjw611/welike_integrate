@@ -34,8 +34,9 @@ async function fetchFromGitHub(date: string, skipCache = false): Promise<Issue |
     }
   }
 
-  // Try "master" branch first (has latest generated content), fall back to "content" branch (for edits)
-  const branches = ["master", "content"];
+  // When skipCache is true (admin preview with ?t= param), check "content" branch first for edits
+  // Otherwise, read "master" branch first (has latest generated content)
+  const branches = skipCache ? ["content", "master"] : ["master", "content"];
   for (const branch of branches) {
     try {
       const res = await fetch(
