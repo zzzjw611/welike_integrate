@@ -128,44 +128,78 @@ export default function AdminNewsPage() {
     fetchNews();
   }, []);
 
-  // Poll GitHub API to check if the file has been updated after publish
+  // Poll Vercel deployment status after publish
   const [publishPolling, setPublishPolling] = useState(false);
   const [publishPollDate, setPublishPollDate] = useState<string | null>(null);
 
   useEffect(() => {
     if (!publishPolling || !publishPollDate) return;
 
+    let cancelled = false;
+    let pollTimer: ReturnType<typeof setTimeout>;
+
     const poll = async () => {
+      if (cancelled) return;
       try {
-        const res = await fetch(
-          `https://api.github.com/repos/zzzjw611/welike_integrate/contents/web/content/${publishPollDate}.md?ref=master`,
+        // Get latest commit SHA from GitHub
+        const branchRes = await fetch(
+          "https://api.github.com/repos/zzzjw611/welike_integrate/branches/master",
           { headers: { Accept: "application/vnd.github.v3+json" } }
         );
-        if (res.ok) {
-          const data = await res.json();
-          const raw = atob(data.content.replace(/\n/g, ""));
-          const { data: frontmatter } = matter(raw);
-          // Check if published_at matches what we expect (file has been updated)
-          if (frontmatter.published !== undefined) {
-            // File is updated, stop polling and redirect
-            setPublishPolling(false);
-            setPublishPollDate(null);
-            setPublishSuccess(null);
-            setPublishCountdown(0);
-            setPublishRedirectUrl(null);
-            const url = publishRedirectUrl || "/tools/news";
-            window.open(url, "_blank");
-            return;
+        if (!branchRes.ok) throw new Error("Failed to fetch branch");
+        const branchData = await branchRes.json();
+        const latestSha = branchData.commit?.sha;
+
+        // Get latest deployment status from GitHub
+        const depRes = await fetch(
+          `https://api.github.com/repos/zzzjw611/welike_integrate/deployments?environment=production`,
+          { headers: { Accept: "application/vnd.github.v3+json" } }
+        );
+        if (!depRes.ok) throw new Error("Failed to fetch deployments");
+        const depData = await depRes.json();
+
+        if (depData.length > 0) {
+          const latestDep = depData[0];
+          // Check if the latest deployment matches the latest commit and is successful
+          if (latestDep.sha === latestSha) {
+            // Get deployment status
+            const statusRes = await fetch(latestDep.statuses_url, {
+              headers: { Accept: "application/vnd.github.v3+json" }
+            });
+            if (statusRes.ok) {
+              const statusData = await statusRes.json();
+              const latestStatus = statusData[0];
+              if (latestStatus?.state === "success") {
+                // Vercel has deployed the latest commit, redirect now
+                if (!cancelled) {
+                  setPublishPolling(false);
+                  setPublishPollDate(null);
+                  setPublishSuccess(null);
+                  setPublishCountdown(0);
+                  setPublishRedirectUrl(null);
+                  const url = publishRedirectUrl || "/tools/news";
+                  window.open(url, "_blank");
+                }
+                return;
+              }
+            }
           }
         }
       } catch {
         // Ignore errors, keep polling
       }
-      // Poll again in 3 seconds
-      setTimeout(poll, 3000);
+      // Poll again in 5 seconds
+      if (!cancelled) {
+        pollTimer = setTimeout(poll, 5000);
+      }
     };
 
     poll();
+
+    return () => {
+      cancelled = true;
+      clearTimeout(pollTimer);
+    };
   }, [publishPolling, publishPollDate, publishRedirectUrl]);
 
   // Countdown display (visual only, actual redirect is handled by polling)
@@ -222,7 +256,7 @@ export default function AdminNewsPage() {
 
       setPublishAction(published ? "publish" : "unpublish");
       setPublishSuccess(date);
-      setPublishCountdown(5);
+      setPublishCountdown(60);
       setPublishRedirectUrl(`/tools/news/archive/${date}`);
 
       if (openInNewTab) {
