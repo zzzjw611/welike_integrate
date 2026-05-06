@@ -86,6 +86,7 @@ export default function AdminNewsPage() {
   const [editSaving, setEditSaving] = useState(false);
   const [publishSuccess, setPublishSuccess] = useState<string | null>(null);
   const [publishCountdown, setPublishCountdown] = useState(0);
+  const [publishAction, setPublishAction] = useState<"publish" | "unpublish">("publish");
   const [editSuccess, setEditSuccess] = useState<string | null>(null);
 
   const fetchNews = async () => {
@@ -179,8 +180,9 @@ export default function AdminNewsPage() {
         throw new Error(data.error || "Failed to publish");
       }
 
+      setPublishAction(published ? "publish" : "unpublish");
       setPublishSuccess(date);
-      setPublishCountdown(60);
+      setPublishCountdown(published ? 60 : 0);
     } catch (err) {
       alert(err instanceof Error ? err.message : "Failed to publish");
     } finally {
@@ -651,20 +653,26 @@ export default function AdminNewsPage() {
         )}
       </div>
 
-      {/* Publish Success Toast */}
+      {/* Publish / Unpublish Toast */}
       {publishSuccess && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
           <div className="bg-surface-900 border border-surface-800 rounded-2xl p-8 mx-4 shadow-2xl text-center max-w-sm">
-            <div className="h-16 w-16 rounded-full bg-green-500/20 flex items-center justify-center mx-auto mb-4">
-              <CheckCircle className="h-8 w-8 text-green-400" />
+            <div className={`h-16 w-16 rounded-full flex items-center justify-center mx-auto mb-4 ${publishAction === "publish" ? "bg-green-500/20" : "bg-yellow-500/20"}`}>
+              <CheckCircle className={`h-8 w-8 ${publishAction === "publish" ? "text-green-400" : "text-yellow-400"}`} />
             </div>
             <h3 className="text-lg font-semibold text-white mb-2">
-              {lang === "zh" ? "发布成功！" : "Publish Success!"}
+              {publishAction === "publish"
+                ? (lang === "zh" ? "发布成功！" : "Publish Success!")
+                : (lang === "zh" ? "已撤回！" : "Unpublished!")}
             </h3>
             <p className="text-sm text-surface-400 mb-6">
-              {lang === "zh"
-                ? `网站需要约 1 分钟更新，更新后将自动跳转到 AI News 页面... (${publishCountdown}s)`
-                : `The website needs about 1 minute to update. Redirecting to AI News page... (${publishCountdown}s)`}
+              {publishAction === "publish"
+                ? (lang === "zh"
+                    ? `网站需要约 1 分钟更新，更新后将自动跳转到 AI News 页面... (${publishCountdown}s)`
+                    : `The website needs about 1 minute to update. Redirecting to AI News page... (${publishCountdown}s)`)
+                : (lang === "zh"
+                    ? "新闻已撤回，网站更新后将不再显示。"
+                    : "News has been unpublished. It will no longer show on the website after the next deploy.")}
             </p>
             <div className="flex items-center justify-center gap-3">
               <button
