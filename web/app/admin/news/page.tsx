@@ -183,8 +183,8 @@ export default function AdminNewsPage() {
       }
 
       setPublishAction(published ? "publish" : "unpublish");
-      // Redirect to the archive page which reads directly from GitHub API (no Vercel deploy needed)
-      window.location.href = `/tools/news/archive/${date}`;
+      // Open the archive page in a new tab (reads directly from GitHub API, no Vercel deploy needed)
+      window.open(`/tools/news/archive/${date}`, "_blank");
     } catch (err) {
       alert(err instanceof Error ? err.message : "Failed to publish");
     } finally {
