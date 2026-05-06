@@ -149,6 +149,8 @@ export default function AdminNewsPage() {
     );
   }
 
+  const [publishSuccess, setPublishSuccess] = useState<string | null>(null);
+
   const handlePublish = async (date: string, published: boolean) => {
     setPublishing(date);
     try {
@@ -163,7 +165,11 @@ export default function AdminNewsPage() {
         throw new Error(data.error || "Failed to publish");
       }
 
-      await fetchNews();
+      setPublishSuccess(date);
+      // Wait 3 seconds then redirect to WeLike platform
+      setTimeout(() => {
+        window.location.href = "https://welike-integrate.vercel.app";
+      }, 3000);
     } catch (err) {
       alert(err instanceof Error ? err.message : "Failed to publish");
     } finally {
@@ -632,6 +638,30 @@ export default function AdminNewsPage() {
           </div>
         )}
       </div>
+
+      {/* Publish Success Toast */}
+      {publishSuccess && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+          <div className="bg-surface-900 border border-surface-800 rounded-2xl p-8 mx-4 shadow-2xl text-center max-w-sm">
+            <div className="h-16 w-16 rounded-full bg-green-500/20 flex items-center justify-center mx-auto mb-4">
+              <CheckCircle className="h-8 w-8 text-green-400" />
+            </div>
+            <h3 className="text-lg font-semibold text-white mb-2">
+              {lang === "zh" ? "发布成功！" : "Publish Success!"}
+            </h3>
+            <p className="text-sm text-surface-400 mb-6">
+              {lang === "zh"
+                ? "新闻正在同步到网页，几秒后将自动跳转到 WeLike 平台..."
+                : "News is syncing to the website. Redirecting to WeLike platform..."}
+            </p>
+            <div className="flex justify-center">
+              <div className="h-1.5 w-32 bg-surface-800 rounded-full overflow-hidden">
+                <div className="h-full bg-green-500 rounded-full animate-pulse" />
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Edit Modal */}
       {editing && editData && (
