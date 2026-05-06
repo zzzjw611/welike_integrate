@@ -37,18 +37,15 @@ async function fetchFromGitHub(date: string, skipCache = false): Promise<Issue |
 
   // When skipCache is true (admin preview with ?t= param), check "content" branch first for edits
   // Otherwise, read "master" branch first (has latest generated content)
+  // Uses our proxy endpoint (/api/news/content) which authenticates with GITHUB_TOKEN
+  // (5000 req/hr) instead of calling GitHub API directly (60 req/hr unauthenticated).
   const branches = skipCache ? ["content", "master"] : ["master", "content"];
   for (const branch of branches) {
     try {
-      const res = await fetch(
-        `https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/contents/web/content/${date}.md?ref=${branch}`,
-        { headers: { Accept: "application/vnd.github.v3+json" } }
-      );
+      const res = await fetch(`/api/news/content?date=${date}&branch=${branch}`);
       if (!res.ok) continue;
       const data = await res.json();
-      // Use fetch to get raw content with proper encoding (avoids atob UTF-8 issues)
-      const rawRes = await fetch(data.download_url);
-      const raw = await rawRes.text();
+      const raw = data.content;
       const { data: frontmatter } = matter(raw);
       const issue: Issue = {
         date: date,

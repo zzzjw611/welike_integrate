@@ -416,20 +416,18 @@ export default function AdminNewsPage() {
     }
 
     try {
-      // 2) Read from GitHub. Edits live on the `content` branch (we write there
-      //    to skip Vercel rebuild), with `master` as the fallback for issues
-      //    that have only been generated/published, never edited.
+      // 2) Read from GitHub via our proxy endpoint (uses GITHUB_TOKEN for auth,
+      //    5000 req/hr instead of 60 req/hr for unauthenticated requests).
+      //    Edits live on the `content` branch (we write there to skip Vercel
+      //    rebuild), with `master` as the fallback for issues that have only
+      //    been generated/published, never edited.
       let raw: string | null = null;
       for (const branch of ["content", "master"]) {
         try {
-          const res = await fetch(
-            `https://api.github.com/repos/zzzjw611/welike_integrate/contents/web/content/${date}.md?ref=${branch}`,
-            { headers: { Accept: "application/vnd.github.v3+json" } }
-          );
+          const res = await fetch(`/api/news/content?date=${date}&branch=${branch}`);
           if (!res.ok) continue;
           const data = await res.json();
-          const rawRes = await fetch(data.download_url);
-          raw = await rawRes.text();
+          raw = data.content;
           break;
         } catch {
           continue;
