@@ -84,6 +84,7 @@ export default function AdminNewsPage() {
   const [editData, setEditData] = useState<IssueData | null>(null);
   const [editLoading, setEditLoading] = useState(false);
   const [editSaving, setEditSaving] = useState(false);
+  const [publishSuccess, setPublishSuccess] = useState<string | null>(null);
 
   const fetchNews = async () => {
     setLoading(true);
@@ -148,8 +149,6 @@ export default function AdminNewsPage() {
       </div>
     );
   }
-
-  const [publishSuccess, setPublishSuccess] = useState<string | null>(null);
 
   const handlePublish = async (date: string, published: boolean) => {
     setPublishing(date);
