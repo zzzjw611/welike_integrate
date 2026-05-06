@@ -2,9 +2,8 @@ name: Generate AI News Daily
 
 on:
   schedule:
-    # 10:00 AM PT = 17:00 UTC (standard time) / 16:00 UTC (daylight time)
-    # Using 17:00 UTC to be safe — covers the 10 AM PT window
-    - cron: '0 17 * * *'
+    # 9:00 AM PT = 16:00 UTC (daylight time)
+    - cron: '0 16 * * *'
   workflow_dispatch:
     # Allow manual trigger for testing
 
