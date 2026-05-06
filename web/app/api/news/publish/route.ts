@@ -1,26 +1,65 @@
 import { NextRequest, NextResponse } from "next/server";
 import matter from "gray-matter";
 import { readContentFile, writeContentFile, listContentFiles } from "@/lib/github-storage";
+import fs from "node:fs/promises";
+import path from "node:path";
+
+export const dynamic = "force-dynamic";
 
 export async function GET() {
   try {
-    const dates = await listContentFiles();
+    const isLocal = !process.env.VERCEL;
+    let dates: string[];
+
+    if (isLocal) {
+      const contentDir = path.join(process.cwd(), "content");
+      try {
+        const files = await fs.readdir(contentDir);
+        dates = files
+          .filter((f) => f.endsWith(".md"))
+          .map((f) => f.replace(/\.md$/, ""))
+          .sort((a, b) => b.localeCompare(a));
+      } catch {
+        dates = [];
+      }
+    } else {
+      dates = await listContentFiles();
+    }
+
     const issues: { date: string; published: boolean; published_at: string | null }[] = [];
 
     for (const date of dates) {
-      const raw = await readContentFile(date);
-      if (!raw) continue;
-      const { data } = matter(raw);
-      issues.push({
-        date,
-        published: data.published !== false,
-        published_at: data.published_at || null,
-      });
+      try {
+        let raw: string | null;
+        if (isLocal) {
+          const filePath = path.join(process.cwd(), "content", `${date}.md`);
+          try {
+            raw = await fs.readFile(filePath, "utf8");
+          } catch {
+            raw = null;
+          }
+        } else {
+          raw = await readContentFile(date);
+        }
+
+        if (raw) {
+          const { data } = matter(raw);
+          issues.push({
+            date,
+            published: data.published !== false,
+            published_at: data.published_at || null,
+          });
+        } else {
+          issues.push({ date, published: false, published_at: null });
+        }
+      } catch {
+        issues.push({ date, published: false, published_at: null });
+      }
     }
 
-    return NextResponse.json({ data: issues });
+    return NextResponse.json({ issues });
   } catch (e) {
-    return NextResponse.json({ data: [], error: String(e) }, { status: 500 });
+    return NextResponse.json({ issues: [], error: String(e) }, { status: 500 });
   }
 }
 
