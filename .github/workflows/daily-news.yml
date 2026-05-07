@@ -68,7 +68,7 @@ jobs:
         uses: peter-evans/create-pull-request@v6
         with:
           branch: drafts/${{ steps.date.outputs.date }}
-          base: main
+          base: master
           title: "[Draft] AI Marketer News · ${{ steps.date.outputs.date }}"
           commit-message: "chore(content): auto-draft ${{ steps.date.outputs.date }}"
           body: |
