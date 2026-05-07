@@ -1,7 +1,10 @@
 "use client";
 
-import type { DailyCase, Lang } from "@/lib/ai-marketer-news";
-import { pickLang } from "@/lib/ai-marketer-news";
+import type { DailyCase } from "@/lib/ai-marketer-news";
+// pickLang/Lang come from the client-safe shared module so this "use client"
+// component doesn't drag fs/path/etc from the server-side lib into the
+// browser bundle (UnhandledSchemeError on node:fs/promises during build).
+import { pickLang, type Lang } from "@/lib/ai-marketer-news-shared";
 import SectionHeader from "./SectionHeader";
 import { BookOpen } from "lucide-react";
 

@@ -7,8 +7,12 @@ import remarkHtml from "remark-html";
 // Bilingual fields (`*_zh`) are optional — older issues authored before the
 // bilingual prompt was rolled out (2026-05 and earlier) won't have them.
 // Renderers should fall back to the English field when `_zh` is missing.
+//
+// Re-exported from ./ai-marketer-news-shared so server callers keep working,
+// but client components MUST import directly from the shared file to avoid
+// dragging fs/path into the browser bundle.
 
-export type Lang = "en" | "zh";
+export { pickLang, type Lang } from "./ai-marketer-news-shared";
 
 export type Brief = {
   title: string;
@@ -62,10 +66,6 @@ export type Highlight = {
   bullets_zh?: string[];
 };
 
-// Tiny helper used by render components: prefer `_zh` field when lang is zh.
-export function pickLang<T>(en: T, zh: T | undefined, lang: Lang): T {
-  return lang === "zh" && zh !== undefined && zh !== null ? zh : en;
-}
 
 export type Issue = {
   date: string;
