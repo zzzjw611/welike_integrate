@@ -1,0 +1,42 @@
+name: Dispatch Telegram Alerts
+
+# Hourly fan-out for the Create Alerts subscription closed loop. Runs on
+# GitHub Actions instead of Vercel Cron because Vercel's Hobby tier is
+# limited to once-per-day crons; honouring per-user `deliveryTime` ×
+# `timezone` requires hourly granularity. The endpoint itself
+# (web/app/api/cron/dispatch-alerts/route.ts) is idempotent (news_push_log
+# table) and applies a ±35min window so the exact tick offset doesn't matter.
+#
+# Required repo secrets:
+#   CRON_SECRET   — same value configured in Vercel Project Env Vars
+#   WEB_BASE_URL  — e.g. https://welike-integrate.vercel.app
+
+on:
+  schedule:
+    - cron: "0 * * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  dispatch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Call dispatch endpoint
+        env:
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+          WEB_BASE_URL: ${{ secrets.WEB_BASE_URL }}
+        run: |
+          if [ -z "$WEB_BASE_URL" ] || [ -z "$CRON_SECRET" ]; then
+            echo "::error::CRON_SECRET and WEB_BASE_URL must be configured as repo secrets"
+            exit 1
+          fi
+          # `--fail` exits non-zero on 4xx/5xx so a misconfigured Vercel
+          # deployment surfaces as a workflow failure instead of silently
+          # skipping the day.
+          curl --fail --show-error --silent \
+            -H "Authorization: Bearer $CRON_SECRET" \
+            "$WEB_BASE_URL/api/cron/dispatch-alerts"
+          echo

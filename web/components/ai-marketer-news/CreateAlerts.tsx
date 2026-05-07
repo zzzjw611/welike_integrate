@@ -354,7 +354,13 @@ export default function CreateAlerts({
   };
 
   // ===== Save =====
-  const handleSave = () => {
+  // Telegram subscriptions are persisted to the backend (telegram_subscriptions
+  // table) so the hourly Vercel cron at /api/cron/dispatch-alerts can deliver
+  // the latest issue at the user's chosen push_time × timezone. Email channel
+  // stays in localStorage only — manual "Send now" path covers that flow.
+  const [saving, setSaving] = useState(false);
+
+  const handleSave = async () => {
     if (channel === "telegram" && !chatId) {
       setError("Please connect Telegram first");
       return;
@@ -372,19 +378,53 @@ export default function CreateAlerts({
       timezone,
       ...(channel === "telegram" ? { chatId: chatId! } : { email }),
     };
-    saveConfig(newConfig);
-    setConfig(newConfig);
+
     setError("");
+    setSaving(true);
+    try {
+      if (channel === "telegram" && chatId) {
+        const resp = await fetch("/api/news/subscriptions", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            chat_id: chatId,
+            timezone,
+            push_time: deliveryTime,
+            sections,
+          }),
+        });
+        if (!resp.ok) {
+          const data = await resp.json().catch(() => ({}));
+          throw new Error(data.error || "Failed to save subscription");
+        }
+      }
+      saveConfig(newConfig);
+      setConfig(newConfig);
+    } catch (err: any) {
+      setError(err.message || "Failed to save subscription");
+    } finally {
+      setSaving(false);
+    }
   };
 
-  const handleDelete = () => {
+  const handleDelete = async () => {
+    setError("");
+    try {
+      if (config?.channel === "telegram" && config.chatId) {
+        await fetch(
+          `/api/news/subscriptions?chat_id=${encodeURIComponent(String(config.chatId))}`,
+          { method: "DELETE" }
+        );
+      }
+    } catch {
+      // best effort; localStorage still gets cleared
+    }
     clearConfig();
     setConfig(null);
     setChatId(null);
     setEmail("");
     setSections({ ...DEFAULT_SECTIONS });
     setDeliveryTime(DEFAULT_TIME);
-    setError("");
   };
 
   // ===== Send Now =====
@@ -399,17 +439,18 @@ export default function CreateAlerts({
     try {
       if (config.channel === "telegram" && config.chatId) {
         const text = formatIssueForTelegram(issue, activeSections);
+        // Token now lives server-side (TELEGRAM_BOT_TOKEN env). The /api/telegram
+        // route ignores any `token` in the body — it always uses the env value.
         const res = await fetch("/api/telegram", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            token: "8732346171:AAFcGgXKofYzY-tsQwv9ZyNkrfeuKqyvSGs",
             chatId: String(config.chatId),
             text,
           }),
         });
         const data = await res.json();
-        if (!res.ok) throw new Error(data.description || "Failed to send Telegram message");
+        if (!res.ok) throw new Error(data.error || data.description || "Failed to send Telegram message");
       } else if (config.channel === "email" && config.email) {
         const html = formatIssueForEmail(issue, activeSections);
         const res = await fetch("/api/news/send-email", {
@@ -712,10 +753,15 @@ export default function CreateAlerts({
                 </button>
                 <button
                   onClick={handleSave}
-                  className="flex items-center gap-2 rounded-lg border border-surface-700 bg-surface-900 px-5 py-3 text-sm text-surface-400 hover:text-white transition-colors"
+                  disabled={saving}
+                  className="flex items-center gap-2 rounded-lg border border-surface-700 bg-surface-900 px-5 py-3 text-sm text-surface-400 hover:text-white disabled:opacity-50 transition-colors"
                 >
-                  <Check className="h-4 w-4" />
-                  Update
+                  {saving ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Check className="h-4 w-4" />
+                  )}
+                  {saving ? "Saving…" : "Update"}
                 </button>
                 <button
                   onClick={handleDelete}
@@ -728,11 +774,15 @@ export default function CreateAlerts({
             ) : (
               <button
                 onClick={handleSave}
-                disabled={channel === "telegram" ? !chatId : !email}
+                disabled={saving || (channel === "telegram" ? !chatId : !email)}
                 className="flex items-center gap-2 rounded-lg bg-brand-500 px-5 py-3 text-sm font-semibold text-black hover:bg-brand-400 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
-                <Bell className="h-4 w-4" />
-                Save alert
+                {saving ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Bell className="h-4 w-4" />
+                )}
+                {saving ? "Saving…" : "Save alert"}
               </button>
             )}
           </div>

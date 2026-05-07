@@ -11,6 +11,13 @@ web/out/
 .env
 .env.local
 web/.env.local
+pipeline/.env
+
+# Python pipeline runtime
+pipeline/__pycache__/
+pipeline/**/__pycache__/
+pipeline/.venv/
+.venv/
 
 # Output files
 output/
