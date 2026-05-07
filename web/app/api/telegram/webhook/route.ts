@@ -1,301 +1,288 @@
 import { NextRequest, NextResponse } from "next/server";
-import pool from "@/lib/db";
 import { getLatestIssue } from "@/lib/ai-marketer-news";
 import {
   formatIssueForTelegram,
-  sendTelegramMessage,
   type AlertSections,
 } from "@/lib/news-telegram";
 
-// Telegram → Vercel webhook. Receives every Update Telegram pushes for
-// @WeLike_Alerts_bot and dispatches to a command handler.
+// Stateless interactive menu bot for @WeLike_Alerts_bot.
 //
-// One-time setup (run once after deploying, see scripts/setup-telegram-webhook.sh):
-//   curl -F "url=$WEB_BASE_URL/api/telegram/webhook" \
-//        -F "secret_token=$TELEGRAM_WEBHOOK_SECRET" \
-//        "https://api.telegram.org/bot$TELEGRAM_BOT_TOKEN/setWebhook"
+// Design:
+//   /start  → main menu: [AI News] [Social Listening]
+//   tap "AI News"  → sections menu: [Daily Brief] [Growth Insight]
+//                                   [Launch Radar] [Daily Case] [All]
+//   tap a section  → bot sends that part of the latest issue inline
+//   tap "Social Listening" → placeholder (deep-links to web)
 //
-// Telegram then includes the secret in `X-Telegram-Bot-Api-Secret-Token`
-// so we can reject forged Updates.
+// No persistence. Every interaction is "pull": the user taps a button and
+// gets content right then. No subscription, no DB, no cron.
+//
+// Webhook bootstrap (one-time): scripts/setup-telegram-webhook.sh
+// Telegram echoes our TELEGRAM_WEBHOOK_SECRET in the
+// X-Telegram-Bot-Api-Secret-Token header so we can reject forgeries.
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 30;
 
 const BASE_URL = process.env.WEB_BASE_URL || "https://welike-integrate.vercel.app";
+const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
+const TELEGRAM_API = `https://api.telegram.org/bot${BOT_TOKEN}`;
 
+// ─── types ─────────────────────────────────────────────────────────────
+
+interface InlineKeyboardButton {
+  text: string;
+  callback_data?: string;
+  url?: string;
+}
+interface InlineKeyboardMarkup {
+  inline_keyboard: InlineKeyboardButton[][];
+}
+interface TelegramMessage {
+  message_id: number;
+  from?: { id: number; language_code?: string };
+  chat: { id: number };
+  text?: string;
+}
+interface TelegramCallbackQuery {
+  id: string;
+  from: { id: number; language_code?: string };
+  message?: TelegramMessage;
+  data?: string;
+}
 interface TelegramUpdate {
   update_id: number;
-  message?: {
-    message_id: number;
-    from?: { id: number; language_code?: string; first_name?: string };
-    chat: { id: number };
-    text?: string;
-  };
+  message?: TelegramMessage;
+  callback_query?: TelegramCallbackQuery;
 }
 
-// ─── helpers ────────────────────────────────────────────────────────────
+type Lang = "en" | "zh";
 
-async function reply(chatId: number, text: string) {
-  await sendTelegramMessage(chatId, text);
+// ─── Telegram API helpers ──────────────────────────────────────────────
+
+async function tg(method: string, body: unknown) {
+  if (!BOT_TOKEN) {
+    console.error("[webhook] TELEGRAM_BOT_TOKEN missing");
+    return;
+  }
+  try {
+    const res = await fetch(`${TELEGRAM_API}/${method}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+    if (!res.ok) {
+      console.error(`[webhook] ${method} failed`, res.status, await res.text());
+    }
+  } catch (err) {
+    console.error(`[webhook] ${method} threw`, err);
+  }
 }
 
-function detectLang(code?: string): "en" | "zh" {
+function sendMessage(
+  chatId: number,
+  text: string,
+  reply_markup?: InlineKeyboardMarkup
+) {
+  return tg("sendMessage", {
+    chat_id: chatId,
+    text,
+    parse_mode: "HTML",
+    disable_web_page_preview: true,
+    ...(reply_markup ? { reply_markup } : {}),
+  });
+}
+
+function editMessageText(
+  chatId: number,
+  messageId: number,
+  text: string,
+  reply_markup?: InlineKeyboardMarkup
+) {
+  return tg("editMessageText", {
+    chat_id: chatId,
+    message_id: messageId,
+    text,
+    parse_mode: "HTML",
+    disable_web_page_preview: true,
+    ...(reply_markup ? { reply_markup } : {}),
+  });
+}
+
+function answerCallback(callbackId: string, text?: string) {
+  return tg("answerCallbackQuery", {
+    callback_query_id: callbackId,
+    ...(text ? { text, show_alert: false } : {}),
+  });
+}
+
+// ─── menus ─────────────────────────────────────────────────────────────
+
+const T = {
+  welcome: {
+    en: `👋 <b>Welcome!</b>
+
+What would you like to receive?`,
+    zh: `👋 <b>欢迎！</b>
+
+你想接收哪类信息？`,
+  },
+  aiNewsHeader: {
+    en: `📰 <b>AI Marketer News</b>
+
+Pick a section:`,
+    zh: `📰 <b>AI Marketer News</b>
+
+选择一个板块：`,
+  },
+  socialPlaceholder: {
+    en: `📡 <b>Social Listening</b>
+
+Real-time mentions for your product and competitors.
+
+🛠 Telegram delivery for Social Listening is coming soon.
+For now, view your dashboard:
+👉 ${BASE_URL}/tools/social-listening`,
+    zh: `📡 <b>Social Listening</b>
+
+实时跟踪你的产品和竞品被讨论的情况。
+
+🛠 Telegram 推送即将上线。
+现在请前往网页：
+👉 ${BASE_URL}/tools/social-listening`,
+  },
+  noIssue: {
+    en: `📭 No issue published yet. Check back tomorrow morning.`,
+    zh: `📭 今天还没发布日报，明早再来看吧。`,
+  },
+  help: {
+    en: `📚 <b>Commands</b>
+
+/start — Open the main menu
+/ainews — AI News section picker
+/help — Show this menu
+
+🌐 ${BASE_URL}/tools/news`,
+    zh: `📚 <b>命令</b>
+
+/start — 打开主菜单
+/ainews — 选择 AI News 板块
+/help — 显示此菜单
+
+🌐 ${BASE_URL}/tools/news`,
+  },
+};
+
+function detectLang(code?: string): Lang {
   return code?.startsWith("zh") ? "zh" : "en";
 }
 
-function authorize(req: NextRequest): boolean {
-  const expected = process.env.TELEGRAM_WEBHOOK_SECRET;
-  if (!expected) return true; // dev / not configured
-  const got = req.headers.get("x-telegram-bot-api-secret-token");
-  return got === expected;
+function mainMenuMarkup(lang: Lang): InlineKeyboardMarkup {
+  return {
+    inline_keyboard: [
+      [
+        {
+          text: lang === "zh" ? "📰 AI News" : "📰 AI News",
+          callback_data: "m:ai",
+        },
+      ],
+      [
+        {
+          text: lang === "zh" ? "📡 Social Listening" : "📡 Social Listening",
+          callback_data: "m:soc",
+        },
+      ],
+    ],
+  };
 }
 
-// Ensure a `users` row exists; reuse the one already linked to this chat
-// if one exists (e.g. from a prior /start), else mint a new one.
-async function ensureUser(chatId: string, lang: "en" | "zh"): Promise<string> {
-  const existing = await pool.query<{ user_id: string }>(
-    `SELECT user_id FROM telegram_subscriptions WHERE telegram_chat_id = $1`,
-    [chatId]
-  );
-  if (existing.rows.length > 0) return existing.rows[0].user_id;
-
-  const inserted = await pool.query<{ id: string }>(
-    `INSERT INTO users (language) VALUES ($1) RETURNING id`,
-    [lang]
-  );
-  return inserted.rows[0].id;
+function aiSectionsMarkup(lang: Lang): InlineKeyboardMarkup {
+  return {
+    inline_keyboard: [
+      [
+        {
+          text: lang === "zh" ? "📋 Daily Brief" : "📋 Daily Brief",
+          callback_data: "m:ai:b",
+        },
+      ],
+      [
+        {
+          text: lang === "zh" ? "💡 Growth Insight" : "💡 Growth Insight",
+          callback_data: "m:ai:g",
+        },
+      ],
+      [
+        {
+          text: lang === "zh" ? "🚀 Launch Radar" : "🚀 Launch Radar",
+          callback_data: "m:ai:l",
+        },
+      ],
+      [
+        {
+          text: lang === "zh" ? "📊 Daily Case" : "📊 Daily Case",
+          callback_data: "m:ai:c",
+        },
+      ],
+      [
+        {
+          text: lang === "zh" ? "✨ All" : "✨ All",
+          callback_data: "m:ai:all",
+        },
+      ],
+      [
+        {
+          text: lang === "zh" ? "← 返回" : "← Back",
+          callback_data: "m:root",
+        },
+      ],
+    ],
+  };
 }
 
-async function ensureSubscription(
-  userId: string,
-  chatId: string,
-  lang: "en" | "zh"
-) {
-  await pool.query(
-    `INSERT INTO telegram_subscriptions
-       (user_id, telegram_chat_id, language, timezone, push_time, is_active, updated_at)
-     VALUES ($1, $2, $3, 'Asia/Shanghai', '09:00', true, NOW())
-     ON CONFLICT (telegram_chat_id) DO UPDATE
-       SET is_active = true, updated_at = NOW()`,
-    [userId, chatId, lang]
-  );
-}
-
-// ─── command handlers ──────────────────────────────────────────────────
-
-const HELP_TEXT = `📚 <b>Commands</b>
-
-/ainews — Today's top AI news
-/social — Your Social Listening mentions
-/list — See your alert configuration
-/pause — Pause daily push
-/resume — Resume daily push
-/delete — Remove subscription entirely
-/help — Show this menu
-
-🌐 Manage from the web — easiest way
-👉 ${BASE_URL}/tools/news · Create Alerts`;
-
-function welcomeWithToolMenu(lang: "en" | "zh"): string {
-  return lang === "zh"
-    ? `✅ <b>已连接 WeLike 网站！</b>
-你的 Telegram 已绑定。日报会自动推送到这里。
-
-━━━━━━━━━━━━━━━━━━━━
-🌐 <b>从网页管理（推荐）</b>
-👉 ${BASE_URL}/tools/news  ·  Create Alerts
-━━━━━━━━━━━━━━━━━━━━
-
-<b>命令：</b>
-  /ainews  → 今日 AI 新闻
-  /social  → 你的 Social Listening 提及
-  /list  → 查看你的告警
-  /pause  /resume  /delete
-  /help  → 全部命令`
-    : `✅ <b>Connected to the WeLike website!</b>
-Your Telegram is now linked. Pushes will land here automatically.
-
-━━━━━━━━━━━━━━━━━━━━
-🌐 <b>Manage from the web — easiest way</b>
-👉 ${BASE_URL}/tools/news  ·  Create Alerts
-━━━━━━━━━━━━━━━━━━━━
-
-<b>Commands:</b>
-  /ainews  → today's top AI news
-  /social  → your Social Listening mentions
-  /list  → see your alert
-  /pause  /resume  /delete
-  /help  → all commands`;
-}
-
-async function handleStart(
-  chatId: number,
-  lang: "en" | "zh",
-  payload: string
-) {
-  const chatIdStr = String(chatId);
-  const userId = await ensureUser(chatIdStr, lang);
-  await ensureSubscription(userId, chatIdStr, lang);
-
-  // If the user came via "?start=link_<token>" deep link, finish the bind.
-  if (payload.startsWith("link_")) {
-    const token = payload.slice(5);
-    const upd = await pool.query(
-      `UPDATE link_tokens
-          SET telegram_chat_id = $1
-        WHERE token = $2
-          AND expires_at > NOW()
-          AND telegram_chat_id IS NULL
-        RETURNING token`,
-      [chatIdStr, token]
-    );
-    if (upd.rowCount && upd.rowCount > 0) {
-      await reply(chatId, welcomeWithToolMenu(lang));
-      return;
-    }
-    await reply(
-      chatId,
-      lang === "zh"
-        ? "⚠️ 链接已过期或已使用。请回到网站重新点 Connect。"
-        : "⚠️ This link has expired or already been used. Please click Connect on the website again."
-    );
-    return;
+function sectionsForKey(key: string): AlertSections {
+  switch (key) {
+    case "b":
+      return { briefs: true, launches: false, growth_insights: false, daily_case: false };
+    case "g":
+      return { briefs: false, launches: false, growth_insights: true, daily_case: false };
+    case "l":
+      return { briefs: false, launches: true, growth_insights: false, daily_case: false };
+    case "c":
+      return { briefs: false, launches: false, growth_insights: false, daily_case: true };
+    case "all":
+    default:
+      return { briefs: true, launches: true, growth_insights: true, daily_case: true };
   }
-
-  // Plain /start (typed manually or from bot menu)
-  await reply(chatId, welcomeWithToolMenu(lang));
 }
 
-async function handleAinews(chatId: number, lang: "en" | "zh") {
+// ─── handlers ──────────────────────────────────────────────────────────
+
+async function showMainMenu(chatId: number, lang: Lang) {
+  await sendMessage(chatId, T.welcome[lang], mainMenuMarkup(lang));
+}
+
+async function showAiSections(chatId: number, lang: Lang) {
+  await sendMessage(chatId, T.aiNewsHeader[lang], aiSectionsMarkup(lang));
+}
+
+async function sendIssueSection(chatId: number, lang: Lang, sectionKey: string) {
   const issue = await getLatestIssue();
   if (!issue) {
-    await reply(
-      chatId,
-      lang === "zh"
-        ? "今天还没有发布的日报。请明早再来。"
-        : "No issue published yet. Check back tomorrow morning."
-    );
+    await sendMessage(chatId, T.noIssue[lang]);
     return;
   }
-  // /ainews uses the user's saved sections preference if present, else default
-  const subRow = await pool.query<{ sections: AlertSections | null }>(
-    `SELECT sections FROM telegram_subscriptions WHERE telegram_chat_id = $1`,
-    [String(chatId)]
-  );
-  const sections: AlertSections = subRow.rows[0]?.sections ?? {
-    briefs: true,
-    launches: true,
-    growth_insights: true,
-    daily_case: true,
-  };
-  await reply(chatId, formatIssueForTelegram(issue, sections));
+  const sections = sectionsForKey(sectionKey);
+  const text = formatIssueForTelegram(issue, sections);
+  await sendMessage(chatId, text);
 }
 
-async function handleSocial(chatId: number, lang: "en" | "zh") {
-  await reply(
-    chatId,
-    lang === "zh"
-      ? `🛠 <b>Social Listening 集成开发中</b>
+// ─── webhook entry ─────────────────────────────────────────────────────
 
-请前往网页查看你的提及与告警：
-👉 ${BASE_URL}/tools/social-listening`
-      : `🛠 <b>Social Listening integration coming soon</b>
-
-For now, view your mentions and alerts on the web:
-👉 ${BASE_URL}/tools/social-listening`
-  );
+function authorize(req: NextRequest): boolean {
+  const expected = process.env.TELEGRAM_WEBHOOK_SECRET;
+  if (!expected) return true;
+  return req.headers.get("x-telegram-bot-api-secret-token") === expected;
 }
-
-async function handleList(chatId: number, lang: "en" | "zh") {
-  const { rows } = await pool.query<{
-    is_active: boolean;
-    push_time: string;
-    timezone: string;
-    sections: AlertSections | null;
-    language: string;
-  }>(
-    `SELECT is_active,
-            to_char(push_time, 'HH24:MI') AS push_time,
-            timezone, sections, language
-       FROM telegram_subscriptions
-      WHERE telegram_chat_id = $1`,
-    [String(chatId)]
-  );
-
-  if (rows.length === 0) {
-    await reply(
-      chatId,
-      lang === "zh"
-        ? "你还没有订阅。发送 /start 开始。"
-        : "No subscription yet. Send /start to get started."
-    );
-    return;
-  }
-  const r = rows[0];
-  const status = r.is_active ? "✅ Active" : "⏸ Paused";
-  const sections = r.sections ?? {
-    briefs: true,
-    launches: true,
-    growth_insights: true,
-    daily_case: true,
-  };
-  const sectionsLabel = [
-    sections.briefs && "Daily Brief",
-    sections.launches && "Launch Radar",
-    sections.growth_insights && "Growth Insights",
-    sections.daily_case && "Daily Case",
-  ]
-    .filter(Boolean)
-    .join(", ") || "(none)";
-
-  await reply(
-    chatId,
-    `<b>Your alert</b>
-Status: ${status}
-Time: ${r.push_time} ${r.timezone}
-Language: ${r.language}
-Sections: ${sectionsLabel}
-
-Manage on the web → ${BASE_URL}/tools/news`
-  );
-}
-
-async function handlePause(chatId: number) {
-  await pool.query(
-    `UPDATE telegram_subscriptions
-        SET is_active = false, updated_at = NOW()
-      WHERE telegram_chat_id = $1`,
-    [String(chatId)]
-  );
-  await reply(chatId, "⏸ Paused. Send /resume to start receiving again.");
-}
-
-async function handleResume(chatId: number) {
-  await pool.query(
-    `UPDATE telegram_subscriptions
-        SET is_active = true, updated_at = NOW()
-      WHERE telegram_chat_id = $1`,
-    [String(chatId)]
-  );
-  await reply(chatId, "▶️ Resumed. You'll receive the next scheduled push.");
-}
-
-async function handleDelete(chatId: number) {
-  await pool.query(
-    `DELETE FROM telegram_subscriptions WHERE telegram_chat_id = $1`,
-    [String(chatId)]
-  );
-  await reply(
-    chatId,
-    "🗑 Subscription removed. Send /start to subscribe again."
-  );
-}
-
-async function handleHelp(chatId: number) {
-  await reply(chatId, HELP_TEXT);
-}
-
-// ─── main dispatcher ───────────────────────────────────────────────────
 
 export async function POST(req: NextRequest) {
   if (!authorize(req)) {
@@ -306,44 +293,54 @@ export async function POST(req: NextRequest) {
   try {
     update = await req.json();
   } catch {
-    return NextResponse.json({ ok: true }); // ignore malformed
-  }
-
-  const msg = update.message;
-  if (!msg?.text || !msg.from) {
     return NextResponse.json({ ok: true });
   }
 
-  const chatId = msg.chat.id;
-  const lang = detectLang(msg.from.language_code);
-  const text = msg.text.trim();
-
   try {
-    if (text.startsWith("/start")) {
-      const payload = text.slice("/start".length).trim();
-      await handleStart(chatId, lang, payload);
-    } else if (text === "/ainews") {
-      await handleAinews(chatId, lang);
-    } else if (text === "/social") {
-      await handleSocial(chatId, lang);
-    } else if (text === "/list") {
-      await handleList(chatId, lang);
-    } else if (text === "/pause") {
-      await handlePause(chatId);
-    } else if (text === "/resume") {
-      await handleResume(chatId);
-    } else if (text === "/delete") {
-      await handleDelete(chatId);
-    } else if (text === "/help") {
-      await handleHelp(chatId);
+    // ── Slash commands ─────────────────────────────────────────────
+    if (update.message?.text) {
+      const chatId = update.message.chat.id;
+      const lang = detectLang(update.message.from?.language_code);
+      const text = update.message.text.trim();
+
+      if (text.startsWith("/start")) {
+        await showMainMenu(chatId, lang);
+      } else if (text === "/ainews") {
+        await showAiSections(chatId, lang);
+      } else if (text === "/help") {
+        await sendMessage(chatId, T.help[lang]);
+      }
+      // Anything else: silent, default Telegram bot behaviour.
     }
-    // Unknown commands and plain chat: silent (Telegram bots default behaviour).
+
+    // ── Inline keyboard taps ───────────────────────────────────────
+    if (update.callback_query) {
+      const cb = update.callback_query;
+      const chatId = cb.message?.chat.id;
+      const messageId = cb.message?.message_id;
+      const lang = detectLang(cb.from.language_code);
+      const data = cb.data ?? "";
+
+      // Always dismiss the spinner first; replies happen async.
+      await answerCallback(cb.id);
+
+      if (!chatId || !messageId) return NextResponse.json({ ok: true });
+
+      if (data === "m:root") {
+        await editMessageText(chatId, messageId, T.welcome[lang], mainMenuMarkup(lang));
+      } else if (data === "m:ai") {
+        await editMessageText(chatId, messageId, T.aiNewsHeader[lang], aiSectionsMarkup(lang));
+      } else if (data.startsWith("m:ai:")) {
+        const sectionKey = data.slice("m:ai:".length); // b / g / l / c / all
+        await sendIssueSection(chatId, lang, sectionKey);
+      } else if (data === "m:soc") {
+        await sendMessage(chatId, T.socialPlaceholder[lang]);
+      }
+    }
   } catch (err) {
-    console.error("[telegram:webhook] handler error", { text, chatId, err });
-    // Tell Telegram OK regardless — otherwise it'll keep retrying the same
-    // update and double-deliver replies once we recover.
+    console.error("[telegram:webhook] handler error", err);
+    // Always 200 — Telegram retries 5xx and we don't want double-delivery.
   }
 
-  // 200 within ~30s is the contract with Telegram. Always return ok.
   return NextResponse.json({ ok: true });
 }
