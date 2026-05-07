@@ -37,7 +37,7 @@ jobs:
             node scripts/generate-news.mjs "$(date -d 'yesterday' '+%Y-%m-%d')"
           fi
         env:
-          DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
 
       - name: Commit and push generated content
         run: |

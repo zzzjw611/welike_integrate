@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 /**
- * Generate AI Marketer News issues using DeepSeek API.
+ * Generate AI Marketer News issues using Claude API.
  * Usage: node scripts/generate-news.mjs [date]
  *   date: optional, defaults to today. Format: YYYY-MM-DD
  *
@@ -15,8 +15,8 @@ import { fileURLToPath } from "node:url";
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const CONTENT_DIR = path.join(__dirname, "..", "web", "content");
 
-const DEEPSEEK_API_KEY = process.env.DEEPSEEK_API_KEY || "sk-f5c9e4006af7418ba864709b76773bba";
-const DEEPSEEK_BASE = "https://api.deepseek.com/v1";
+const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY;
+const ANTHROPIC_BASE = "https://api.anthropic.com/v1";
 
 // ===== URL Validation =====
 
@@ -99,16 +99,28 @@ function getMissingDates(from, to) {
   return missing;
 }
 
-async function callDeepSeek(messages, temperature = 0.7, maxTokens = 4096) {
-  const res = await fetch(`${DEEPSEEK_BASE}/chat/completions`, {
+async function callClaude(messages, temperature = 0.7, maxTokens = 4096) {
+  // Convert OpenAI-style messages to Anthropic format
+  let systemMsg = "";
+  const claudeMessages = messages.filter((m) => {
+    if (m.role === "system") {
+      systemMsg = m.content;
+      return false;
+    }
+    return true;
+  });
+
+  const res = await fetch(`${ANTHROPIC_BASE}/messages`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      Authorization: `Bearer ${DEEPSEEK_API_KEY}`,
+      "x-api-key": ANTHROPIC_API_KEY,
+      "anthropic-version": "2023-06-01",
     },
     body: JSON.stringify({
-      model: "deepseek-chat",
-      messages,
+      model: "claude-sonnet-4-20250514",
+      system: systemMsg,
+      messages: claudeMessages,
       temperature,
       max_tokens: maxTokens,
     }),
@@ -116,11 +128,11 @@ async function callDeepSeek(messages, temperature = 0.7, maxTokens = 4096) {
 
   if (!res.ok) {
     const text = await res.text();
-    throw new Error(`DeepSeek API error ${res.status}: ${text}`);
+    throw new Error(`Claude API error ${res.status}: ${text}`);
   }
 
   const data = await res.json();
-  return data.choices[0].message.content;
+  return data.content[0].text;
 }
 
 function parseJSON(content) {
@@ -243,10 +255,10 @@ async function generateIssue(dateStr, prevIssue) {
   const userPrompt = buildUserPrompt(dateStr);
 
   // First call: generate the frontmatter JSON
-  console.log("  → Calling DeepSeek for frontmatter...");
+  console.log("  → Calling Claude for frontmatter...");
   let frontmatterContent;
   try {
-    frontmatterContent = await callDeepSeek(
+    frontmatterContent = await callClaude(
       [
         { role: "system", content: sysPrompt },
         { role: "user", content: userPrompt },
@@ -255,7 +267,7 @@ async function generateIssue(dateStr, prevIssue) {
       4096
     );
   } catch (e) {
-    console.error(`  ❌ DeepSeek API error for frontmatter: ${e.message}`);
+    console.error(`  ❌ Claude API error for frontmatter: ${e.message}`);
     return null;
   }
 
@@ -269,7 +281,7 @@ async function generateIssue(dateStr, prevIssue) {
   }
 
   // Second call: generate the daily_case body content
-  console.log("  → Calling DeepSeek for case study body...");
+  console.log("  → Calling Claude for case study body...");
   let bodyContent = "";
   if (issueData.daily_case) {
     const bodyPrompt = `Write a detailed marketing case study analysis in markdown format for:
@@ -288,7 +300,7 @@ Write 3-5 paragraphs covering:
 Output ONLY the markdown content, no JSON.`;
 
     try {
-      bodyContent = await callDeepSeek(
+      bodyContent = await callClaude(
         [
           {
             role: "system",
@@ -331,7 +343,7 @@ ${invalidUrls.map((u) => `- [${u.section}] "${u.label}": ${u.url}`).join("\n")}
 Please regenerate the SAME issue but replace ONLY the invalid URLs with real, working URLs. Keep everything else exactly the same. Output ONLY raw JSON.`;
 
       try {
-        frontmatterContent = await callDeepSeek(
+        frontmatterContent = await callClaude(
           [
             { role: "system", content: sysPrompt },
             { role: "user", content: fixPrompt },
