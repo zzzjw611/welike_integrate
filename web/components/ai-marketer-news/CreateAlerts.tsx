@@ -16,7 +16,12 @@ import {
 // /start, picks AI News or Social Listening, and picks a section. Done.
 
 const BOT_USERNAME = "WeLike_Alerts_bot";
-const BOT_DEEP_LINK = `https://t.me/${BOT_USERNAME}`;
+// `?start=connect` makes Telegram show a "Start" button on first open. Tapping
+// it sends "/start connect" to the bot, which fires the welcome handler
+// without the user having to type anything. (For returning users who've
+// already started the bot, the chat just opens — they can tap the menu hint
+// or send /start manually.)
+const BOT_DEEP_LINK = `https://t.me/${BOT_USERNAME}?start=connect`;
 
 // `issue` is still passed by the parent server page from the previous design
 // — keep the prop signature loose so we don't force a parent change.

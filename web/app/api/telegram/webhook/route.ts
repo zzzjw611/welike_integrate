@@ -120,12 +120,34 @@ function answerCallback(callbackId: string, text?: string) {
 
 const T = {
   welcome: {
-    en: `👋 <b>Welcome!</b>
+    en: `✅ <b>Connected to the WeLike website!</b>
+Your Telegram is now linked. Pick what you want from the menu below — content arrives instantly.
 
-What would you like to receive?`,
-    zh: `👋 <b>欢迎！</b>
+━━━━━━━━━━━━━━━━━━━━
+🌐 <b>Manage from the web — easiest way</b>
+👉 ${BASE_URL}/tools/news  ·  Create Alerts
+━━━━━━━━━━━━━━━━━━━━
 
-你想接收哪类信息？`,
+<b>Commands:</b>
+  /ainews  → today's top AI news
+  /social  → your Social Listening mentions
+  /list  → see your alert
+  /pause  /resume  /delete
+  /help  → all commands`,
+    zh: `✅ <b>已连接 WeLike 网站！</b>
+你的 Telegram 已绑定。从下方菜单选择，内容立即送达。
+
+━━━━━━━━━━━━━━━━━━━━
+🌐 <b>从网页管理（推荐）</b>
+👉 ${BASE_URL}/tools/news  ·  Create Alerts
+━━━━━━━━━━━━━━━━━━━━
+
+<b>命令：</b>
+  /ainews  → 今日 AI 新闻
+  /social  → 你的 Social Listening 提及
+  /list  → 查看你的告警
+  /pause  /resume  /delete
+  /help  → 全部命令`,
   },
   aiNewsHeader: {
     en: `📰 <b>AI Marketer News</b>
@@ -156,20 +178,34 @@ For now, view your dashboard:
     zh: `📭 今天还没发布日报，明早再来看吧。`,
   },
   help: {
-    en: `📚 <b>Commands</b>
+    en: `📚 <b>All Commands</b>
 
-/start — Open the main menu
-/ainews — AI News section picker
-/help — Show this menu
-
-🌐 ${BASE_URL}/tools/news`,
-    zh: `📚 <b>命令</b>
-
-/start — 打开主菜单
-/ainews — 选择 AI News 板块
-/help — 显示此菜单
+/start  → Main menu (this welcome screen)
+/ainews → Today's top AI news
+/social → Your Social Listening mentions
+/list   → See your alert
+/pause  → Pause notifications
+/resume → Resume notifications
+/delete → Remove subscription
+/help   → Show this menu
 
 🌐 ${BASE_URL}/tools/news`,
+    zh: `📚 <b>全部命令</b>
+
+/start  → 主菜单（欢迎页）
+/ainews → 今日 AI 新闻
+/social → Social Listening 提及
+/list   → 查看告警
+/pause  → 暂停推送
+/resume → 恢复推送
+/delete → 删除订阅
+/help   → 显示此菜单
+
+🌐 ${BASE_URL}/tools/news`,
+  },
+  statelessNotice: {
+    en: `ℹ️ This bot runs in pull mode — there's no scheduled push to manage. Use /ainews any time to read the latest issue.`,
+    zh: `ℹ️ 当前为按需拉取模式，没有定时推送可管理。随时发 /ainews 即可获取最新日报。`,
   },
 };
 
@@ -304,13 +340,28 @@ export async function POST(req: NextRequest) {
       const text = update.message.text.trim();
 
       if (text.startsWith("/start")) {
+        // /start carries an optional payload like "/start connect" when the
+        // user came in via the website Connect button — we don't need to
+        // act on it differently in stateless mode, the welcome screen is
+        // the same.
         await showMainMenu(chatId, lang);
       } else if (text === "/ainews") {
         await showAiSections(chatId, lang);
+      } else if (text === "/social") {
+        await sendMessage(chatId, T.socialPlaceholder[lang]);
+      } else if (
+        text === "/list" ||
+        text === "/pause" ||
+        text === "/resume" ||
+        text === "/delete"
+      ) {
+        // Stateless mode: no subscription state to manage. Tell the user
+        // about pull mode and offer the menu so they can keep going.
+        await sendMessage(chatId, T.statelessNotice[lang], mainMenuMarkup(lang));
       } else if (text === "/help") {
         await sendMessage(chatId, T.help[lang]);
       }
-      // Anything else: silent, default Telegram bot behaviour.
+      // Anything else (plain chat, unknown commands): silent.
     }
 
     // ── Inline keyboard taps ───────────────────────────────────────
