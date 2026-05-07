@@ -18,6 +18,9 @@ const CONTENT_DIR = path.join(__dirname, "..", "web", "content");
 const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY;
 const ANTHROPIC_BASE = "https://api.anthropic.com/v1";
 
+const DEEPSEEK_API_KEY = process.env.DEEPSEEK_API_KEY;
+const DEEPSEEK_BASE = "https://api.deepseek.com/v1";
+
 // ===== URL Validation =====
 
 async function checkUrl(url) {
@@ -97,6 +100,30 @@ function getMissingDates(from, to) {
     }
   }
   return missing;
+}
+
+async function callDeepSeek(messages, temperature = 0.7, maxTokens = 4096) {
+  const res = await fetch(`${DEEPSEEK_BASE}/chat/completions`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${DEEPSEEK_API_KEY}`,
+    },
+    body: JSON.stringify({
+      model: "deepseek-chat",
+      messages,
+      temperature,
+      max_tokens: maxTokens,
+    }),
+  });
+
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(`DeepSeek API error ${res.status}: ${text}`);
+  }
+
+  const data = await res.json();
+  return data.choices[0].message.content;
 }
 
 async function callClaude(messages, temperature = 0.7, maxTokens = 4096) {
@@ -280,8 +307,8 @@ async function generateIssue(dateStr, prevIssue) {
     return null;
   }
 
-  // Second call: generate the daily_case body content
-  console.log("  → Calling Claude for case study body...");
+  // Second call: generate the daily_case body content (DeepSeek for summarization)
+  console.log("  → Calling DeepSeek for case study body...");
   let bodyContent = "";
   if (issueData.daily_case) {
     const bodyPrompt = `Write a detailed marketing case study analysis in markdown format for:
@@ -300,7 +327,7 @@ Write 3-5 paragraphs covering:
 Output ONLY the markdown content, no JSON.`;
 
     try {
-      bodyContent = await callClaude(
+      bodyContent = await callDeepSeek(
         [
           {
             role: "system",
