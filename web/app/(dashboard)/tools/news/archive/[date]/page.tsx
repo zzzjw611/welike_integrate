@@ -5,6 +5,7 @@ import {
   getPreviousIssueSummaries,
   listPublishedIssues,
 } from "@/lib/ai-marketer-news";
+import type { Lang } from "@/lib/ai-marketer-news";
 import Masthead from "@/components/ai-marketer-news/Masthead";
 import HighlightSummary from "@/components/ai-marketer-news/HighlightSummary";
 import DailyBrief from "@/components/ai-marketer-news/DailyBrief";
@@ -18,16 +19,22 @@ import BackToTop from "@/components/ai-marketer-news/BackToTop";
 import DatePicker from "@/components/ai-marketer-news/DatePicker";
 import GuideButton from "@/components/ai-marketer-news/GuideButton";
 
-// Read straight from web/content/*.md. The Draft PR flow guarantees that
-// anything sitting under web/content/ has been reviewed and merged — there is
-// no draft branch, no admin preview, no localStorage shadow draft. Drafts
-// live under web/content/drafts/ and are excluded by listIssues().
+function parseLang(value: string | string[] | undefined): Lang {
+  const v = Array.isArray(value) ? value[0] : value;
+  return v === "zh" ? "zh" : "en";
+}
+
 export default async function ArchiveDatePage({
   params,
+  searchParams,
 }: {
   params: Promise<{ date: string }>;
+  searchParams: Promise<{ lang?: string | string[] }>;
 }) {
   const { date } = await params;
+  const sp = await searchParams;
+  const lang = parseLang(sp.lang);
+
   const issue = await getIssueByDate(date);
   if (!issue) notFound();
 
@@ -62,11 +69,11 @@ export default async function ArchiveDatePage({
         editor={issue.editor}
       />
 
-      <HighlightSummary highlight={issue.highlight} />
-      <DailyBrief items={issue.briefs} />
-      <GrowthInsightSection items={issue.growth_insights} />
-      <LaunchRadar items={issue.launches} />
-      <DailyCaseSection caseItem={issue.daily_case} />
+      <HighlightSummary highlight={issue.highlight} lang={lang} />
+      <DailyBrief items={issue.briefs} lang={lang} />
+      <GrowthInsightSection items={issue.growth_insights} lang={lang} />
+      <LaunchRadar items={issue.launches} lang={lang} />
+      <DailyCaseSection caseItem={issue.daily_case} lang={lang} />
       <PastIssues issues={pastSummaries} />
 
       <Footer />

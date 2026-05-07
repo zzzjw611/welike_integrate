@@ -5,6 +5,7 @@ import {
   getPreviousIssueSummaries,
   listPublishedIssues,
 } from "@/lib/ai-marketer-news";
+import type { Lang } from "@/lib/ai-marketer-news";
 import Masthead from "@/components/ai-marketer-news/Masthead";
 import HighlightSummary from "@/components/ai-marketer-news/HighlightSummary";
 import DailyBrief from "@/components/ai-marketer-news/DailyBrief";
@@ -20,7 +21,19 @@ import CreateAlerts from "@/components/ai-marketer-news/CreateAlerts";
 import SectionHeader from "@/components/ai-marketer-news/SectionHeader";
 import { Bell } from "lucide-react";
 
-export default async function NewsPage() {
+function parseLang(value: string | string[] | undefined): Lang {
+  const v = Array.isArray(value) ? value[0] : value;
+  return v === "zh" ? "zh" : "en";
+}
+
+export default async function NewsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ lang?: string | string[] }>;
+}) {
+  const params = await searchParams;
+  const lang = parseLang(params.lang);
+
   const issue = await getLatestIssue();
   if (!issue) notFound();
 
@@ -58,17 +71,21 @@ export default async function NewsPage() {
         editor={issue.editor}
       />
 
-      <HighlightSummary highlight={issue.highlight} />
-      <DailyBrief items={issue.briefs} />
-      <GrowthInsightSection items={issue.growth_insights} />
-      <LaunchRadar items={issue.launches} />
-      <DailyCaseSection caseItem={issue.daily_case} />
+      <HighlightSummary highlight={issue.highlight} lang={lang} />
+      <DailyBrief items={issue.briefs} lang={lang} />
+      <GrowthInsightSection items={issue.growth_insights} lang={lang} />
+      <LaunchRadar items={issue.launches} lang={lang} />
+      <DailyCaseSection caseItem={issue.daily_case} lang={lang} />
       <PastIssues issues={pastSummaries} />
 
       <section data-anchor id="create-alerts" className="mb-16">
         <SectionHeader
-          eyebrow="06 · CREATE ALERTS"
-          title="Create your daily alert"
+          eyebrow={lang === "zh" ? "06 · 创建告警" : "06 · CREATE ALERTS"}
+          title={
+            lang === "zh"
+              ? "创建你的每日告警"
+              : "Create your daily alert"
+          }
           icon={Bell}
         />
         <CreateAlerts issue={issue} />
