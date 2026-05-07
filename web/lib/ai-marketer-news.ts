@@ -159,37 +159,18 @@ export async function listIssues(): Promise<string[]> {
 }
 
 export async function getLatestIssue(): Promise<Issue | null> {
-  // Only return the latest published issue
-  const published = await listPublishedIssues();
-  if (published.length > 0) {
-    return getIssueByDate(published[0]);
-  }
-
-  // Fallback: if no published issues, check if any files exist
   const issues = await listIssues();
   if (issues.length === 0) return null;
-
   return getIssueByDate(issues[0]);
 }
 
+// Drafts live in web/content/drafts/ and are intentionally excluded by the
+// listIssues() readdir filter (only top-level *.md is returned). The
+// pipeline/publish.py script promotes a draft by moving the file out of
+// drafts/ — once it lands in CONTENT_DIR it is automatically considered
+// published. No frontmatter `published` flag is required.
 export async function listPublishedIssues(): Promise<string[]> {
-  const all = await listIssues();
-  const published: string[] = [];
-
-  for (const date of all) {
-    const filePath = path.join(CONTENT_DIR, `${date}.md`);
-    try {
-      const raw = await fs.readFile(filePath, "utf8");
-      const { data } = matter(raw);
-      if (data.published !== false) {
-        published.push(date);
-      }
-    } catch {
-      // Skip files that can't be read
-    }
-  }
-
-  return published;
+  return listIssues();
 }
 
 export async function getAdjacentIssues(

@@ -1,0 +1,96 @@
+name: Daily News Pipeline
+
+# Runs at 23:45 UTC → ~23:48 UTC done = 北京 07:48. Aimed at Beijing 8 AM
+# morning-commute reading window. EU 00:45 / US PT 16:45 prev day acceptable.
+# Trigger manually from the Actions tab via "workflow_dispatch" anytime.
+on:
+  schedule:
+    - cron: "45 23 * * *"
+  workflow_dispatch:
+    inputs:
+      target_date:
+        description: "Target publish date (YYYY-MM-DD). Leave blank for today in PT."
+        required: false
+        type: string
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: pipeline/requirements.txt
+
+      - name: Install pipeline deps
+        run: pip install -r pipeline/requirements.txt
+
+      - name: Resolve target date
+        id: date
+        run: |
+          if [ -n "${{ inputs.target_date }}" ]; then
+            echo "date=${{ inputs.target_date }}" >> "$GITHUB_OUTPUT"
+          else
+            # Today in America/Los_Angeles
+            echo "date=$(TZ=America/Los_Angeles date +%Y-%m-%d)" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Run pipeline
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          PH_TOKEN: ${{ secrets.PH_TOKEN }}
+          TARGET_DATE: ${{ steps.date.outputs.date }}
+        run: python -m pipeline.run
+
+      - name: Check draft was produced
+        id: check_draft
+        run: |
+          # WeLike integration: drafts live under web/content/drafts/
+          DRAFT_PATH="web/content/drafts/${{ steps.date.outputs.date }}.draft.md"
+          if [ ! -f "$DRAFT_PATH" ]; then
+            echo "Draft file missing: $DRAFT_PATH"
+            exit 1
+          fi
+          echo "path=$DRAFT_PATH" >> "$GITHUB_OUTPUT"
+
+      - name: Open review PR
+        uses: peter-evans/create-pull-request@v6
+        with:
+          branch: drafts/${{ steps.date.outputs.date }}
+          base: main
+          title: "[Draft] AI Marketer News · ${{ steps.date.outputs.date }}"
+          commit-message: "chore(content): auto-draft ${{ steps.date.outputs.date }}"
+          body: |
+            Auto-generated daily news draft.
+
+            **Review checklist:**
+            - [ ] 6 briefs, each with source URL
+            - [ ] At least 5 of 6 briefs include "So what for marketer"
+            - [ ] 2 Growth Insights have Our Take commentary
+            - [ ] 2 Launch Radar entries have valid product URLs
+            - [ ] Daily Case has correct metrics row
+            - [ ] No fabricated URLs (cross-check against raw data if in doubt)
+            - [ ] At least 1 brief sourced from 量子位 (QbitAI) for cross-language coverage
+
+            **To publish:** edit as needed in this PR, then run locally:
+            ```
+            gh pr checkout <pr-number>
+            python -m pipeline.publish ${{ steps.date.outputs.date }}
+            git add web/content/${{ steps.date.outputs.date }}.md web/content/drafts/
+            git commit -m "publish(content): ${{ steps.date.outputs.date }}"
+            git push
+            ```
+            Or move the file manually and merge.
+          add-paths: |
+            web/content/drafts/*.md

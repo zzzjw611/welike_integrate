@@ -1,10 +1,10 @@
-"use client";
-
-import { useEffect, useState } from "react";
-import { useParams } from "next/navigation";
-import matter from "gray-matter";
-import { ArrowLeft, Send, Eye } from "lucide-react";
-import type { Issue } from "@/lib/ai-marketer-news";
+import { notFound } from "next/navigation";
+import {
+  getIssueByDate,
+  getAdjacentIssues,
+  getPreviousIssueSummaries,
+  listPublishedIssues,
+} from "@/lib/ai-marketer-news";
 import Masthead from "@/components/ai-marketer-news/Masthead";
 import HighlightSummary from "@/components/ai-marketer-news/HighlightSummary";
 import DailyBrief from "@/components/ai-marketer-news/DailyBrief";
@@ -18,170 +18,23 @@ import BackToTop from "@/components/ai-marketer-news/BackToTop";
 import DatePicker from "@/components/ai-marketer-news/DatePicker";
 import GuideButton from "@/components/ai-marketer-news/GuideButton";
 
-const GITHUB_OWNER = "zzzjw611";
-const GITHUB_REPO = "welike_integrate";
-const GITHUB_BRANCH = "master";
+// Read straight from web/content/*.md. The Draft PR flow guarantees that
+// anything sitting under web/content/ has been reviewed and merged — there is
+// no draft branch, no admin preview, no localStorage shadow draft. Drafts
+// live under web/content/drafts/ and are excluded by listIssues().
+export default async function ArchiveDatePage({
+  params,
+}: {
+  params: Promise<{ date: string }>;
+}) {
+  const { date } = await params;
+  const issue = await getIssueByDate(date);
+  if (!issue) notFound();
 
-// Simple in-memory cache to avoid hitting GitHub API rate limits
-const cache = new Map<string, { data: Issue; ts: number }>();
-const CACHE_TTL = 10_000; // 10 seconds
-
-async function fetchFromGitHub(date: string, skipCache = false): Promise<Issue | null> {
-  // Check cache first (unless skipCache is true, e.g. from admin preview)
-  if (!skipCache) {
-    const cached = cache.get(date);
-    if (cached && Date.now() - cached.ts < CACHE_TTL) {
-      return cached.data;
-    }
-  }
-
-  // When skipCache is true (admin preview with ?t= param), check "content" branch first for edits
-  // Otherwise, read "master" branch first (has latest generated content)
-  // Uses our proxy endpoint (/api/news/content) which authenticates with GITHUB_TOKEN
-  // (5000 req/hr) instead of calling GitHub API directly (60 req/hr unauthenticated).
-  const branches = skipCache ? ["content", "master"] : ["master", "content"];
-  for (const branch of branches) {
-    try {
-      const res = await fetch(`/api/news/content?date=${date}&branch=${branch}`);
-      if (!res.ok) continue;
-      const data = await res.json();
-      const raw = data.content;
-      const { data: frontmatter } = matter(raw);
-      const issue: Issue = {
-        date: date,
-        issueNumber: frontmatter.issueNumber,
-        editor: frontmatter.editor,
-        highlight: frontmatter.highlight,
-        briefs: frontmatter.briefs ?? [],
-        growth_insights: frontmatter.growth_insights ?? [],
-        launches: frontmatter.launches ?? [],
-        daily_case: {
-          company: frontmatter.daily_case?.company ?? "",
-          title: frontmatter.daily_case?.title ?? "",
-          deck: frontmatter.daily_case?.deck ?? "",
-          metrics: frontmatter.daily_case?.metrics,
-          bodyHtml: "",
-        },
-      };
-      cache.set(date, { data: issue, ts: Date.now() });
-      return issue;
-    } catch {
-      continue;
-    }
-  }
-  return null;
-}
-
-export default function ArchivePage() {
-  const params = useParams();
-  const date = params.date as string;
-  const [cacheBust, setCacheBust] = useState(0);
-
-  const [issue, setIssue] = useState<Issue | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [prev, setPrev] = useState<string | null>(null);
-  const [next, setNext] = useState<string | null>(null);
-  const [issues, setIssues] = useState<string[]>([]);
-  const [pastSummaries, setPastSummaries] = useState<any[]>([]);
-  // Admin draft preview (?draft=1) — render the editor bar with Exit + Publish
-  const [isDraftPreview, setIsDraftPreview] = useState(false);
-
-  useEffect(() => {
-    async function fetchData() {
-      setLoading(true);
-      try {
-        // Admin preview is keyed by ?draft=1 (instant, reads localStorage) and
-        // ?t=... (cache-bust fallback that reads GitHub content branch first).
-        const search = typeof window !== "undefined" ? window.location.search : "";
-        const isDraft = search.includes("draft=1");
-        const skipCache = isDraft || search.includes("t=");
-        setIsDraftPreview(isDraft);
-
-        // 1) Instant path: when admin clicks Preview right after Save, the
-        //    just-edited issue is sitting in localStorage. Render it without
-        //    any network roundtrip — no GitHub commit lag, no Vercel rebuild.
-        if (isDraft && typeof window !== "undefined") {
-          try {
-            const draftRaw = localStorage.getItem(`news-draft-${date}`);
-            if (draftRaw) {
-              const parsed = JSON.parse(draftRaw) as {
-                data: Omit<Issue, "daily_case"> & { daily_case: Omit<Issue["daily_case"], "bodyHtml"> };
-                ts: number;
-              };
-              // Drop drafts older than 30 minutes — admin probably moved on
-              if (Date.now() - parsed.ts < 30 * 60_000) {
-                setIssue({
-                  ...parsed.data,
-                  daily_case: { ...parsed.data.daily_case, bodyHtml: "" },
-                });
-                setLoading(false);
-                // Still fetch the published-issue list for nav (cheap, non-blocking)
-                fetch("/api/news/archive")
-                  .then((r) => (r.ok ? r.json() : null))
-                  .then((d) => {
-                    if (!d) return;
-                    const dates = (d.issues || []).map((x: any) => x.date);
-                    setIssues(dates);
-                    const idx = dates.indexOf(date);
-                    setPrev(idx < dates.length - 1 ? dates[idx + 1] : null);
-                    setNext(idx > 0 ? dates[idx - 1] : null);
-                  })
-                  .catch(() => {});
-                return;
-              }
-            }
-          } catch {
-            // Bad JSON / disabled storage — fall through to GitHub fetch
-          }
-        }
-
-        // 2) Fallback: hit the GitHub API directly. With skipCache=true the
-        //    fetcher reads the `content` branch first (where edits live) before
-        //    falling back to `master` — still no Vercel deploy involved.
-        const issueData = await fetchFromGitHub(date, skipCache);
-        setIssue(issueData);
-
-        // Fetch all published issues for navigation
-        const pubRes = await fetch("/api/news/archive");
-        if (pubRes.ok) {
-          const pubData = await pubRes.json();
-          const dates = (pubData.issues || []).map((d: any) => d.date);
-          setIssues(dates);
-
-          const idx = dates.indexOf(date);
-          setPrev(idx < dates.length - 1 ? dates[idx + 1] : null);
-          setNext(idx > 0 ? dates[idx - 1] : null);
-        }
-      } catch (err) {
-        console.error("Failed to fetch issue:", err);
-        setIssue(null);
-      } finally {
-        setLoading(false);
-      }
-    }
-
-    fetchData();
-  }, [date]);
-
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-surface-950 flex items-center justify-center">
-        <div className="h-8 w-8 border-2 border-brand-500 border-t-transparent rounded-full animate-spin" />
-      </div>
-    );
-  }
-
-  if (!issue) {
-    return (
-      <div className="min-h-screen bg-surface-950 flex items-center justify-center">
-        <div className="text-center">
-          <p className="text-surface-500 text-sm">Issue not found</p>
-        </div>
-      </div>
-    );
-  }
-
+  const issues = await listPublishedIssues();
+  const { prev, next } = await getAdjacentIssues(date);
   const isLatest = issues.length > 0 && issues[0] === date;
+  const pastSummaries = await getPreviousIssueSummaries(date, 6);
 
   return (
     <div
@@ -191,47 +44,6 @@ export default function ArchivePage() {
           "radial-gradient(ellipse 900px 600px at 10% 0%,rgba(0,245,160,.055) 0%,transparent 65%),radial-gradient(ellipse 700px 500px at 90% 100%,rgba(90,171,255,.05) 0%,transparent 60%),#07090d",
       }}
     >
-      {/* Admin draft preview bar — only visible when URL has ?draft=1.
-          Exit Preview returns to /admin/news and re-shows the post-save toast
-          (Continue Editing / Preview / Republish). Publish hands off to the
-          admin page so we don't duplicate the publish-and-poll-deploy flow. */}
-      {isDraftPreview && (
-        <div className="sticky top-0 z-40 bg-surface-900/95 backdrop-blur-md border-b border-surface-800">
-          <div className="mx-auto max-w-6xl px-6 py-3 flex items-center justify-between gap-4">
-            <div className="flex items-center gap-2 min-w-0">
-              <span className="inline-flex items-center gap-1.5 text-[11px] font-medium text-brand-500 bg-brand-500/10 px-2 py-0.5 rounded-full">
-                <Eye className="h-3 w-3" />
-                Draft Preview
-              </span>
-              <span className="text-xs text-surface-500 truncate">
-                {date} — admin view, not visible to public
-              </span>
-            </div>
-            <div className="flex items-center gap-2 flex-shrink-0">
-              <button
-                onClick={() => {
-                  window.location.href = `/admin/news?resume=${encodeURIComponent(date)}`;
-                }}
-                className="inline-flex items-center gap-1.5 text-xs text-surface-300 hover:text-white bg-surface-800 hover:bg-surface-700 px-3 py-1.5 rounded-lg transition-colors"
-              >
-                <ArrowLeft className="h-3.5 w-3.5" />
-                Exit Preview
-              </button>
-              <button
-                onClick={() => {
-                  window.location.href = `/admin/news?publish=${encodeURIComponent(date)}`;
-                }}
-                className="inline-flex items-center gap-1.5 text-xs text-white bg-brand-500 hover:bg-brand-400 px-3 py-1.5 rounded-lg transition-colors"
-              >
-                <Send className="h-3.5 w-3.5" />
-                Publish
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Top bar with IssueSwitcher + DatePicker */}
       <div className="flex items-center justify-between gap-4 mb-8">
         <div className="flex-1 min-w-0">
           <IssueSwitcher
@@ -251,15 +63,10 @@ export default function ArchivePage() {
       />
 
       <HighlightSummary highlight={issue.highlight} />
-
       <DailyBrief items={issue.briefs} />
-
       <GrowthInsightSection items={issue.growth_insights} />
-
       <LaunchRadar items={issue.launches} />
-
       <DailyCaseSection caseItem={issue.daily_case} />
-
       <PastIssues issues={pastSummaries} />
 
       <Footer />
