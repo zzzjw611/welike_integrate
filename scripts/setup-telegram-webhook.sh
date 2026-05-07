@@ -21,10 +21,13 @@ set -euo pipefail
 WEBHOOK_URL="${WEB_BASE_URL%/}/api/telegram/webhook"
 
 echo "→ Registering webhook: $WEBHOOK_URL"
+# `callback_query` is required — tapping inline-keyboard buttons in the
+# menu (📰 AI News, 📋 Daily Brief, etc.) sends a callback_query update.
+# Without it Telegram silently drops button taps and the menu appears dead.
 RESP=$(curl -sS \
   --data-urlencode "url=$WEBHOOK_URL" \
   --data-urlencode "secret_token=$TELEGRAM_WEBHOOK_SECRET" \
-  --data-urlencode "allowed_updates=[\"message\"]" \
+  --data-urlencode 'allowed_updates=["message","callback_query"]' \
   --data-urlencode "drop_pending_updates=true" \
   "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/setWebhook")
 
