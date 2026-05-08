@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>WeLike · Social Listening</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&family=JetBrains+Mono:wght@400;500;600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@3.0.1/dist/chartjs-plugin-annotation.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/marked@12.0.0/marked.min.js"></script>
+</head>
+<body>
+  <!-- Radial green glow background -->
+  <div class="bg-glow"></div>
+
+  <!-- Header -->
+  <header>
+    <div class="logo">
+      <svg class="logo-mark" viewBox="0 0 40 40" width="28" height="28" aria-hidden="true">
+        <g fill="#06F5B7">
+          <path d="M20 4 C16 4 14 8 14 12 C14 14 15 16 17 17 C13 18 8 20 8 26 C8 30 12 32 16 32 C18 32 19 31 20 30 C21 31 22 32 24 32 C28 32 32 30 32 26 C32 20 27 18 23 17 C25 16 26 14 26 12 C26 8 24 4 20 4 Z"/>
+        </g>
+      </svg>
+      <div class="logo-stack">
+        <span class="logo-text">WeLike</span>
+        <span class="logo-sub">Social Listening</span>
+      </div>
+    </div>
+    <nav class="nav">
+      <button class="nav-btn active" data-view="analyze" data-i18n="nav_analyze">社交聆听</button>
+      <button class="nav-btn" data-view="alerts" data-i18n="nav_alerts">Smart Alerts</button>
+      <div class="lang-toggle">
+        <button class="lang-btn" data-lang="zh">中</button>
+        <button class="lang-btn" data-lang="en">EN</button>
+      </div>
+    </nav>
+  </header>
+
+  <main>
+    <!-- ========== VIEW: ANALYZE ========== -->
+    <section id="view-analyze" class="view">
+      <div class="hero">
+        <span class="hero-eyebrow" data-i18n="hero_title_1">AI 驱动的社交聆听</span>
+        <h1 class="hero-title" data-i18n-html="hero_title_2">实时<span class="accent">捕捉</span>，即刻<span class="accent">决策</span></h1>
+        <p class="hero-desc" data-i18n-html="hero_desc">输入关键词或项目 X 主页链接，WeLike 社交聆听会在几十秒内<br>抓取推文、识别叙事、判定紧急度，并生成可执行的市场策略报告</p>
+
+        <div class="search-box">
+          <input
+            id="queryInput"
+            type="text"
+            data-i18n-placeholder="search_placeholder"
+            placeholder="例：Claude  或  https://x.com/AnthropicAI"
+            autocomplete="off"
+          />
+          <select id="timeRange" class="time-select" data-i18n-title="time_select_title" title="时间范围">
+            <option value="24h" data-i18n="time_24h">24 小时</option>
+            <option value="7d" selected data-i18n="time_7d">近 7 天</option>
+            <option value="14d" data-i18n="time_14d">近 14 天</option>
+          </select>
+          <button id="analyzeBtn" onclick="startAnalysis()">
+            <span id="btnText" data-i18n="btn_analyze">开始分析</span>
+            <span id="btnIcon">→</span>
+          </button>
+        </div>
+        <div class="examples">
+          <span class="ex-label" data-i18n="examples">快速示例：</span>
+          <button class="chip" onclick="fillExample('Claude')">Claude</button>
+          <button class="chip" onclick="fillExample('OpenAI')">OpenAI</button>
+          <button class="chip" onclick="fillExample('Gemini')">Gemini</button>
+          <button class="chip" onclick="fillExample('Perplexity')">Perplexity</button>
+        </div>
+      </div>
+
+      <!-- Progress -->
+      <div id="progressSection" class="hidden">
+        <div class="progress-card">
+          <div class="progress-header">
+            <span class="pulse-dot"></span>
+            <span id="progressMsg" data-i18n="progress_init">正在初始化...</span>
+          </div>
+          <div class="progress-bar-wrap">
+            <div id="progressBar" class="progress-bar" style="width:0%"></div>
+          </div>
+          <div id="progressPct" class="progress-pct mono">0%</div>
+        </div>
+      </div>
+
+      <!-- Dashboard -->
+      <div id="dashboard" class="hidden">
+        <!-- Stats -->
+        <div class="stats-row">
+          <div class="stat-card">
+            <div class="stat-label mono" data-i18n="stat_tweets">TWEETS</div>
+            <div id="statTotal" class="stat-value">0</div>
+            <div class="stat-unit" data-i18n="unit_count">条</div>
+          </div>
+          <div class="stat-card positive">
+            <div class="stat-label mono" data-i18n="stat_pos">POSITIVE</div>
+            <div id="statPos" class="stat-value">0</div>
+            <div class="stat-unit">%</div>
+          </div>
+          <div class="stat-card negative">
+            <div class="stat-label mono" data-i18n="stat_neg">NEGATIVE</div>
+            <div id="statNeg" class="stat-value">0</div>
+            <div class="stat-unit">%</div>
+          </div>
+          <div class="stat-card neutral">
+            <div class="stat-label mono" data-i18n="stat_neu">NEUTRAL</div>
+            <div id="statNeu" class="stat-value">0</div>
+            <div class="stat-unit">%</div>
+          </div>
+          <div class="stat-card urgent">
+            <div class="stat-label mono" data-i18n="stat_urgent">HIGH URGENCY</div>
+            <div id="statUrgent" class="stat-value">0</div>
+            <div class="stat-unit" data-i18n="unit_count">条</div>
+          </div>
+        </div>
+
+        <!-- Row 1: Sentiment + Categories charts -->
+        <div class="grid-2">
+          <div class="card">
+            <div class="card-head"><h3 class="serif-em" data-i18n="card_sentiment">Sentiment</h3></div>
+            <canvas id="sentimentChart" class="chart-small"></canvas>
+          </div>
+          <div class="card">
+            <div class="card-head"><h3 class="serif-em" data-i18n="card_categories">Categories</h3></div>
+            <canvas id="categoryChart" class="chart-small"></canvas>
+          </div>
+        </div>
+
+        <!-- Row 1.5: Engagement timeline + milestones (full width) -->
+        <div class="card timeline-card full-width">
+          <div class="card-head">
+            <h3 class="serif-em" data-i18n="card_timeline">Heat &amp; Milestones</h3>
+            <span class="muted mono" data-i18n="card_timeline_hint">日热度折线 + AI 推断的项目里程碑</span>
+          </div>
+          <div id="timelineEmpty" class="timeline-empty muted" data-i18n="timeline_loading">正在分析时间线…</div>
+          <div id="timelineWrap" class="timeline-wrap hidden">
+            <canvas id="timelineChart" class="chart-line"></canvas>
+            <div id="milestoneList" class="milestone-list"></div>
+          </div>
+        </div>
+
+        <!-- Row 2: Topic Explorer (2-col: topic list + selected-topic detail) -->
+        <div class="card topic-explorer">
+          <div class="card-head">
+            <h3 class="serif-em" data-i18n="card_topics">Hot Topics</h3>
+            <span class="muted mono" data-i18n="card_topics_hint">click a topic to see driving tweets &amp; actions</span>
+          </div>
+          <div class="topic-explorer-grid">
+            <div class="topic-list-col">
+              <div id="topicsList" class="topics-list"></div>
+            </div>
+            <div class="topic-detail-col">
+              <div id="topicDetail" class="topic-detail">
+                <div class="topic-detail-empty">
+                  <div class="empty-icon">◎</div>
+                  <p data-i18n="topic_empty">点击左侧任意话题，查看对应的驱动推文与逐条推荐动作</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Row 2.5: Smart Alerts CTA — turn this analysis into a recurring alert -->
+        <div id="alertCtaCard" class="alert-cta full-width hidden">
+          <div class="alert-cta-grid">
+            <div class="alert-cta-body">
+              <span class="alert-cta-eyebrow">
+                <span class="alert-cta-pulse"></span>
+                <span data-i18n="cta_eyebrow">REAL-TIME · 一键转预警</span>
+              </span>
+              <h2 class="alert-cta-title" data-i18n-html="cta_title">把这次分析变成<span class="accent">实时预警</span></h2>
+              <p class="alert-cta-desc" id="alertCtaDesc"></p>
+
+              <div class="alert-cta-prefill">
+                <div class="prefill-row">
+                  <span class="prefill-label" data-i18n="cta_prefill_handle">监听</span>
+                  <span class="prefill-chip" id="ctaHandleChip">@your_handle</span>
+                </div>
+                <div class="prefill-row">
+                  <span class="prefill-label" data-i18n="cta_prefill_sentiment">情感</span>
+                  <span class="prefill-chips" id="ctaSentChips"></span>
+                </div>
+                <div class="prefill-row">
+                  <span class="prefill-label" data-i18n="cta_prefill_urgency">紧急度</span>
+                  <span class="prefill-chips" id="ctaUrgChips"></span>
+                </div>
+              </div>
+
+              <div class="alert-cta-actions">
+                <button class="cta-primary" id="ctaCreateBtn" data-i18n="cta_btn_create">一键创建 Alert</button>
+                <button class="cta-text" id="ctaDismissBtn" data-i18n="cta_btn_dismiss">稍后再说</button>
+              </div>
+            </div>
+
+            <!-- Mini Telegram preview to make the value concrete -->
+            <div class="alert-cta-preview" aria-hidden="true">
+              <div class="cta-tg-head">
+                <div class="cta-tg-avatar">🔔</div>
+                <div>
+                  <div class="cta-tg-name">WeLikeBot</div>
+                  <div class="cta-tg-status">bot · online</div>
+                </div>
+              </div>
+              <div class="cta-tg-stack">
+                <div class="cta-tg-msg">
+                  <div class="cta-tg-title">🔔 <span class="cta-tg-project" id="ctaTgProject">@your_handle</span> <span class="cta-tg-suffix" data-i18n="cta_tg_suffix">· 新提及</span></div>
+                  <div class="cta-tg-trio" id="ctaTgTrio"></div>
+                  <div class="cta-tg-meta" data-i18n="cta_tg_time">🕐 刚刚</div>
+                  <div class="cta-tg-meta">👤 Sample User <span class="cta-tg-mute">(@sample_user) · 12.4K</span></div>
+                  <div class="cta-tg-body" id="ctaTgBody"></div>
+                  <div class="cta-tg-summary" data-i18n="cta_tg_summary">📌 AI 一句话提炼这条推文要回什么</div>
+                  <div class="cta-tg-time mono" id="ctaTgClock">14:08</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Row 3: Raw Tweets (full-width) -->
+        <div class="card tweets-card full-width">
+          <div class="card-head">
+            <h3 class="serif-em" data-i18n="card_raw_tweets">Raw Tweets</h3>
+            <div class="filter-tabs" id="categoryTabs">
+              <button class="tab active" data-filter="all" data-i18n="filter_all">全部</button>
+              <button class="tab" data-filter="cat:key_voice" data-i18n="filter_key_voice">Key Voices</button>
+              <button class="tab" data-filter="cat:feature_request" data-i18n="filter_feature">功能建议</button>
+              <button class="tab" data-filter="cat:bug_issue" data-i18n="filter_bug">Bug / 投诉</button>
+              <button class="tab" data-filter="cat:competitor" data-i18n="filter_competitor">竞品对比</button>
+              <button class="tab" data-filter="sent:positive" data-i18n="filter_pos">积极</button>
+              <button class="tab" data-filter="sent:negative" data-i18n="filter_neg">消极</button>
+              <button class="tab" data-filter="sent:neutral" data-i18n="filter_neu">中性</button>
+            </div>
+          </div>
+          <div id="tweetFeed" class="tweet-feed tweet-feed-grid"></div>
+        </div>
+
+        <!-- Row 4: Strategy Report (full-width) -->
+        <div class="card report-card full-width">
+            <div class="card-head">
+              <h3 class="serif-em" data-i18n="card_report">Strategy Report</h3>
+              <div class="export-btns">
+                <button class="pill-btn" onclick="exportMarkdown()">⬇ Markdown</button>
+                <button class="pill-btn" onclick="printReport()">⬇ PDF</button>
+              </div>
+            </div>
+            <div id="reportContent" class="report-content"></div>
+        </div>
+
+        <!-- Row 5: Inline Chat (anchored at bottom of dashboard, scroll target) -->
+        <div class="card chat-card full-width" id="chatSection">
+          <div class="card-head">
+            <h3 class="serif-em" data-i18n="card_chat">追问 AI</h3>
+            <span class="muted mono" data-i18n="card_chat_hint">基于已采集的数据</span>
+          </div>
+          <div id="chatMessages" class="chat-messages"></div>
+          <div class="chat-input-wrap">
+            <input id="chatInput" type="text" data-i18n-placeholder="chat_placeholder" placeholder="例如：消极的声音里，最紧急的一条是什么？应该怎么回？" />
+            <button id="chatSendBtn" onclick="sendChat()" data-i18n="chat_send">发送 →</button>
+          </div>
+          <div class="chat-suggestions" id="chatSuggestions">
+            <button class="chip-sm" data-i18n="chat_suggest_3" data-prompt-zh="总结最值得立刻回复的3条推文，给出具体回复话术" data-prompt-en="Summarize the 3 tweets most worth replying to right now, with concrete reply scripts">3 条立回</button>
+            <button class="chip-sm" data-i18n="chat_suggest_features" data-prompt-zh="按热度列出所有功能建议，并标注重复出现的诉求" data-prompt-en="List all feature requests by frequency, flagging recurring asks">功能建议</button>
+            <button class="chip-sm" data-i18n="chat_suggest_neg" data-prompt-zh="消极讨论的核心原因是什么？给出公关回应模板" data-prompt-en="What's the root cause of negative discussion? Give a PR response template">负面根因</button>
+            <button class="chip-sm" data-i18n="chat_suggest_compare" data-prompt-zh="和竞品相比，本品牌的差距和优势是什么？" data-prompt-en="Compared with competitors, what are the gaps and advantages?">竞品差距</button>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Error -->
+      <div id="errorSection" class="hidden">
+        <div class="error-card">
+          <span class="error-icon">⚠</span>
+          <p id="errorMsg" data-i18n="err_generic">发生错误</p>
+          <button class="pill-btn" onclick="resetUI()" data-i18n="btn_search_again">重新搜索</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========== VIEW: ALERTS ========== -->
+    <section id="view-alerts" class="view hidden">
+      <div class="hero">
+        <span class="hero-eyebrow" data-i18n="alerts_eyebrow">实时舆情预警</span>
+        <h1 class="hero-title">
+          <span class="accent" data-i18n="alerts_title_em">Smart</span> <span data-i18n="alerts_title_rest">Alerts</span>
+        </h1>
+        <p class="hero-desc" data-i18n="alerts_desc">通过 Telegram Bot 接收实时舆情推送。先连接你的 Telegram 账号，之后网页和 Telegram 共享同一份监听</p>
+
+        <!-- State A: Not linked yet -->
+        <div id="alertNotLinked" class="card connect-card hidden">
+          <div class="empty-illustration" aria-hidden="true">
+            <!-- Sleeping bell — alerts dormant, waiting to wake up -->
+            <svg viewBox="0 0 96 96" width="96" height="96" fill="none"
+                 stroke="currentColor" stroke-width="1.6"
+                 stroke-linecap="round" stroke-linejoin="round">
+              <!-- Bell body -->
+              <path d="M48 22v4"/>
+              <path d="M30 32a18 18 0 0 1 36 0v14c0 6 3 9 6 12H24c3-3 6-6 6-12V32z"/>
+              <path d="M42 64a6 6 0 0 0 12 0"/>
+              <!-- Sleepy eyes (closed) -->
+              <path d="M40 42c1.5 1.6 3.5 1.6 5 0"/>
+              <path d="M51 42c1.5 1.6 3.5 1.6 5 0"/>
+              <!-- Floating Z's (sleeping) -->
+              <g class="zzz">
+                <path d="M70 24h6l-6 6h6" />
+                <path d="M78 14h4l-4 4h4" />
+              </g>
+            </svg>
+          </div>
+          <h3 data-i18n="connect_title">连接你的 Telegram</h3>
+          <p class="muted" data-i18n="connect_desc">你的预警雷达还在沉睡，连接 Telegram 即可开启实时舆情捕捉 ✨</p>
+          <button id="connectTgBtn" class="pill-btn primary" onclick="startTelegramLink()" data-i18n="connect_btn">连接 Telegram →</button>
+        </div>
+
+        <!-- State A.2: Waiting for Telegram /start -->
+        <div id="alertLinking" class="card connect-card hidden">
+          <div class="connect-icon spin">⏳</div>
+          <h3 class="serif-em" data-i18n="linking_title">等待 Telegram 确认</h3>
+          <p class="muted" data-i18n="linking_desc">已为你打开 Telegram。请在 Bot 里点 Start 按钮。完成后这个页面会自动刷新。</p>
+          <a id="linkingDeepLink" class="pill-btn primary" target="_blank" data-i18n="linking_open">如未自动跳转，点这里打开 Telegram ↗</a>
+          <button class="pill-btn" onclick="cancelLinking()" data-i18n="linking_cancel">取消</button>
+        </div>
+
+        <!-- State B/C: Linked -->
+        <div id="alertLinked" class="hidden">
+          <div class="link-status">
+            <span class="link-dot"></span>
+            <span data-i18n="link_connected_prefix">已连接到 Telegram：</span>
+            <strong id="linkUsername" class="mono">@user</strong>
+            <button class="text-btn" onclick="disconnectTelegram()" data-i18n="link_disconnect">断开</button>
+          </div>
+
+          <!-- State B: Linked, no alert yet — 2-col: config left, live preview right -->
+          <div id="alertCreateBox" class="alert-form alert-form-grid card hidden">
+            <h3 data-i18n="alerts_create_title" style="margin-bottom:18px">创建你的监听</h3>
+            <div class="alert-create-grid">
+              <!-- Left: configuration -->
+              <div class="alert-config-col">
+                <div class="form-row">
+                  <label data-i18n="alerts_label_handles">项目 X handles</label>
+                  <div id="alertHandlesTagInput" class="tag-input">
+                    <input id="alertHandles" type="text" data-i18n-placeholder="alerts_handles_ph" placeholder="@WeLike" />
+                  </div>
+                </div>
+                <div class="form-row">
+                  <label>
+                    <span data-i18n="alerts_label_keywords">关键词</span>
+                    <span class="muted" data-i18n="alerts_optional">(选填)</span>
+                    <span class="muted" data-i18n="alerts_keywords_max">· 最多 3 个</span>
+                  </label>
+                  <div id="alertKeywordsTagInput" class="tag-input">
+                    <input id="alertKeywords" type="text" data-i18n-placeholder="alerts_keywords_ph" placeholder="WeLike（输入后空格或回车）" />
+                  </div>
+                </div>
+                <div class="form-row">
+                  <label data-i18n="alerts_label_filter">情感过滤 <span class="muted" data-i18n="alerts_filter_multi_hint">(可多选)</span></label>
+                  <div class="sent-check-group" role="group">
+                    <label class="sent-check neg">
+                      <input type="checkbox" name="sentiment_filter" value="negative" checked />
+                      <span class="dot" aria-hidden="true"></span>
+                      <span data-i18n="sent_negative">消极</span>
+                    </label>
+                    <label class="sent-check pos">
+                      <input type="checkbox" name="sentiment_filter" value="positive" />
+                      <span class="dot" aria-hidden="true"></span>
+                      <span data-i18n="sent_positive">积极</span>
+                    </label>
+                    <label class="sent-check neu">
+                      <input type="checkbox" name="sentiment_filter" value="neutral" />
+                      <span class="dot" aria-hidden="true"></span>
+                      <span data-i18n="sent_neutral">中性</span>
+                    </label>
+                  </div>
+                </div>
+                <div class="form-row">
+                  <label data-i18n="alerts_label_urgency">紧急度过滤 <span class="muted" data-i18n="alerts_filter_multi_hint">(可多选)</span></label>
+                  <div class="sent-check-group" role="group">
+                    <label class="sent-check urg-high">
+                      <input type="checkbox" name="urgency_filter" value="high" checked />
+                      <span class="dot" aria-hidden="true"></span>
+                      <span data-i18n="urg_high_label">🚨 高</span>
+                    </label>
+                    <label class="sent-check urg-medium">
+                      <input type="checkbox" name="urgency_filter" value="medium" />
+                      <span class="dot" aria-hidden="true"></span>
+                      <span data-i18n="urg_medium_label">⚠️ 中</span>
+                    </label>
+                    <label class="sent-check urg-low">
+                      <input type="checkbox" name="urgency_filter" value="low" />
+                      <span class="dot" aria-hidden="true"></span>
+                      <span data-i18n="urg_low_label">🔵 低</span>
+                    </label>
+                  </div>
+                </div>
+                <div class="form-row">
+                  <label>
+                    <span data-i18n="alerts_label_digest">聚合推送</span>
+                    <span class="info-tip" data-tip-i18n="alerts_digest_tooltip" data-tip="开启后，我们会在短时间内有大量命中时合并成一条摘要发送，避免你的手机被通知轰炸。">?</span>
+                  </label>
+                  <label class="toggle-switch">
+                    <input type="checkbox" id="alertDigestMode" />
+                    <span class="track" aria-hidden="true"></span>
+                    <span class="label-text" data-i18n="alerts_digest_hint_short">把高频通知合并成一条摘要</span>
+                  </label>
+                </div>
+                <div class="form-actions">
+                  <button id="createAlertBtn" class="pill-btn primary" onclick="createWebAlert()" disabled data-i18n="alerts_btn_create">创建 Alert</button>
+                </div>
+              </div>
+
+              <!-- Right: live preview — looks like a real Telegram bot push -->
+              <div class="alert-preview-col" aria-live="polite">
+                <div class="alert-preview-head" data-i18n="alerts_preview_label">实时预览：Telegram 推送长这样</div>
+                <div class="tg-preview" id="alertPreviewTweet">
+                  <div class="tg-chat-head">
+                    <div class="tg-bot-avatar">🔔</div>
+                    <div class="tg-bot-meta">
+                      <div class="tg-bot-name">WeLikeBot</div>
+                      <div class="tg-bot-status mono" data-i18n="alerts_preview_bot_status">bot · online</div>
+                    </div>
+                  </div>
+                  <div class="tg-msg-stack">
+                    <div class="tg-msg" id="tgMsg">
+                      <div class="tg-msg-line tg-msg-title">
+                        🔔 <span id="tgProjectLabel" class="tg-project-label">@your_handle</span>
+                        <span class="tg-msg-suffix" data-i18n="alerts_preview_new_mention">· New mention</span>
+                      </div>
+                      <div class="tg-msg-line" id="tgTrioLine"></div>
+                      <div class="tg-msg-line tg-msg-meta-line">
+                        🕐 <span id="tgTime" data-i18n="alerts_preview_time">刚刚</span>
+                      </div>
+                      <div class="tg-msg-line tg-msg-meta-line">
+                        👤 <span id="tgAuthor">Sample User</span>
+                        <span class="tg-msg-mute">(@<span id="tgAuthorHandle">sample_user</span>) · 12.4K followers</span>
+                      </div>
+                      <div class="tg-msg-body" id="tgMsgBody"></div>
+                      <div class="tg-msg-line tg-msg-summary" id="tgMsgSummary">📌 <span data-i18n="alerts_preview_summary">AI 一句话提炼这条推文要回什么</span></div>
+                      <div class="tg-msg-foot">
+                        <span class="tg-msg-time mono" id="tgMsgTime">12:34</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <p class="preview-empty-note" id="previewEmptyNote" data-i18n="alerts_preview_hint">在左侧填入 handle 或关键词，预览会立即更新 ✨</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- State C: Linked, has alert -->
+          <div id="alertExistingBox" class="card hidden">
+            <div class="card-head">
+              <h3 class="serif-em" data-i18n="alerts_active">当前监听</h3>
+              <button class="pill-btn" onclick="loadAlerts()" data-i18n="alerts_btn_refresh">刷新 ↻</button>
+            </div>
+            <div id="alertCard" class="alert-current"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <span class="mono" data-i18n="footer">WeLike · Social Listening · powered by Claude API + X API</span>
+  </footer>
+
+  <!-- Floating shortcut: bottom-right button that scrolls to the inline chat.
+       Hidden by default; shown after the first analysis completes. -->
+  <button id="chatFab" class="chat-fab-shortcut hide" onclick="scrollToChat()" aria-label="jump to chat">
+    <span class="chat-fab-icon">💬</span>
+    <span class="chat-fab-label" data-i18n="chat_floating_label">追问 AI</span>
+  </button>
+
+  <script src="app.js"></script>
+</body>
+</html>
