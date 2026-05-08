@@ -438,7 +438,21 @@ const I18N = {
   },
 };
 
-let currentLang = localStorage.getItem("welike_lang") || "zh";
+function getInitialLang() {
+  const params = new URLSearchParams(window.location.search);
+  const fromUrl = params.get("lang");
+  if (fromUrl === "zh" || fromUrl === "en") return fromUrl;
+
+  const fromLocalStorage = localStorage.getItem("welike_lang");
+  if (fromLocalStorage === "zh" || fromLocalStorage === "en") return fromLocalStorage;
+
+  const cookieMatch = document.cookie.match(/(?:^|;\s*)lang=(zh|en)(?:;|$)/);
+  if (cookieMatch) return cookieMatch[1];
+
+  return "zh";
+}
+
+let currentLang = getInitialLang();
 function t(key) { return (I18N[currentLang] && I18N[currentLang][key]) ?? key; }
 
 function applyI18n() {
@@ -515,6 +529,7 @@ function setLang(lang) {
   if (!I18N[lang]) return;
   currentLang = lang;
   localStorage.setItem("welike_lang", lang);
+  document.cookie = `lang=${lang}; path=/; max-age=${365 * 24 * 60 * 60}; SameSite=Lax`;
   applyI18n();
   // Re-render dynamic content that includes translated strings
   if (currentTopics.length) {

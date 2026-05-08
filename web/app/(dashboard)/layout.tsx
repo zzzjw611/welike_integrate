@@ -63,6 +63,9 @@ export default function DashboardLayout({
     pathname === "/tools/kol-pricer" ||
     pathname.startsWith("/tools/kol-pricer/") ||
     isNewsActive;
+  const isSocialListeningPage =
+    pathname === "/tools/social-listening" ||
+    pathname.startsWith("/tools/social-listening/");
 
   // Always show Toolkit and Playbook when logged in (no auto-hide)
   const shouldExpandToolkit = true;
@@ -409,7 +412,12 @@ export default function DashboardLayout({
 
         {/* Main content — scrollable independently */}
         <main className="flex-1 overflow-y-auto scroll-smooth min-w-0">
-          <div className="sticky top-0 z-10 flex items-center justify-between px-4 sm:px-8 py-3 bg-surface-950/80 backdrop-blur-sm border-b border-surface-800">
+          <div
+            className={cn(
+              "sticky top-0 z-10 flex items-center justify-between px-4 sm:px-8 py-3 bg-surface-950/80 backdrop-blur-sm border-b border-surface-800",
+              isSocialListeningPage && "lg:hidden"
+            )}
+          >
             <button
               type="button"
               onClick={() => setSidebarOpen(true)}
@@ -419,7 +427,7 @@ export default function DashboardLayout({
               <Menu className="h-5 w-5" />
             </button>
             <div className="flex-1 lg:flex-none" />
-            <LanguageSwitcher current={currentLang} />
+            {!isSocialListeningPage && <LanguageSwitcher current={currentLang} />}
           </div>
           <div className="mx-auto max-w-5xl px-4 sm:px-8 py-8">{children}</div>
         </main>
