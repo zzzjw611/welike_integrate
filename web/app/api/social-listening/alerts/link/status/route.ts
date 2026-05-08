@@ -1,9 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
-import pool from "@/lib/db";
 
-// Auto-link flow step 2: frontend polls this endpoint until either
-// `linked: true` (user pressed Start link_<token> in the bot) or
-// `expired: true` (15min passed without the bot picking it up).
+// Proxy to Social Listening FastAPI backend. The frontend polls this every
+// 2s after a Connect Telegram click; backend returns { linked, chat_id,
+// expired } based on whether the user has sent /start link_<token> to the
+// bot yet.
+
+const BACKEND = process.env.SOCIAL_LISTENING_BACKEND || "http://localhost:8000";
 
 export const dynamic = "force-dynamic";
 
@@ -12,38 +14,17 @@ export async function GET(req: NextRequest) {
   if (!token) {
     return NextResponse.json({ error: "Missing token" }, { status: 400 });
   }
-
   try {
-    const { rows } = await pool.query<{
-      telegram_chat_id: string | null;
-      expired: boolean;
-    }>(
-      `SELECT telegram_chat_id,
-              (expires_at < NOW()) AS expired
-         FROM link_tokens
-        WHERE token = $1`,
-      [token]
+    const resp = await fetch(
+      `${BACKEND}/api/web/link/status?token=${encodeURIComponent(token)}`
     );
-
-    if (rows.length === 0) {
-      return NextResponse.json({ linked: false, chat_id: null, expired: true });
-    }
-
-    const row = rows[0];
-    if (row.telegram_chat_id) {
-      return NextResponse.json({
-        linked: true,
-        chat_id: Number(row.telegram_chat_id),
-        expired: false,
-      });
-    }
-    return NextResponse.json({
-      linked: false,
-      chat_id: null,
-      expired: row.expired,
-    });
+    const data = await resp.json();
+    return NextResponse.json(data, { status: resp.status });
   } catch (err) {
-    console.error("[link/status] DB error", err);
-    return NextResponse.json({ error: "DB error" }, { status: 500 });
+    console.error("[social-listening:link/status] backend error", err);
+    return NextResponse.json(
+      { error: "Backend unreachable" },
+      { status: 502 }
+    );
   }
 }
