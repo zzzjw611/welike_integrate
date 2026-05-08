@@ -7,15 +7,15 @@ const I18N = {
     nav_compare: "竞品对比",
     nav_alerts: "智能提醒",
     hero_title_1: "AI 驱动的市场声音雷达",
-    hero_title_2: '发现真实<span class="accent">声音</span>，转成增长<span class="accent">动作</span>',
+    hero_title_2: '实时<span class="accent">捕捉</span>，即刻<span class="accent">决策</span>',
     time_select_title: "时间范围",
     progress_preparing: "准备中...",
     err_generic: "发生错误",
     btn_search_again: "重新搜索",
     server_error: "服务器错误",
     submitting_task: "提交任务...",
-    hero_desc: "输入产品名、品牌名、竞品名或公司官网，WeLike 会快速汇总公开讨论中的<br>情绪、话题、购买阻力与机会信号，并生成可执行的市场响应报告",
-    search_placeholder: "例：Claude、OpenAI 或 anthropic.com",
+    hero_desc: "粘贴产品官网链接或产品相关帖子链接，WeLike 会快速汇总公开讨论中的<br>情绪、话题、购买阻力与机会信号，并生成可执行的市场响应报告",
+    search_placeholder: "例：https://openai.com 或 https://x.com/OpenAI/status/...",
     btn_analyze: "开始分析",
     btn_analyzing: "分析中...",
     btn_reanalyze: "重新分析",
@@ -89,6 +89,7 @@ const I18N = {
     err_no_backend: "分析服务暂时不可用。<br/><br/>",
     err_polling: "轮询状态失败：",
     err_run_first: "请先运行一次分析",
+    err_link_only: "请粘贴产品官网链接或产品相关帖子链接，例如 https://openai.com 或 https://x.com/OpenAI/status/...",
     compare_title_em: "Competitor",
     compare_title_rest: "side-by-side.",
     compare_desc: "最多输入 4 个品牌、产品或竞品关键词，并排查看情绪、类别分布和高互动声音。",
@@ -224,15 +225,15 @@ const I18N = {
     nav_compare: "Compare",
     nav_alerts: "Smart Alerts",
     hero_title_1: "AI-powered market signal radar",
-    hero_title_2: 'Turn real <span class="accent">voices</span> into growth <span class="accent">moves</span>',
+    hero_title_2: '<span class="accent">Capture</span> in real time, <span class="accent">decide</span> instantly',
     time_select_title: "Time range",
     progress_preparing: "Preparing...",
     err_generic: "Something went wrong",
     btn_search_again: "Search again",
     server_error: "Server error",
     submitting_task: "Submitting task...",
-    hero_desc: "Enter a product, brand, competitor, or company website.<br>WeLike surfaces public market voices, narratives, buying friction, and response opportunities in seconds",
-    search_placeholder: "e.g., Claude, OpenAI, or anthropic.com",
+    hero_desc: "Paste a product website link or a product-related post link.<br>WeLike surfaces public market voices, narratives, buying friction, and response opportunities in seconds",
+    search_placeholder: "e.g., https://openai.com or https://x.com/OpenAI/status/...",
     btn_analyze: "Analyze",
     btn_analyzing: "Analyzing...",
     btn_reanalyze: "Re-analyze",
@@ -306,6 +307,7 @@ const I18N = {
     err_no_backend: "The analysis service is temporarily unavailable.<br/><br/>",
     err_polling: "Status polling failed: ",
     err_run_first: "Please run an analysis first",
+    err_link_only: "Please paste a product website link or product-related post link, such as https://openai.com or https://x.com/OpenAI/status/...",
     compare_title_em: "Competitor",
     compare_title_rest: "side-by-side.",
     compare_desc: "Compare up to 4 brands, products, or competitors side-by-side: sentiment, category mix, and top market signals.",
@@ -712,16 +714,36 @@ async function readApiError(resp) {
 
 function normalizeMarketQuery(raw) {
   const value = String(raw || "").trim();
-  if (!value) return "";
+  if (!value) return { ok: false, display: "", query: "" };
 
-  // Keep exact account inputs when the user provides one. For a company
-  // website, search the brand name instead of the full URL.
-  if (/^(?:@|(?:https?:\/\/)?(?:www\.)?(?:x|twitter)\.com\/)/i.test(value)) {
-    return value;
+  const withScheme = /^[a-z][a-z0-9+.-]*:\/\//i.test(value)
+    ? value
+    : `https://${value}`;
+
+  let url;
+  try {
+    url = new URL(withScheme);
+  } catch {
+    return { ok: false, display: value, query: "" };
   }
 
-  const domainLike = value.match(/^(?:https?:\/\/)?(?:www\.)?([a-z0-9-]+)\.(?:ai|app|com|co|io|dev|so|xyz|net|org)(?:\/.*)?$/i);
-  if (!domainLike) return value;
+  if (!/^https?:$/i.test(url.protocol)) {
+    return { ok: false, display: value, query: "" };
+  }
+
+  const host = url.hostname.replace(/^www\./i, "").toLowerCase();
+  const display = /^[a-z][a-z0-9+.-]*:\/\//i.test(value) ? value : url.href;
+
+  if (host === "x.com" || host === "twitter.com") {
+    const parts = url.pathname.split("/").filter(Boolean);
+    const hasHandle = parts.length >= 1 && /^[A-Za-z0-9_]{1,15}$/.test(parts[0]);
+    if (!hasHandle) return { ok: false, display: value, query: "" };
+    return { ok: true, display, query: url.href };
+  }
+
+  if (!/[a-z0-9-]+\.[a-z]{2,}$/i.test(host)) {
+    return { ok: false, display: value, query: "" };
+  }
 
   const knownBrands = {
     openai: "OpenAI",
@@ -731,20 +753,31 @@ function normalizeMarketQuery(raw) {
     vercel: "Vercel",
     linear: "Linear",
     runwayml: "Runway",
+    gemini: "Gemini",
+    google: "Google",
   };
-  const slug = domainLike[1].toLowerCase();
-  if (knownBrands[slug]) return knownBrands[slug];
-  return slug
+
+  const labels = host.split(".").filter(Boolean);
+  const root = labels.length >= 2 ? labels[labels.length - 2] : labels[0];
+  const productLabel = labels.find(label => knownBrands[label]) || root;
+  const slug = productLabel.toLowerCase();
+  const query = knownBrands[slug] || slug
     .split("-")
     .filter(Boolean)
     .map(part => part.charAt(0).toUpperCase() + part.slice(1))
     .join(" ");
+  return { ok: true, display, query };
 }
 
 async function startAnalysis() {
-  const query = normalizeMarketQuery($("queryInput").value);
-  if (!query) { $("queryInput").focus(); return; }
-  $("queryInput").value = query;
+  const normalized = normalizeMarketQuery($("queryInput").value);
+  if (!normalized.ok || !normalized.query) {
+    $("queryInput").focus();
+    showError(escapeHtml(t("err_link_only")));
+    return;
+  }
+  const query = normalized.query;
+  $("queryInput").value = normalized.display;
   const timeRange = $("timeRange").value;
 
   hide("dashboard"); hide("errorSection");

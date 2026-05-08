@@ -29,6 +29,49 @@ export function getAnthropic(): Anthropic {
 export const MODEL_HAIKU = "claude-haiku-4-5";
 export const MODEL_SONNET = "claude-sonnet-4-6";
 
+function toWellFormedString(input: string): string {
+  const native = (input as unknown as { toWellFormed?: () => string })
+    .toWellFormed;
+  if (typeof native === "function") return native.call(input);
+
+  let output = "";
+  for (let i = 0; i < input.length; i += 1) {
+    const code = input.charCodeAt(i);
+    if (code >= 0xd800 && code <= 0xdbff) {
+      const next = input.charCodeAt(i + 1);
+      if (next >= 0xdc00 && next <= 0xdfff) {
+        output += input[i] + input[i + 1];
+        i += 1;
+      } else {
+        output += "\ufffd";
+      }
+    } else if (code >= 0xdc00 && code <= 0xdfff) {
+      output += "\ufffd";
+    } else {
+      output += input[i];
+    }
+  }
+  return output;
+}
+
+function sanitizeForAnthropic<T>(value: T): T {
+  if (typeof value === "string") {
+    return toWellFormedString(value) as T;
+  }
+  if (Array.isArray(value)) {
+    return value.map((item) => sanitizeForAnthropic(item)) as T;
+  }
+  if (value && typeof value === "object") {
+    return Object.fromEntries(
+      Object.entries(value).map(([key, item]) => [
+        key,
+        sanitizeForAnthropic(item),
+      ])
+    ) as T;
+  }
+  return value;
+}
+
 // ────────────────────────────────────────────────────────────────────────────
 // Structured-output helper
 // ────────────────────────────────────────────────────────────────────────────
@@ -68,13 +111,17 @@ export async function generateStructured<TInput = unknown>(
   const res = await client.messages.create({
     model: opts.model,
     max_tokens: opts.maxTokens ?? 4000,
-    system: opts.system,
-    messages: [{ role: "user", content: opts.user }],
+    system: sanitizeForAnthropic(opts.system),
+    messages: [
+      { role: "user", content: sanitizeForAnthropic(opts.user) },
+    ],
     tools: [
       {
         name: toolName,
         description: "Submit the structured analysis result.",
-        input_schema: opts.schema as unknown as Anthropic.Tool.InputSchema,
+        input_schema: sanitizeForAnthropic(
+          opts.schema
+        ) as unknown as Anthropic.Tool.InputSchema,
       },
     ],
     tool_choice: { type: "tool", name: toolName },
@@ -112,8 +159,8 @@ export async function generateText(opts: {
   const res = await client.messages.create({
     model: opts.model,
     max_tokens: opts.maxTokens ?? 4000,
-    system: opts.systemBlocks ?? opts.system,
-    messages,
+    system: sanitizeForAnthropic(opts.systemBlocks ?? opts.system),
+    messages: sanitizeForAnthropic(messages),
   });
   const text = res.content
     .filter(

@@ -44,15 +44,15 @@
     <section id="view-analyze" class="view">
       <div class="hero">
         <span class="hero-eyebrow" data-i18n="hero_title_1">AI 驱动的市场声音雷达</span>
-        <h1 class="hero-title" data-i18n-html="hero_title_2">发现真实<span class="accent">声音</span>，转成增长<span class="accent">动作</span></h1>
-        <p class="hero-desc" data-i18n-html="hero_desc">输入产品名、品牌名、竞品名或公司官网，WeLike 会快速汇总公开讨论中的<br>情绪、话题、购买阻力与机会信号，并生成可执行的市场响应报告</p>
+        <h1 class="hero-title" data-i18n-html="hero_title_2">实时<span class="accent">捕捉</span>，即刻<span class="accent">决策</span></h1>
+        <p class="hero-desc" data-i18n-html="hero_desc">粘贴产品官网链接或产品相关帖子链接，WeLike 会快速汇总公开讨论中的<br>情绪、话题、购买阻力与机会信号，并生成可执行的市场响应报告</p>
 
         <div class="search-box">
           <input
             id="queryInput"
             type="text"
             data-i18n-placeholder="search_placeholder"
-            placeholder="例：Claude、OpenAI 或 anthropic.com"
+            placeholder="例：https://openai.com 或 https://x.com/OpenAI/status/..."
             autocomplete="off"
           />
           <select id="timeRange" class="time-select" data-i18n-title="time_select_title" title="时间范围">
@@ -67,10 +67,10 @@
         </div>
         <div class="examples">
           <span class="ex-label" data-i18n="examples">快速示例：</span>
-          <button class="chip" onclick="fillExample('Claude')">Claude</button>
-          <button class="chip" onclick="fillExample('OpenAI')">OpenAI</button>
-          <button class="chip" onclick="fillExample('Gemini')">Gemini</button>
-          <button class="chip" onclick="fillExample('Perplexity')">Perplexity</button>
+          <button class="chip" onclick="fillExample('https://anthropic.com')">Anthropic</button>
+          <button class="chip" onclick="fillExample('https://openai.com')">OpenAI</button>
+          <button class="chip" onclick="fillExample('https://gemini.google.com')">Gemini</button>
+          <button class="chip" onclick="fillExample('https://perplexity.ai')">Perplexity</button>
         </div>
       </div>
 
