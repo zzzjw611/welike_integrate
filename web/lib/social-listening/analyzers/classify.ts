@@ -35,7 +35,7 @@ interface RawClassification {
 }
 
 interface ClassificationBatchOutput {
-  results: RawClassification[];
+  results?: RawClassification[] | Record<string, RawClassification>;
 }
 
 const CLASSIFY_SCHEMA: JsonSchema = {
@@ -165,6 +165,19 @@ ${RULES_EN}`;
 ${RULES_ZH}`;
 }
 
+function normalizeClassificationOutputs(
+  input: ClassificationBatchOutput | RawClassification[] | unknown
+): RawClassification[] {
+  if (Array.isArray(input)) return input as RawClassification[];
+  if (!input || typeof input !== "object") return [];
+  const maybeResults = (input as ClassificationBatchOutput).results;
+  if (Array.isArray(maybeResults)) return maybeResults;
+  if (maybeResults && typeof maybeResults === "object") {
+    return Object.values(maybeResults);
+  }
+  return [];
+}
+
 /**
  * Enrich each input tweet in-place with classification fields. Returns the
  * same array reference for chainable use. Empty input is a no-op.
@@ -213,7 +226,10 @@ export async function classifyTweets(
   }
 
   const byId = new Map<number, RawClassification>();
-  for (const r of parsed.results) byId.set(r.id, r);
+  for (const r of normalizeClassificationOutputs(parsed)) {
+    const id = Number(r?.id);
+    if (Number.isFinite(id)) byId.set(id, r);
+  }
 
   for (let i = 0; i < tweets.length; i++) {
     const tweet = tweets[i];
