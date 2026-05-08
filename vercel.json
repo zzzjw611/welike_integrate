@@ -8,7 +8,7 @@
   "crons": [
     {
       "path": "/api/social-listening/cron/poll-alerts",
-      "schedule": "*/10 * * * *"
+      "schedule": "0 0 * * *"
     }
   ],
   "functions": {
