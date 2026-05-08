@@ -115,6 +115,16 @@ const TOPICS_SCHEMA: JsonSchema = {
   required: ["topics"],
 };
 
+function normalizeTopicOutputs(input: unknown): TopicOutput[] {
+  if (!input || typeof input !== "object") return [];
+  const maybeTopics = (input as { topics?: unknown }).topics;
+  if (Array.isArray(maybeTopics)) return maybeTopics as TopicOutput[];
+  if (maybeTopics && typeof maybeTopics === "object") {
+    return Object.values(maybeTopics) as TopicOutput[];
+  }
+  return [];
+}
+
 export async function extractTopics(tweets: Tweet[]): Promise<Topic[]> {
   if (tweets.length === 0) return [];
 
@@ -134,14 +144,18 @@ export async function extractTopics(tweets: Tweet[]): Promise<Topic[]> {
   if (!result) return [];
 
   const maxId = tweets.length;
-  return result.topics.map((t) => ({
-    topic: t.topic,
-    count: t.count,
-    sentiment: t.sentiment,
-    urgency: t.urgency,
-    action: t.action,
-    tweet_ids: (t.tweet_ids || []).filter((i) => i >= 1 && i <= maxId),
-  }));
+  return normalizeTopicOutputs(result)
+    .filter((t) => t && typeof t.topic === "string")
+    .map((t) => ({
+      topic: t.topic,
+      count: Number.isFinite(Number(t.count)) ? Number(t.count) : 1,
+      sentiment: t.sentiment,
+      urgency: t.urgency,
+      action: typeof t.action === "string" ? t.action : "",
+      tweet_ids: (Array.isArray(t.tweet_ids) ? t.tweet_ids : []).filter(
+        (i) => i >= 1 && i <= maxId
+      ),
+    }));
 }
 
 // ────────────────────────────────────────────────────────────────────────────

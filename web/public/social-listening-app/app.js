@@ -708,9 +708,15 @@ async function loadReport(taskId) {
 
 // ===== Render Dashboard =====
 
+function asArray(value) {
+  if (Array.isArray(value)) return value;
+  if (value && typeof value === "object") return Object.values(value);
+  return [];
+}
+
 function renderDashboard(data) {
-  allTweets = data.tweets || [];
-  currentTopics = data.topics || [];
+  allTweets = asArray(data.tweets);
+  currentTopics = asArray(data.topics).filter(topic => topic && typeof topic === "object");
   currentReport = data.report_markdown || "";
   selectedTopicIdx = -1;
 
@@ -814,6 +820,7 @@ function renderCategoryChart(counts) {
 
 function renderTopics(topics) {
   const list = $("topicsList");
+  topics = asArray(topics);
   if (!topics.length) {
     list.innerHTML = `<span class="muted">${t("no_topics")}</span>`;
     return;
@@ -1407,8 +1414,8 @@ function generateChatSuggestions(data) {
   const cat = data.category_counts || {};
   const urg = data.urgency_counts || {};
   const sent = data.sentiment_counts || {};
-  const topics = data.topics || [];
-  const tweets = data.tweets || [];
+  const topics = asArray(data.topics);
+  const tweets = asArray(data.tweets);
 
   const candidates = [];
 
