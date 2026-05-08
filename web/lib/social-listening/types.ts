@@ -48,14 +48,20 @@ export interface Tweet {
   urgency?: Urgency;
   action?: Action;
   summary?: string;
+  summary_zh?: string;
+  summary_en?: string;
 }
 
 export interface Topic {
   topic: string;
+  topic_zh?: string;
+  topic_en?: string;
   count: number;
   sentiment: Sentiment;
   urgency: Urgency;
   action: string;
+  action_zh?: string;
+  action_en?: string;
   tweet_ids: number[]; // 1-based indices into the analysis tweets array
 }
 

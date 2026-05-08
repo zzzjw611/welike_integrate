@@ -20,6 +20,16 @@ const CONNECTION_STRING = RAW_URL
   ? RAW_URL + (RAW_URL.includes("?") ? "&" : "?") + "family=4"
   : undefined;
 
+let schemaInitPromise: Promise<void> | null = null;
+
+export function assertDatabaseConfigured(): void {
+  if (!RAW_URL) {
+    throw new Error(
+      "SOCIAL_LISTENING_DATABASE_URL or DATABASE_URL is not configured in this Vercel environment"
+    );
+  }
+}
+
 // One pool per process. Vercel cold starts get a fresh one each time.
 const pool = new Pool({
   connectionString: CONNECTION_STRING,
@@ -151,9 +161,20 @@ create index if not exists sl_task_created_idx on sl_task(created_at desc);
 `;
 
 export async function initSchema(): Promise<void> {
+  assertDatabaseConfigured();
   // pg lets us send the whole multi-statement block in one query — no need to
   // split on ';' which would break the `default '[]'::jsonb` literal.
   await pool.query(SCHEMA_SQL);
+}
+
+export async function initSchemaOnce(): Promise<void> {
+  if (!schemaInitPromise) {
+    schemaInitPromise = initSchema().catch((err) => {
+      schemaInitPromise = null;
+      throw err;
+    });
+  }
+  await schemaInitPromise;
 }
 
 // ────────────────────────────────────────────────────────────────────────────

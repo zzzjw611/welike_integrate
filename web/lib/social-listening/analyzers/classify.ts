@@ -19,6 +19,7 @@ import type {
   Category,
   Urgency,
   Action,
+  Lang,
 } from "@/lib/social-listening/types";
 
 interface RawClassification {
@@ -29,10 +30,12 @@ interface RawClassification {
   urgency: Urgency;
   action: Action;
   summary: string;
+  summary_zh: string;
+  summary_en: string;
 }
 
 interface ClassificationBatchOutput {
-  results: RawClassification[];
+  results?: RawClassification[] | Record<string, RawClassification>;
 }
 
 const CLASSIFY_SCHEMA: JsonSchema = {
@@ -78,7 +81,17 @@ const CLASSIFY_SCHEMA: JsonSchema = {
           summary: {
             type: "string",
             maxLength: 150,
-            description: "中文一句话概括",
+            description: "One-sentence summary in the requested UI language.",
+          },
+          summary_zh: {
+            type: "string",
+            maxLength: 150,
+            description: "中文一句话概括；产品名、人名和平台名可保留英文。",
+          },
+          summary_en: {
+            type: "string",
+            maxLength: 150,
+            description: "One-sentence English summary; keep proper nouns unchanged.",
           },
         },
         required: [
@@ -89,6 +102,8 @@ const CLASSIFY_SCHEMA: JsonSchema = {
           "urgency",
           "action",
           "summary",
+          "summary_zh",
+          "summary_en",
         ],
       },
     },
@@ -96,9 +111,7 @@ const CLASSIFY_SCHEMA: JsonSchema = {
   required: ["results"],
 };
 
-const SYSTEM = `你是一位资深的社交聆听分析师。请对每一条推文做多维度分析。
-
-分类规则：
+const RULES_ZH = `分类规则：
 - key_voice：高粉丝（>10000）或高互动（>100）账号的重要声音
 - feature_request：含 "should have" / "would love" / "希望" / "建议" / "feature"
 - bug_issue：含 bug / broken / not working / 崩溃 / 不工作
@@ -117,11 +130,62 @@ const SYSTEM = `你是一位资深的社交聆听分析师。请对每一条推�
 - share_amplify：扩散转发（积极高影响力内容）
 - ignore：忽略（低价值内容）`;
 
+const RULES_EN = `Classification rules:
+- key_voice: high-follower (>10000) or high-engagement (>100) accounts with important signals
+- feature_request: contains "should have" / "would love" / "hope" / "suggest" / "feature"
+- bug_issue: contains bug / broken / not working / crash / failure complaints
+- competitor: compares against another product
+- general: general discussion
+
+Urgency rules:
+- high: negative sentiment + high-impact account, or explicit bug/complaint that needs a response within 24h
+- medium: normal feature requests or medium-impact issues within 1 week
+- low: general discussion
+
+Recommended actions:
+- reply_now: reply immediately for negative high-impact posts or direct complaints
+- log_product: log in the product backlog for feature requests or bugs
+- monitor: keep watching the discussion
+- share_amplify: amplify positive high-impact content
+- ignore: ignore low-value content`;
+
+function systemPrompt(lang: Lang): string {
+  if (lang === "en") {
+    return `You are a senior social listening analyst. Analyze every tweet across sentiment, urgency, category, recommended action, and summary.
+
+Return both summary_zh and summary_en for every tweet. Set summary to the English summary. Keep product names and proper nouns such as Gemini, ChatGPT, OpenAI, Claude, X, and Perplexity unchanged.
+
+${RULES_EN}`;
+  }
+
+  return `你是一位资深的社交聆听分析师。请对每一条推文做多维度分析。
+
+请为每条推文同时输出 summary_zh 和 summary_en。summary 字段使用中文。中文里产品名、平台名、人名等专有名词可以保留英文，例如 Gemini、ChatGPT、OpenAI、Claude、X、Perplexity。
+
+${RULES_ZH}`;
+}
+
+function normalizeClassificationOutputs(
+  input: ClassificationBatchOutput | RawClassification[] | unknown
+): RawClassification[] {
+  if (Array.isArray(input)) return input as RawClassification[];
+  if (!input || typeof input !== "object") return [];
+  const maybeResults = (input as ClassificationBatchOutput).results;
+  if (Array.isArray(maybeResults)) return maybeResults;
+  if (maybeResults && typeof maybeResults === "object") {
+    return Object.values(maybeResults);
+  }
+  return [];
+}
+
 /**
  * Enrich each input tweet in-place with classification fields. Returns the
  * same array reference for chainable use. Empty input is a no-op.
  */
-export async function classifyTweets(tweets: Tweet[]): Promise<Tweet[]> {
+export async function classifyTweets(
+  tweets: Tweet[],
+  lang: Lang = "zh"
+): Promise<Tweet[]> {
   if (tweets.length === 0) return tweets;
 
   const lines = tweets
@@ -131,12 +195,15 @@ export async function classifyTweets(tweets: Tweet[]): Promise<Tweet[]> {
     )
     .join("\n");
 
-  const user = `请分析以下 ${tweets.length} 条推文：\n\n${lines}`;
+  const user =
+    lang === "en"
+      ? `Analyze the following ${tweets.length} tweets:\n\n${lines}`
+      : `请分析以下 ${tweets.length} 条推文：\n\n${lines}`;
 
   // 30 tweets × ~120 output tokens ≈ 3600; pad to 5000 for safety (matches Python).
   const parsed = await generateStructured<ClassificationBatchOutput>({
     model: MODEL_HAIKU,
-    system: SYSTEM,
+    system: systemPrompt(lang),
     user,
     schema: CLASSIFY_SCHEMA,
     maxTokens: 5000,
@@ -149,6 +216,8 @@ export async function classifyTweets(tweets: Tweet[]): Promise<Tweet[]> {
     if (!t.urgency) t.urgency = "low";
     if (!t.action) t.action = "monitor";
     if (t.summary === undefined) t.summary = "";
+    if (t.summary_zh === undefined) t.summary_zh = t.summary || "";
+    if (t.summary_en === undefined) t.summary_en = t.summary || "";
   };
 
   if (!parsed) {
@@ -157,7 +226,10 @@ export async function classifyTweets(tweets: Tweet[]): Promise<Tweet[]> {
   }
 
   const byId = new Map<number, RawClassification>();
-  for (const r of parsed.results) byId.set(r.id, r);
+  for (const r of normalizeClassificationOutputs(parsed)) {
+    const id = Number(r?.id);
+    if (Number.isFinite(id)) byId.set(id, r);
+  }
 
   for (let i = 0; i < tweets.length; i++) {
     const tweet = tweets[i];
@@ -168,7 +240,10 @@ export async function classifyTweets(tweets: Tweet[]): Promise<Tweet[]> {
       tweet.category = info.category;
       tweet.urgency = info.urgency;
       tweet.action = info.action;
-      tweet.summary = info.summary;
+      tweet.summary_zh = info.summary_zh || info.summary;
+      tweet.summary_en = info.summary_en || info.summary;
+      tweet.summary =
+        lang === "en" ? tweet.summary_en || info.summary : tweet.summary_zh || info.summary;
     } else {
       fillDefault(tweet);
     }

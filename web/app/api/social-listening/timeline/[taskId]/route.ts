@@ -12,16 +12,18 @@ import {
   bucketsToPublic,
   inferMilestones,
 } from "@/lib/social-listening/analyzers/timeline";
-import type { Tweet } from "@/lib/social-listening/types";
+import type { Tweet, Lang } from "@/lib/social-listening/types";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
 
 export async function GET(
-  _req: Request,
+  req: Request,
   { params }: { params: { taskId: string } }
 ) {
+  const url = new URL(req.url);
+  const lang: Lang = url.searchParams.get("lang") === "en" ? "en" : "zh";
   const task = await getTask(params.taskId);
   if (!task || task.status !== "done") {
     return NextResponse.json(
@@ -29,8 +31,11 @@ export async function GET(
       { status: 400 }
     );
   }
-  if (task.timeline_json) {
-    return NextResponse.json(task.timeline_json);
+  const cached = task.timeline_json as
+    | (Record<string, unknown> & { lang?: Lang })
+    | null;
+  if (cached && cached.lang === lang) {
+    return NextResponse.json(cached);
   }
   const result = (task.result_json as Record<string, unknown> | null) || null;
   if (!result) {
@@ -45,9 +50,11 @@ export async function GET(
     tweets,
     internalBuckets,
     4,
-    String(result.query || "")
+    String(result.query || ""),
+    lang
   );
   const payload = {
+    lang,
     buckets: bucketsToPublic(internalBuckets),
     milestones,
   };

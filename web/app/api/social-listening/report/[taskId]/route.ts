@@ -1,8 +1,15 @@
 import { NextResponse } from "next/server";
-import { getTask } from "@/lib/social-listening/db";
+import { getTask, initSchemaOnce } from "@/lib/social-listening/db";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+
+const REPORT_LANG_MARKER = /^<!--\s*welike-report-lang:(en|zh)\s*-->\s*/;
+
+function reportLang(markdown: string | null | undefined): "en" | "zh" | null {
+  const match = String(markdown || "").match(REPORT_LANG_MARKER);
+  return match ? (match[1] as "en" | "zh") : null;
+}
 
 /**
  * GET /api/social-listening/report/{taskId}
@@ -16,7 +23,16 @@ export async function GET(
   _req: Request,
   { params }: { params: { taskId: string } }
 ) {
-  const task = await getTask(params.taskId);
+  let task;
+  try {
+    await initSchemaOnce();
+    task = await getTask(params.taskId);
+  } catch (err) {
+    return NextResponse.json(
+      { error: err instanceof Error ? err.message : String(err) },
+      { status: 500 }
+    );
+  }
   if (!task) {
     return NextResponse.json({ error: "Task not found" }, { status: 404 });
   }
@@ -31,9 +47,11 @@ export async function GET(
   // the columns so the latest report shows up without needing the result_json
   // to be rewritten on every report generation.
   const result = (task.result_json as Record<string, unknown> | null) || {};
+  const reportMarkdown = task.report_markdown ?? (result.report_markdown ?? "");
   return NextResponse.json({
     ...result,
-    report_markdown: task.report_markdown ?? (result.report_markdown ?? ""),
+    report_markdown: reportMarkdown,
+    report_lang: reportLang(String(reportMarkdown)) || (result.lang as string | undefined) || "zh",
     report_status:
       task.report_status && task.report_status !== "idle"
         ? task.report_status
