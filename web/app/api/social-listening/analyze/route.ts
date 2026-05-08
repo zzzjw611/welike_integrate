@@ -17,6 +17,7 @@ import {
   createTask,
   updateTask,
   lookupDedupeTask,
+  initSchemaOnce,
 } from "@/lib/social-listening/db";
 import { collectTweets } from "@/lib/social-listening/collectors/twitter";
 import { classifyTweets } from "@/lib/social-listening/analyzers/classify";
@@ -86,25 +87,30 @@ export async function POST(req: NextRequest) {
     Math.min(100, Number(body.max_tweets) || 30)
   );
 
-  // 1h dedupe
-  const dKey = dedupeKey(query, timeRange);
-  const existing = await lookupDedupeTask(dKey);
-  if (existing) {
-    return NextResponse.json({ task_id: existing.id, cached: true });
-  }
-
   const taskId = shortId();
-  await createTask({
-    id: taskId,
-    query,
-    time_range: timeRange,
-    max_tweets: maxTweets,
-    dedupe_key: dKey,
-  });
+  let taskCreated = false;
 
   // Inline pipeline. Errors bubble up and we mark status=error so the polling
   // frontend can render a useful message.
   try {
+    await initSchemaOnce();
+
+    // 1h dedupe
+    const dKey = dedupeKey(query, timeRange);
+    const existing = await lookupDedupeTask(dKey);
+    if (existing) {
+      return NextResponse.json({ task_id: existing.id, cached: true });
+    }
+
+    await createTask({
+      id: taskId,
+      query,
+      time_range: timeRange,
+      max_tweets: maxTweets,
+      dedupe_key: dKey,
+    });
+    taskCreated = true;
+
     await updateTask(taskId, {
       status: "running",
       progress: 8,
@@ -184,11 +190,13 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ task_id: taskId, cached: false });
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
-    await updateTask(taskId, {
-      status: "error",
-      progress: 0,
-      message: `错误：${msg}`,
-    }).catch(() => {});
+    if (taskCreated) {
+      await updateTask(taskId, {
+        status: "error",
+        progress: 0,
+        message: `错误：${msg}`,
+      }).catch(() => {});
+    }
     return NextResponse.json(
       { task_id: taskId, cached: false, error: msg },
       { status: 500 }
