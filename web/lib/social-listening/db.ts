@@ -474,6 +474,14 @@ export async function updateAlertLastRun(
   );
 }
 
+export async function clearAlertPushedTweets(
+  alertId: number | string
+): Promise<void> {
+  await pool.query(`delete from sl_pushed_tweet where alert_id = $1`, [
+    alertId,
+  ]);
+}
+
 function alertRowToDict(r: AlertRow): AlertDict {
   // pg returns jsonb columns as already-parsed JS values. Defensive parse in
   // case the row was hand-edited and stored as text.

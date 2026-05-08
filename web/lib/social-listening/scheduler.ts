@@ -111,6 +111,8 @@ export async function runAlert(alertDict: AlertDict): Promise<void> {
     newTweets = newTweets.filter((t) => t.urgency && wanted.has(t.urgency));
   }
 
+  const matchedTweetIds = newTweets.map((t) => t.id).filter(Boolean);
+
   if (newTweets.length > 0) {
     if (digestMode && newTweets.length >= DIGEST_THRESHOLD) {
       const msg = formatDigestMessage(
@@ -156,9 +158,9 @@ export async function runAlert(alertDict: AlertDict): Promise<void> {
     }
   }
 
-  // Mark every new id as seen — including filtered-out ones — so the next poll
-  // doesn't re-classify the same tweets.
-  await markTweetsPushed(alertId, [...newIdSet]);
+  // Only mark tweets that matched the current alert filters. If the user
+  // changes filters later, previously excluded tweets can still be considered.
+  await markTweetsPushed(alertId, matchedTweetIds);
   await updateAlertLastRun(alertId);
 }
 

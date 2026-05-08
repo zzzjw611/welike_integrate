@@ -1875,6 +1875,8 @@ async function requestReply(tweetIdx, btn) {
 const STORAGE_CHAT_ID = "welike_chat_id";
 let linkPollTimer = null;
 let currentAlert = null;
+let alertPatchSeq = 0;
+let filterRunTimer = null;
 
 const getStoredChatId = () => {
   const v = localStorage.getItem(STORAGE_CHAT_ID);
@@ -2148,19 +2150,19 @@ function renderCurrentAlert(a) {
   const watchChips = (handleChips + kwChips) || `<span class="muted">${escapeHtml(t("alerts_meta_telegram_none") || "(none)")}</span>`;
 
   const sentChip = (val, emoji, label, modCls) => `
-    <label class="filter-chip ${modCls} ${sentSel.has(val) ? 'on' : 'off'}">
-      <input type="checkbox" name="alert_sent" value="${val}" ${sentSel.has(val) ? 'checked' : ''}
-             onchange="updateAlertSentiment()" />
+    <button type="button" class="filter-chip ${modCls} ${sentSel.has(val) ? 'on' : 'off'}"
+            aria-pressed="${sentSel.has(val) ? 'true' : 'false'}"
+            onclick="setAlertSentiment('${val}')">
       <span class="filter-chip-dot" aria-hidden="true"></span>
       <span>${emoji} ${label}</span>
-    </label>`;
+    </button>`;
   const urgChip = (val, emoji, label, modCls) => `
-    <label class="filter-chip ${modCls} ${urgSel.has(val) ? 'on' : 'off'}">
-      <input type="checkbox" name="alert_urg" value="${val}" ${urgSel.has(val) ? 'checked' : ''}
-             onchange="updateAlertUrgency()" />
+    <button type="button" class="filter-chip ${modCls} ${urgSel.has(val) ? 'on' : 'off'}"
+            aria-pressed="${urgSel.has(val) ? 'true' : 'false'}"
+            onclick="setAlertUrgency('${val}')">
       <span class="filter-chip-dot" aria-hidden="true"></span>
       <span>${emoji} ${label}</span>
-    </label>`;
+    </button>`;
 
   // Telegram username for the connected-status line in the hero
   const tgUser = $("linkUsername")?.textContent || "";
@@ -2363,9 +2365,13 @@ function renderAlertPushPreview(a) {
   `;
 }
 
-async function patchAlert(fields) {
+async function patchAlert(fields, opts = {}) {
   const chatId = getStoredChatId();
   if (!chatId || !currentAlert) return;
+  const seq = ++alertPatchSeq;
+  const previous = currentAlert;
+  currentAlert = { ...currentAlert, ...fields };
+  renderCurrentAlert(currentAlert);
   try {
     const resp = await fetch(`${API_BASE}/api/social-listening/alerts/${currentAlert.id}`, {
       method: "PATCH",
@@ -2376,37 +2382,56 @@ async function patchAlert(fields) {
       const err = await resp.json().catch(() => ({}));
       throw new Error(err.detail || `HTTP ${resp.status}`);
     }
-    loadAlerts();
+    const updated = await resp.json();
+    if (seq === alertPatchSeq) {
+      currentAlert = updated;
+      renderCurrentAlert(currentAlert);
+      if (opts.runAfterSave) scheduleFilterRun();
+    }
   } catch (err) {
+    if (seq === alertPatchSeq) {
+      currentAlert = previous;
+      renderCurrentAlert(currentAlert);
+    }
     alert("Update failed: " + err.message);
   }
 }
 
-// Multi-select edit handlers — read every checked box and PATCH the CSV.
-// The backend's normalize_multi_filter folds "all 3 selected" → "all".
-// Empty set falls back to a sensible default so we never send "" to the API.
-function _readChecked(name, fallback) {
-  const vals = [...document.querySelectorAll(`input[name="${name}"]:checked`)].map(i => i.value);
-  if (!vals.length) return fallback;
-  return vals.join(",");
+function scheduleFilterRun() {
+  if (filterRunTimer) clearTimeout(filterRunTimer);
+  filterRunTimer = setTimeout(() => {
+    filterRunTimer = null;
+    runAlertNow(null, { auto: true });
+  }, 900);
 }
-const updateAlertSentiment = () => patchAlert({ sentiment_filter: _readChecked("alert_sent", "negative") });
-const updateAlertUrgency   = () => patchAlert({ urgency_filter:   _readChecked("alert_urg",  "high")     });
+
+const setAlertSentiment = (value) => currentAlert && patchAlert({
+  sentiment_filter: value,
+  urgency_filter: currentAlert.urgency_filter || "all",
+}, { runAfterSave: true });
+const setAlertUrgency = (value) => currentAlert && patchAlert({
+  sentiment_filter: currentAlert.sentiment_filter || "all",
+  urgency_filter: value,
+}, { runAfterSave: true });
 const toggleDigestMode = () => currentAlert && patchAlert({ digest_mode: !currentAlert.digest_mode });
 const toggleAlertActive = () => currentAlert && patchAlert({ active: !currentAlert.active });
 
-async function runAlertNow(btn) {
+async function runAlertNow(btn, opts = {}) {
   const chatId = getStoredChatId();
   if (!chatId || !currentAlert) return;
+  btn = btn || document.querySelector(".alert-run-btn");
+  if (btn?.disabled) return;
   // Visible loading state: spinner + "Running…" copy + disabled
-  const labelEl = btn.querySelector(".run-btn-label");
-  const originalLabel = labelEl ? labelEl.textContent : btn.textContent;
-  btn.disabled = true;
-  btn.classList.add("is-loading");
-  if (labelEl) {
-    labelEl.innerHTML = `<span class="run-spinner" aria-hidden="true"></span>${t("alerts_running")}`;
-  } else {
-    btn.textContent = t("alerts_running");
+  const labelEl = btn?.querySelector(".run-btn-label");
+  const originalLabel = labelEl ? labelEl.textContent : btn?.textContent;
+  if (btn) {
+    btn.disabled = true;
+    btn.classList.add("is-loading");
+    if (labelEl) {
+      labelEl.innerHTML = `<span class="run-spinner" aria-hidden="true"></span>${t("alerts_running")}`;
+    } else {
+      btn.textContent = t("alerts_running");
+    }
   }
   try {
     const resp = await fetch(`${API_BASE}/api/social-listening/alerts/${currentAlert.id}/run`, {
@@ -2420,11 +2445,13 @@ async function runAlertNow(btn) {
     }
     loadAlerts();
   } catch (err) {
-    alert("Run failed: " + err.message);
-    btn.disabled = false;
-    btn.classList.remove("is-loading");
-    if (labelEl) labelEl.textContent = originalLabel;
-    else btn.textContent = originalLabel;
+    alert((opts.auto ? "Auto run failed: " : "Run failed: ") + err.message);
+    if (btn) {
+      btn.disabled = false;
+      btn.classList.remove("is-loading");
+      if (labelEl) labelEl.textContent = originalLabel;
+      else btn.textContent = originalLabel;
+    }
   }
 }
 

@@ -12,6 +12,7 @@ import {
   getAlert,
   updateAlert,
   deleteAlert,
+  clearAlertPushedTweets,
   normalizeMultiFilter,
   SENTIMENT_ORDER,
   URGENCY_ORDER,
@@ -55,6 +56,7 @@ export async function PATCH(
   if (guard) return guard;
 
   const fields: AlertUpdate = {};
+  let filtersChanged = false;
   if (body.sentiment_filter !== undefined && body.sentiment_filter !== null) {
     const canonical = normalizeMultiFilter(
       body.sentiment_filter,
@@ -69,6 +71,7 @@ export async function PATCH(
       );
     }
     fields.sentiment_filter = canonical;
+    filtersChanged = true;
   }
   if (body.urgency_filter !== undefined && body.urgency_filter !== null) {
     const canonical = normalizeMultiFilter(
@@ -84,6 +87,7 @@ export async function PATCH(
       );
     }
     fields.urgency_filter = canonical;
+    filtersChanged = true;
   }
   if (body.digest_mode !== undefined && body.digest_mode !== null) {
     fields.digest_mode = Boolean(body.digest_mode);
@@ -103,6 +107,9 @@ export async function PATCH(
       { error: "Alert 不存在" },
       { status: 404 }
     );
+  }
+  if (filtersChanged) {
+    await clearAlertPushedTweets(params.alertId);
   }
   return NextResponse.json(updated);
 }
