@@ -6,6 +6,7 @@ import LaunchRadar from '@/components/LaunchRadar';
 import DailyCase from '@/components/DailyCase';
 
 export const metadata = { title: 'Preview — Admin' };
+export const dynamic = 'force-dynamic';
 
 export default async function PreviewPage() {
   const today   = new Date().toISOString().slice(0, 10);

@@ -2,6 +2,7 @@ import { getCandidates } from '@/lib/db';
 import type { ContentCandidate } from '@/lib/types';
 
 export const metadata = { title: 'Candidates — Admin' };
+export const dynamic = 'force-dynamic';
 
 const SECTION_LABELS: Record<string, string> = {
   daily_brief:    'Daily Brief',
