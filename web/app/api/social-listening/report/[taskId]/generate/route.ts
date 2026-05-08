@@ -16,14 +16,26 @@ import type {
   Tweet,
   Topic,
   SentimentCounts,
+  Lang,
 } from "@/lib/social-listening/types";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const maxDuration = 300;
 
+const REPORT_LANG_MARKER = /^<!--\s*welike-report-lang:(en|zh)\s*-->\s*/;
+
+function reportLang(markdown: string | null | undefined): Lang | null {
+  const match = String(markdown || "").match(REPORT_LANG_MARKER);
+  return match ? (match[1] as Lang) : null;
+}
+
+function withReportLang(markdown: string, lang: Lang): string {
+  return `<!-- welike-report-lang:${lang} -->\n${markdown}`;
+}
+
 export async function POST(
-  _req: Request,
+  req: Request,
   { params }: { params: { taskId: string } }
 ) {
   const task = await getTask(params.taskId);
@@ -41,17 +53,31 @@ export async function POST(
     );
   }
 
+  let requestedLang: Lang = "zh";
+  try {
+    const body = (await req.json()) as { lang?: Lang };
+    requestedLang = body.lang === "en" ? "en" : "zh";
+  } catch {
+    requestedLang = "zh";
+  }
+
   // Already generated — short-circuit.
   if (task.report_status === "done" && task.report_markdown) {
-    return NextResponse.json({
-      status: "done",
-      report_markdown: task.report_markdown,
-    });
+    const existingLang = reportLang(task.report_markdown) || "zh";
+    if (existingLang === requestedLang) {
+      return NextResponse.json({
+        status: "done",
+        report_markdown: task.report_markdown,
+        report_lang: existingLang,
+      });
+    }
+    await updateTask(params.taskId, { report_status: "idle" });
   }
   if (task.report_status === "running") {
     return NextResponse.json({
       status: "generating",
       report_markdown: "",
+      report_lang: requestedLang,
     });
   }
 
@@ -70,15 +96,18 @@ export async function POST(
       String(result.query || ""),
       tweets,
       topics,
-      sentimentCounts
+      sentimentCounts,
+      requestedLang
     );
+    const storedReportMd = withReportLang(reportMd, requestedLang);
     await updateTask(params.taskId, {
       report_status: "done",
-      report_markdown: reportMd,
+      report_markdown: storedReportMd,
     });
     return NextResponse.json({
       status: "done",
-      report_markdown: reportMd,
+      report_markdown: storedReportMd,
+      report_lang: requestedLang,
     });
   } catch (err) {
     await updateTask(params.taskId, { report_status: "idle" }).catch(

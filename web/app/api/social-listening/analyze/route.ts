@@ -25,7 +25,7 @@ import {
   extractTopics,
   extractKeywords,
 } from "@/lib/social-listening/analyzers/topics";
-import type { Tweet, TimeRange } from "@/lib/social-listening/types";
+import type { Tweet, TimeRange, Lang } from "@/lib/social-listening/types";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -35,6 +35,7 @@ interface AnalyzeBody {
   query: string;
   time_range?: TimeRange;
   max_tweets?: number;
+  lang?: Lang;
 }
 
 function shortId(): string {
@@ -42,13 +43,18 @@ function shortId(): string {
 }
 
 function dedupeKey(query: string, timeRange: string): string {
-  return `${query.trim().toLowerCase()}|${timeRange}`;
+  return `${query.trim().toLowerCase()}|${timeRange}|i18n-v2`;
 }
 
-function emptyResult(query: string, timeRange: string) {
+function emptyResult(query: string, timeRange: string, lang: Lang) {
+  const reportMarkdown =
+    lang === "zh"
+      ? `# 未找到数据\n\n关键词 **${query}**（范围 ${timeRange}）内未找到相关推文。\n\n建议：\n- 使用英文关键词\n- 延长时间范围\n- 使用项目官方 X 账号链接`
+      : `# No Data Found\n\nNo related tweets were found for **${query}** in the ${timeRange} window.\n\nSuggestions:\n- Try an English keyword\n- Extend the time range\n- Use the project's official X profile link`;
   return {
     query,
     time_range: timeRange,
+    lang,
     tweet_count: 0,
     sentiment_counts: { positive: 0, negative: 0, neutral: 0 },
     category_counts: {},
@@ -56,7 +62,7 @@ function emptyResult(query: string, timeRange: string) {
     topics: [],
     tweets: [],
     keywords: [],
-    report_markdown: `# 未找到数据\n\n关键词 **${query}**（范围 ${timeRange}）内未找到相关推文。\n\n建议：\n- 使用英文关键词\n- 延长时间范围\n- 使用项目官方 X 账号链接`,
+    report_markdown: reportMarkdown,
     report_status: "done" as const,
   };
 }
@@ -86,6 +92,7 @@ export async function POST(req: NextRequest) {
     1,
     Math.min(100, Number(body.max_tweets) || 30)
   );
+  const lang: Lang = body.lang === "en" ? "en" : "zh";
 
   const taskId = shortId();
   let taskCreated = false;
@@ -128,7 +135,7 @@ export async function POST(req: NextRequest) {
         status: "done",
         progress: 100,
         message: "未找到相关推文",
-        result_json: emptyResult(query, timeRange),
+        result_json: emptyResult(query, timeRange, lang),
       });
       return NextResponse.json({ task_id: taskId, cached: false });
     }
@@ -149,13 +156,13 @@ export async function POST(req: NextRequest) {
       progress: 40,
       message: "正在判定情感、紧急度与建议动作...",
     });
-    await classifyTweets(tweets);
+    await classifyTweets(tweets, lang);
 
     await updateTask(taskId, {
       progress: 60,
       message: "正在识别叙事与热点话题...",
     });
-    const topics = await extractTopics(tweets);
+    const topics = await extractTopics(tweets, lang);
     const keywords = extractKeywords(tweets, 30);
 
     const sentimentCounts = countBy(tweets, "sentiment");
@@ -165,6 +172,7 @@ export async function POST(req: NextRequest) {
     const result = {
       query,
       time_range: timeRange,
+      lang,
       tweet_count: tweets.length,
       sentiment_counts: {
         positive: sentimentCounts.positive || 0,

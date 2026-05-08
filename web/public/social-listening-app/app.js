@@ -525,6 +525,35 @@ function setupChatFabAutoHide() {
 // Cache last sentiment/category counts so we can rebuild charts on lang change
 let lastChartData = null;
 
+const REPORT_LANG_MARKER = /^<!--\s*welike-report-lang:(en|zh)\s*-->\s*/;
+
+function inferReportLang(md) {
+  const match = String(md || "").match(REPORT_LANG_MARKER);
+  return match ? match[1] : null;
+}
+
+function stripReportLangMarker(md) {
+  return String(md || "").replace(REPORT_LANG_MARKER, "");
+}
+
+function localizedField(obj, base) {
+  if (!obj) return "";
+  const suffix = currentLang === "en" ? "en" : "zh";
+  return obj[`${base}_${suffix}`] || obj[base] || "";
+}
+
+function localizedTopicName(topic) {
+  return localizedField(topic, "topic");
+}
+
+function localizedTopicAction(topic) {
+  return localizedField(topic, "action");
+}
+
+function localizedTweetSummary(tweet) {
+  return localizedField(tweet, "summary");
+}
+
 function setLang(lang) {
   if (!I18N[lang]) return;
   currentLang = lang;
@@ -545,9 +574,19 @@ function setLang(lang) {
     renderSentimentChart(lastChartData.pos, lastChartData.neg, lastChartData.neu);
     renderCategoryChart(lastChartData.cats);
   }
+  if (lastTimelineData) {
+    if (lastTimelineData.lang === currentLang) renderTimeline(lastTimelineData);
+    else loadTimeline();
+  }
   // Custom chat suggestions store both ZH/EN — re-render so the chip text follows lang
   if (lastSuggestions.length) {
     renderChatSuggestions(lastSuggestions);
+  }
+  if (currentReport || document.getElementById("reportContent")) {
+    renderReport(currentReport);
+  }
+  if (lastDashboardData) {
+    renderAlertCta(lastDashboardData);
   }
   // Refresh the alert preview so its sample sentence picks up the new language
   if (typeof updateAlertPreview === "function") updateAlertPreview();
@@ -559,12 +598,15 @@ let pollTimer = null;
 let allTweets = [];
 let currentTopics = [];
 let currentReport = "";
+let currentReportLang = null;
 let selectedTopicIdx = -1;
 let sentimentChart = null;
 let categoryChart = null;
 let timelineChart = null;
+let lastTimelineData = null;
 let chatHistory = [];
 let lastSuggestions = [];
+let lastDashboardData = null;
 
 // ===== View switching =====
 document.querySelectorAll(".nav-btn").forEach(btn => {
@@ -659,7 +701,7 @@ async function startAnalysis() {
     const resp = await fetch(`${API_BASE}/api/social-listening/analyze`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ query, time_range: timeRange }),
+      body: JSON.stringify({ query, time_range: timeRange, lang: currentLang }),
     });
     if (!resp.ok) throw new Error(await readApiError(resp));
     const data = await resp.json();
@@ -715,10 +757,13 @@ function asArray(value) {
 }
 
 function renderDashboard(data) {
+  lastDashboardData = data;
   allTweets = asArray(data.tweets);
   currentTopics = asArray(data.topics).filter(topic => topic && typeof topic === "object");
   currentReport = data.report_markdown || "";
+  currentReportLang = data.report_lang || inferReportLang(currentReport) || data.lang || null;
   selectedTopicIdx = -1;
+  lastTimelineData = null;
 
   const sc = data.sentiment_counts || {};
   const uc = data.urgency_counts || {};
@@ -834,8 +879,8 @@ function renderTopics(topics) {
         </div>
         <span class="topic-post-count mono">${topic.tweet_ids?.length || topic.count || 0} ${t("unit_count")}</span>
       </div>
-      <div class="topic-name">${escapeHtml(topic.topic)}</div>
-      <div class="topic-action">${escapeHtml(topic.action)}</div>
+      <div class="topic-name">${escapeHtml(localizedTopicName(topic))}</div>
+      <div class="topic-action">${escapeHtml(localizedTopicAction(topic))}</div>
     </div>
   `).join("");
 }
@@ -871,8 +916,8 @@ function renderTopicDetail(idx) {
         <span class="tag sent-${escapeHtml(topic.sentiment)}">${sentLabel(topic.sentiment)}</span>
         <span class="tag">${tweetIds.length} ${t("topic_driving_tweets_count")}</span>
       </div>
-      <h2 class="topic-detail-title">${escapeHtml(topic.topic)}</h2>
-      <div class="topic-detail-action"><strong>${t("topic_overall_advice")}</strong>${escapeHtml(topic.action)}</div>
+      <h2 class="topic-detail-title">${escapeHtml(localizedTopicName(topic))}</h2>
+      <div class="topic-detail-action"><strong>${t("topic_overall_advice")}</strong>${escapeHtml(localizedTopicAction(topic))}</div>
     </div>
     <div class="topic-detail-tweets">${tweetsHTML}</div>
   `;
@@ -912,7 +957,7 @@ function renderTopicTweetCard(t, origIdx) {
           <span class="td-action-label mono">${t_("suggested_action_label")}</span>
           <strong>${actionLabel(t.action) || actionLabel("monitor")}</strong>
         </div>
-        ${t.summary ? `<div class="td-action-why">${escapeHtml(t.summary)}</div>` : ""}
+        ${localizedTweetSummary(t) ? `<div class="td-action-why">${escapeHtml(localizedTweetSummary(t))}</div>` : ""}
         ${t.action === "reply_now" ? `<button class="reply-gen-btn" onclick="requestReply(${origIdx}, this)">${t_("btn_gen_reply")}</button>` : ""}
       </div>
     </div>
@@ -989,7 +1034,7 @@ function renderTweets(tweets) {
           </div>
         </div>
         <div class="tweet-text">${escapeHtml(t.text)}</div>
-        ${t.summary ? `<div class="tweet-summary">📌 ${escapeHtml(t.summary)}</div>` : ""}
+        ${localizedTweetSummary(t) ? `<div class="tweet-summary">📌 ${escapeHtml(localizedTweetSummary(t))}</div>` : ""}
         <div class="tweet-action-line">
           <span>${t_("suggested_action_inline")}<strong>${actionLabel(t.action) || actionLabel("monitor")}</strong></span>
           ${t.action === "reply_now" ? `<button class="reply-gen-btn" onclick="requestReply(${origIdx}, this)">${t_("btn_gen_reply")}</button>` : ""}
@@ -1039,8 +1084,9 @@ function scrollToTweet(origIdx) {
 function renderReport(md) {
   const box = $("reportContent");
   if (!box) return;
-  if (md && md.trim()) {
-    box.innerHTML = marked.parse(md);
+  const reportLang = currentReportLang || inferReportLang(md);
+  if (md && md.trim() && (!reportLang || reportLang === currentLang)) {
+    box.innerHTML = marked.parse(stripReportLangMarker(md));
     setExportButtonsEnabled(true);
     return;
   }
@@ -1100,13 +1146,18 @@ async function requestReportGeneration() {
     `;
   }
   try {
-    const resp = await fetch(`${API_BASE}/api/social-listening/report/${currentTaskId}/generate`, {method: "POST"});
+    const resp = await fetch(`${API_BASE}/api/social-listening/report/${currentTaskId}/generate`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ lang: currentLang }),
+    });
     if (!resp.ok) {
       const err = await resp.json().catch(() => ({}));
       throw new Error(err.detail || `HTTP ${resp.status}`);
     }
     const data = await resp.json();
     currentReport = data.report_markdown || "";
+    currentReportLang = data.report_lang || inferReportLang(currentReport) || currentLang;
     renderReport(currentReport);
   } catch (err) {
     if (box) {
@@ -1141,7 +1192,7 @@ function printReport() {
     : "WeLike Strategy Report";
   const w = window.open("", "_blank");
   if (!w) { alert("Pop-up blocked. Please allow pop-ups and try again."); return; }
-  const renderedHtml = marked.parse(currentReport);
+  const renderedHtml = marked.parse(stripReportLangMarker(currentReport));
   w.document.write(`<!DOCTYPE html>
 <html lang="${lang}">
 <head>
@@ -1433,14 +1484,17 @@ function generateChatSuggestions(data) {
 
   // 2. Top topic — drill into the dominant narrative
   const topTopic = topics[0];
-  if (topTopic && topTopic.topic) {
-    const short = topTopic.topic.length > 12 ? topTopic.topic.slice(0, 12) + "…" : topTopic.topic;
+  if (topTopic && localizedTopicName(topTopic)) {
+    const topicZh = topTopic.topic_zh || topTopic.topic || localizedTopicName(topTopic);
+    const topicEn = topTopic.topic_en || topTopic.topic || localizedTopicName(topTopic);
+    const shortZh = topicZh.length > 12 ? topicZh.slice(0, 12) + "…" : topicZh;
+    const shortEn = topicEn.length > 18 ? topicEn.slice(0, 18) + "…" : topicEn;
     candidates.push({
       priority: 90,
-      labelZh: `📊 拆解「${short}」`,
-      labelEn: `📊 Dig into "${short}"`,
-      promptZh: `深入拆解话题「${topTopic.topic}」：成因是什么？哪些声音在推动？给出 3 条具体应对建议`,
-      promptEn: `Deep-dive on the topic "${topTopic.topic}": what's driving it, who is amplifying it, and 3 concrete actions`,
+      labelZh: `📊 拆解「${shortZh}」`,
+      labelEn: `📊 Dig into "${shortEn}"`,
+      promptZh: `深入拆解话题「${topicZh}」：成因是什么？哪些声音在推动？给出 3 条具体应对建议`,
+      promptEn: `Deep-dive on the topic "${topicEn}": what's driving it, who is amplifying it, and 3 concrete actions`,
     });
   }
 
@@ -1543,7 +1597,7 @@ async function sendChat() {
     const resp = await fetch(`${API_BASE}/api/social-listening/chat`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ task_id: currentTaskId, question: q, history: chatHistory }),
+      body: JSON.stringify({ task_id: currentTaskId, question: q, history: chatHistory, lang: currentLang }),
     });
     const data = await resp.json();
     replaceChat(thinkingId, "assistant", data.answer || t("chat_empty_reply"));
@@ -1596,7 +1650,7 @@ async function loadTimeline() {
   empty?.classList.remove("hidden");
   wrap?.classList.add("hidden");
   try {
-    const resp = await fetch(`${API_BASE}/api/social-listening/timeline/${currentTaskId}`);
+    const resp = await fetch(`${API_BASE}/api/social-listening/timeline/${currentTaskId}?lang=${currentLang}`);
     if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
     const data = await resp.json();
     renderTimeline(data);
@@ -1606,6 +1660,7 @@ async function loadTimeline() {
 }
 
 function renderTimeline(data) {
+  lastTimelineData = data;
   const empty = $("timelineEmpty");
   const wrap = $("timelineWrap");
   const buckets = data.buckets || [];

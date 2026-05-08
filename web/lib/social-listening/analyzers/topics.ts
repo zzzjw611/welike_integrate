@@ -15,6 +15,7 @@ import type {
   Topic,
   KeywordEntry,
   Narrative,
+  Lang,
 } from "@/lib/social-listening/types";
 
 // ────────────────────────────────────────────────────────────────────────────
@@ -68,10 +69,14 @@ export function extractKeywords(tweets: Tweet[], topN = 30): KeywordEntry[] {
 
 interface TopicOutput {
   topic: string;
+  topic_zh?: string;
+  topic_en?: string;
   count: number;
   sentiment: "positive" | "negative" | "mixed" | "neutral";
   urgency: "high" | "medium" | "low";
   action: string;
+  action_zh?: string;
+  action_en?: string;
   tweet_ids: number[];
 }
 
@@ -88,6 +93,16 @@ const TOPICS_SCHEMA: JsonSchema = {
         type: "object",
         properties: {
           topic: { type: "string", maxLength: 100 },
+          topic_zh: {
+            type: "string",
+            maxLength: 100,
+            description: "中文话题标题；产品名和专有名词可保留英文。",
+          },
+          topic_en: {
+            type: "string",
+            maxLength: 100,
+            description: "English topic title; keep proper nouns unchanged.",
+          },
           count: { type: "integer", minimum: 1 },
           sentiment: {
             type: "string",
@@ -95,6 +110,16 @@ const TOPICS_SCHEMA: JsonSchema = {
           },
           urgency: { type: "string", enum: ["high", "medium", "low"] },
           action: { type: "string", maxLength: 200 },
+          action_zh: {
+            type: "string",
+            maxLength: 200,
+            description: "中文推荐行动；产品名和专有名词可保留英文。",
+          },
+          action_en: {
+            type: "string",
+            maxLength: 200,
+            description: "English recommended action; keep proper nouns unchanged.",
+          },
           tweet_ids: {
             type: "array",
             items: { type: "integer" },
@@ -103,10 +128,14 @@ const TOPICS_SCHEMA: JsonSchema = {
         },
         required: [
           "topic",
+          "topic_zh",
+          "topic_en",
           "count",
           "sentiment",
           "urgency",
           "action",
+          "action_zh",
+          "action_en",
           "tweet_ids",
         ],
       },
@@ -125,7 +154,17 @@ function normalizeTopicOutputs(input: unknown): TopicOutput[] {
   return [];
 }
 
-export async function extractTopics(tweets: Tweet[]): Promise<Topic[]> {
+function topicsSystemPrompt(lang: Lang): string {
+  if (lang === "en") {
+    return "You are a social listening topic analyst. Extract the top 6-8 high-signal topics from the tweet set. For each topic, label sentiment, urgency, recommended action, and related tweet ids. Return both Chinese and English versions of topic and action. Set topic/action to English. Keep product names and proper nouns unchanged.";
+  }
+  return "你是社交聆听话题分析师。从推文集合中抽取 top 6-8 个高信号话题，为每个话题标注情感、紧急度、推荐行动，并关联对应推文编号。请同时输出 topic_zh/topic_en 和 action_zh/action_en；topic/action 使用中文。中文里产品名、平台名、人名等专有名词可以保留英文。";
+}
+
+export async function extractTopics(
+  tweets: Tweet[],
+  lang: Lang = "zh"
+): Promise<Topic[]> {
   if (tweets.length === 0) return [];
 
   const numbered = tweets
@@ -134,11 +173,13 @@ export async function extractTopics(tweets: Tweet[]): Promise<Topic[]> {
 
   const result = await generateStructured<TopicsResult>({
     model: MODEL_SONNET,
-    system:
-      "你是社交聆听话题分析师。从推文集合中抽取 top 6-8 个高信号话题，为每个话题标注情感、紧急度、推荐行动，并关联对应推文编号。",
-    user: `推文列表（编号 1-based）：\n\n${numbered}`,
+    system: topicsSystemPrompt(lang),
+    user:
+      lang === "en"
+        ? `Tweet list (1-based ids):\n\n${numbered}`
+        : `推文列表（编号 1-based）：\n\n${numbered}`,
     schema: TOPICS_SCHEMA,
-    maxTokens: 2500,
+    maxTokens: 3200,
   });
 
   if (!result) return [];
@@ -147,11 +188,21 @@ export async function extractTopics(tweets: Tweet[]): Promise<Topic[]> {
   return normalizeTopicOutputs(result)
     .filter((t) => t && typeof t.topic === "string")
     .map((t) => ({
-      topic: t.topic,
+      topic:
+        lang === "en"
+          ? t.topic_en || t.topic
+          : t.topic_zh || t.topic,
+      topic_zh: t.topic_zh || t.topic,
+      topic_en: t.topic_en || t.topic,
       count: Number.isFinite(Number(t.count)) ? Number(t.count) : 1,
       sentiment: t.sentiment,
       urgency: t.urgency,
-      action: typeof t.action === "string" ? t.action : "",
+      action:
+        lang === "en"
+          ? t.action_en || t.action || ""
+          : t.action_zh || t.action || "",
+      action_zh: t.action_zh || t.action || "",
+      action_en: t.action_en || t.action || "",
       tweet_ids: (Array.isArray(t.tweet_ids) ? t.tweet_ids : []).filter(
         (i) => i >= 1 && i <= maxId
       ),

@@ -15,6 +15,7 @@ import type {
   Tweet,
   TimelineBucket,
   Milestone,
+  Lang,
 } from "@/lib/social-listening/types";
 
 function parseDay(createdAt: string): string | null {
@@ -122,7 +123,8 @@ export async function inferMilestones(
   tweets: Tweet[],
   buckets: InternalBucket[],
   topK = 4,
-  query = ""
+  query = "",
+  lang: Lang = "zh"
 ): Promise<RichMilestone[]> {
   if (tweets.length === 0 || buckets.length < 2) return [];
 
@@ -166,8 +168,13 @@ export async function inferMilestones(
   if (blocks.length === 0) return [];
 
   const system =
-    "你是项目动态分析师。给定几个'热度峰值日'及当日的代表性推文，请判断每天发生的最可能的项目里程碑事件（产品发布 / 融资 / 合作 / 危机 / 重大公告 / 用户增长 等）。如果某一天的推文看起来只是日常讨论而非里程碑，可以省略该日。标题简短（≤12 字），摘要客观、具体。";
-  const user = `请为以下峰值日生成里程碑标签：\n\n${blocks.join("\n\n")}`;
+    lang === "en"
+      ? "You are a project momentum analyst. Given several heat-spike days and representative tweets from each day, identify the most likely project milestone event for each date (product launch / fundraising / partnership / crisis / major announcement / user growth, etc.). Skip days that look like normal discussion rather than a milestone. Keep titles short and summaries objective and specific. Output English; keep proper nouns unchanged."
+      : "你是项目动态分析师。给定几个'热度峰值日'及当日的代表性推文，请判断每天发生的最可能的项目里程碑事件（产品发布 / 融资 / 合作 / 危机 / 重大公告 / 用户增长 等）。如果某一天的推文看起来只是日常讨论而非里程碑，可以省略该日。标题简短（≤12 字），摘要客观、具体。产品名和专有名词可保留英文。";
+  const user =
+    lang === "en"
+      ? `Generate milestone labels for these spike days:\n\n${blocks.join("\n\n")}`
+      : `请为以下峰值日生成里程碑标签：\n\n${blocks.join("\n\n")}`;
 
   let parsed: MilestonesResult | null = null;
   try {
