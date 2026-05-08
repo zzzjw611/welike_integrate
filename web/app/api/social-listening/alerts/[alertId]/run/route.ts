@@ -23,7 +23,9 @@ export async function POST(
   } catch {
     body = {};
   }
-  const chatId = Number(body.chat_id);
+  const chatId = Number(
+    body.chat_id ?? req.nextUrl.searchParams.get("chat_id")
+  );
   if (!chatId) {
     return NextResponse.json(
       { error: "chat_id is required" },

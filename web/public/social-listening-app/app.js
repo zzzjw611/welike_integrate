@@ -2409,11 +2409,15 @@ async function runAlertNow(btn) {
     btn.textContent = t("alerts_running");
   }
   try {
-    const resp = await fetch(
-      `${API_BASE}/api/social-listening/alerts/${currentAlert.id}/run?chat_id=${chatId}`,
-      { method: "POST" }
-    );
-    if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+    const resp = await fetch(`${API_BASE}/api/social-listening/alerts/${currentAlert.id}/run`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ chat_id: chatId }),
+    });
+    if (!resp.ok) {
+      const err = await resp.json().catch(() => ({}));
+      throw new Error(err.error || err.detail || `HTTP ${resp.status}`);
+    }
     loadAlerts();
   } catch (err) {
     alert("Run failed: " + err.message);
