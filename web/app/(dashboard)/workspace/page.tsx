@@ -428,7 +428,7 @@ export default function WorkspacePage() {
           const moduleMeta: Record<string, { status: string; tag: string }> = {
             "social-listening": {
               status: lang === "zh" ? "实时监控" : "Real-time monitoring",
-              tag: lang === "zh" ? "X + Reddit" : "X + Reddit",
+              tag: lang === "zh" ? "X 市场声音" : "X market voices",
             },
             "kol-pricer": {
               status: lang === "zh" ? "定价基准" : "Pricing benchmarks",

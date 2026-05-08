@@ -497,7 +497,7 @@ export default function Home() {
             {
               icon: Radio,
               title: lang === 'zh' ? '社交聆听' : 'Social Listening',
-              desc: lang === 'zh' ? '跨 X、Reddit 和开发者社区的实时情感追踪。' : "Real-time sentiment tracking across X, Reddit & dev communities.",
+              desc: lang === 'zh' ? '追踪公开市场声音、情绪变化和高信号机会。' : "Track public market voices, sentiment shifts, and high-signal opportunities.",
             },
             {
               icon: BarChart3,
