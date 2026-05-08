@@ -1873,6 +1873,7 @@ async function requestReply(tweetIdx, btn) {
 //   4. CRUD on alerts hits /api/social-listening/alerts/* — same data as Telegram /track.
 
 const STORAGE_CHAT_ID = "welike_chat_id";
+const TELEGRAM_ALERTS_BOT_URL = "https://t.me/WeLike_Alerts_bot";
 let linkPollTimer = null;
 let currentAlert = null;
 let alertPatchSeq = 0;
@@ -2289,7 +2290,7 @@ function renderCurrentAlert(a) {
 
     <!-- ===== Footer action: primary Run-now ===== -->
     <div class="alert-footer-action">
-      <button class="pill-btn primary alert-run-btn" onclick="runAlertNow(this)" title="${escapeHtml(t('alerts_run_now_tip'))}">
+      <button class="pill-btn primary alert-run-btn" onclick="runAlertNow(this, { openTelegram: true })" title="${escapeHtml(t('alerts_run_now_tip'))}">
         <span class="run-btn-label">${t("alerts_run_now")}</span>
       </button>
     </div>
@@ -2421,6 +2422,9 @@ async function runAlertNow(btn, opts = {}) {
   if (!chatId || !currentAlert) return;
   btn = btn || document.querySelector(".alert-run-btn");
   if (btn?.disabled) return;
+  if (opts.openTelegram) {
+    window.open(TELEGRAM_ALERTS_BOT_URL, "_blank", "noopener,noreferrer");
+  }
   // Visible loading state: spinner + "Running…" copy + disabled
   const labelEl = btn?.querySelector(".run-btn-label");
   const originalLabel = labelEl ? labelEl.textContent : btn?.textContent;
