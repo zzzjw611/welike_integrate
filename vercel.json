@@ -1,0 +1,5 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "_comment": "The active Vercel config is at web/vercel.json (Vercel project root is web/). This file at the repo root is intentionally empty so it doesn't shadow the real config.",
+  "_note": "If your Vercel project root is configured to the repo root rather than web/, move the contents of web/vercel.json here and rewrite the function paths to be web/-prefixed (e.g. web/app/api/...)."
+}
