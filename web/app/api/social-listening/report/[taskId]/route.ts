@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getTask } from "@/lib/social-listening/db";
+import { getTask, initSchemaOnce } from "@/lib/social-listening/db";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -16,7 +16,16 @@ export async function GET(
   _req: Request,
   { params }: { params: { taskId: string } }
 ) {
-  const task = await getTask(params.taskId);
+  let task;
+  try {
+    await initSchemaOnce();
+    task = await getTask(params.taskId);
+  } catch (err) {
+    return NextResponse.json(
+      { error: err instanceof Error ? err.message : String(err) },
+      { status: 500 }
+    );
+  }
   if (!task) {
     return NextResponse.json({ error: "Task not found" }, { status: 404 });
   }

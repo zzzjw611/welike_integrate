@@ -86,7 +86,7 @@ const I18N = {
     chat_suggest_compare: "竞品差距",
     no_tweets: "暂无推文",
     no_topics: "未识别出话题",
-    err_no_backend: "无法连接到后端。请确认后端已运行：<br/><code>bash start.sh</code><br/><br/>",
+    err_no_backend: "分析服务暂时不可用。<br/><br/>",
     err_polling: "轮询状态失败：",
     err_run_first: "请先运行一次分析",
     compare_title_em: "Competitor",
@@ -303,7 +303,7 @@ const I18N = {
     chat_suggest_compare: "Vs. competitors",
     no_tweets: "No tweets",
     no_topics: "No topics detected",
-    err_no_backend: "Cannot reach backend. Make sure it's running:<br/><code>bash start.sh</code><br/><br/>",
+    err_no_backend: "The analysis service is temporarily unavailable.<br/><br/>",
     err_polling: "Status polling failed: ",
     err_run_first: "Please run an analysis first",
     compare_title_em: "Competitor",
@@ -438,7 +438,21 @@ const I18N = {
   },
 };
 
-let currentLang = localStorage.getItem("welike_lang") || "zh";
+function getInitialLang() {
+  const params = new URLSearchParams(window.location.search);
+  const fromUrl = params.get("lang");
+  if (fromUrl === "zh" || fromUrl === "en") return fromUrl;
+
+  const fromLocalStorage = localStorage.getItem("welike_lang");
+  if (fromLocalStorage === "zh" || fromLocalStorage === "en") return fromLocalStorage;
+
+  const cookieMatch = document.cookie.match(/(?:^|;\s*)lang=(zh|en)(?:;|$)/);
+  if (cookieMatch) return cookieMatch[1];
+
+  return "zh";
+}
+
+let currentLang = getInitialLang();
 function t(key) { return (I18N[currentLang] && I18N[currentLang][key]) ?? key; }
 
 function applyI18n() {
@@ -515,6 +529,7 @@ function setLang(lang) {
   if (!I18N[lang]) return;
   currentLang = lang;
   localStorage.setItem("welike_lang", lang);
+  document.cookie = `lang=${lang}; path=/; max-age=${365 * 24 * 60 * 60}; SameSite=Lax`;
   applyI18n();
   // Re-render dynamic content that includes translated strings
   if (currentTopics.length) {
@@ -614,6 +629,20 @@ function escapeHtml(str) {
 
 // ===== Start Analysis =====
 
+async function readApiError(resp) {
+  try {
+    const data = await resp.clone().json();
+    return data.error || data.message || `${t("server_error")} ${resp.status}`;
+  } catch {
+    try {
+      const text = await resp.text();
+      return text || `${t("server_error")} ${resp.status}`;
+    } catch {
+      return `${t("server_error")} ${resp.status}`;
+    }
+  }
+}
+
 async function startAnalysis() {
   const query = $("queryInput").value.trim();
   if (!query) { $("queryInput").focus(); return; }
@@ -632,7 +661,7 @@ async function startAnalysis() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ query, time_range: timeRange }),
     });
-    if (!resp.ok) throw new Error(`${t("server_error")} ${resp.status}`);
+    if (!resp.ok) throw new Error(await readApiError(resp));
     const data = await resp.json();
     currentTaskId = data.task_id;
     chatHistory = [];

@@ -1,5 +1,23 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "_comment": "The active Vercel config is at web/vercel.json (Vercel project root is web/). This file at the repo root is intentionally empty so it doesn't shadow the real config.",
-  "_note": "If your Vercel project root is configured to the repo root rather than web/, move the contents of web/vercel.json here and rewrite the function paths to be web/-prefixed (e.g. web/app/api/...)."
+  "framework": "nextjs",
+  "installCommand": "npm ci --prefix web",
+  "buildCommand": "npm run build --prefix web",
+  "outputDirectory": "web/.next",
+  "fluid": true,
+  "crons": [
+    {
+      "path": "/api/social-listening/cron/poll-alerts",
+      "schedule": "0 0 * * *"
+    }
+  ],
+  "functions": {
+    "web/app/api/social-listening/analyze/route.ts": { "maxDuration": 300 },
+    "web/app/api/social-listening/report/[taskId]/generate/route.ts": { "maxDuration": 300 },
+    "web/app/api/social-listening/cron/poll-alerts/route.ts": { "maxDuration": 300 },
+    "web/app/api/social-listening/alerts/[alertId]/run/route.ts": { "maxDuration": 60 },
+    "web/app/api/social-listening/timeline/[taskId]/route.ts": { "maxDuration": 60 },
+    "web/app/api/social-listening/chat/route.ts": { "maxDuration": 60 },
+    "web/app/api/social-listening/generate-reply/route.ts": { "maxDuration": 60 }
+  }
 }
