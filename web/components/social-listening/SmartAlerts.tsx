@@ -59,14 +59,20 @@ const URGENCY_OPTIONS = [
   { value: "low", zh: "🔵 低", en: "🔵 Low" },
 ];
 
-function formatTime(iso: string | null): string {
+function formatTime(iso: string | null, lang: string): string {
   if (!iso) return "—";
   const d = new Date(iso);
   const now = new Date();
   const diff = now.getTime() - d.getTime();
-  if (diff < 60000) return "刚刚";
-  if (diff < 3600000) return `${Math.floor(diff / 60000)} 分钟前`;
-  if (diff < 86400000) return `${Math.floor(diff / 3600000)} 小时前`;
+  if (lang === "en") {
+    if (diff < 60000) return "just now";
+    if (diff < 3600000) return `${Math.floor(diff / 60000)} min ago`;
+    if (diff < 86400000) return `${Math.floor(diff / 3600000)} h ago`;
+  } else {
+    if (diff < 60000) return "刚刚";
+    if (diff < 3600000) return `${Math.floor(diff / 60000)} 分钟前`;
+    if (diff < 86400000) return `${Math.floor(diff / 3600000)} 小时前`;
+  }
   return `${d.getMonth() + 1}/${d.getDate()}`;
 }
 
@@ -211,7 +217,9 @@ export default function SmartAlerts({ initialQuery, onCreated }: SmartAlertsProp
       });
       if (!resp.ok) {
         const err = await resp.json();
-        throw new Error(err.detail || "创建失败");
+        throw new Error(
+          err.detail || err.error || (lang === "zh" ? "创建失败" : "Creation failed")
+        );
       }
       await loadAlerts();
       setShowCreate(false);
@@ -747,7 +755,7 @@ export default function SmartAlerts({ initialQuery, onCreated }: SmartAlertsProp
                         </>
                       )}
                       <span className="ml-auto">
-                        {lang === "zh" ? "上次运行" : "Last run"}: {formatTime(alert.last_run_at)}
+                        {lang === "zh" ? "上次运行" : "Last run"}: {formatTime(alert.last_run_at, lang)}
                       </span>
                     </div>
                   </div>

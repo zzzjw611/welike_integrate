@@ -1,3 +1,18 @@
 {
-  "$schema": "https://openapi.vercel.sh/vercel.json"
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "crons": [
+    {
+      "path": "/api/social-listening/cron/poll-alerts",
+      "schedule": "*/10 * * * *"
+    }
+  ],
+  "functions": {
+    "app/api/social-listening/analyze/route.ts": { "maxDuration": 300 },
+    "app/api/social-listening/report/[taskId]/generate/route.ts": { "maxDuration": 300 },
+    "app/api/social-listening/cron/poll-alerts/route.ts": { "maxDuration": 300 },
+    "app/api/social-listening/alerts/[alertId]/run/route.ts": { "maxDuration": 60 },
+    "app/api/social-listening/timeline/[taskId]/route.ts": { "maxDuration": 60 },
+    "app/api/social-listening/chat/route.ts": { "maxDuration": 60 },
+    "app/api/social-listening/generate-reply/route.ts": { "maxDuration": 60 }
+  }
 }

@@ -4,27 +4,46 @@ import {
   formatIssueForTelegram,
   type AlertSections,
 } from "@/lib/news-telegram";
+import { upsertUser } from "@/lib/social-listening/db";
+import {
+  cmdTrack,
+  cmdList,
+  cmdToggle,
+  cmdDelete,
+  cmdSentiment,
+  cmdUrgency,
+  cmdDigest,
+  cmdTimezone,
+  cmdRun,
+  cmdFetchSocialSummary,
+  handleStartToken,
+} from "@/lib/social-listening/telegram-commands";
 
-// Stateless interactive menu bot for @WeLike_Alerts_bot.
+// Single-bot stateless interactive webhook for @WeLike_Alerts_bot.
 //
-// Design:
-//   /start  → main menu: [AI News] [Social Listening]
-//   tap "AI News"  → sections menu: [Daily Brief] [Growth Insight]
-//                                   [Launch Radar] [Daily Case] [All]
-//   tap a section  → bot sends that part of the latest issue inline
-//   tap "Social Listening" → placeholder (deep-links to web)
+// Two surfaces share the same Telegram bot:
+//   1. AI News (existing): pull mode — /ainews, /start menu, callback buttons
+//      m:ai*, m:soc, m:root.
+//   2. Social Listening (new): stateful — /track, /list, /sentiment,
+//      /urgency, /digest, /timezone, /run, /pause, /resume, /delete.
+//      /start <token>  binds a website session to this chat (Web Link flow).
 //
-// No persistence. Every interaction is "pull": the user taps a button and
-// gets content right then. No subscription, no DB, no cron.
+// Both surfaces dispatch off the same incoming Update payload. The webhook
+// stays Vercel-serverless friendly (no long-running scheduler) — Smart
+// Alerts polling is handled by /api/social-listening/cron/poll-alerts.
 //
 // Webhook bootstrap (one-time): scripts/setup-telegram-webhook.sh
 // Telegram echoes our TELEGRAM_WEBHOOK_SECRET in the
 // X-Telegram-Bot-Api-Secret-Token header so we can reject forgeries.
 
 export const dynamic = "force-dynamic";
-export const maxDuration = 30;
+export const maxDuration = 60;
+export const runtime = "nodejs";
 
-const BASE_URL = process.env.WEB_BASE_URL || "https://welike-integrate.vercel.app";
+const BASE_URL =
+  process.env.WEB_URL ||
+  process.env.WEB_BASE_URL ||
+  "https://welike-integrate.vercel.app";
 const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
 const TELEGRAM_API = `https://api.telegram.org/bot${BOT_TOKEN}`;
 
@@ -40,13 +59,23 @@ interface InlineKeyboardMarkup {
 }
 interface TelegramMessage {
   message_id: number;
-  from?: { id: number; language_code?: string };
-  chat: { id: number };
+  from?: {
+    id: number;
+    username?: string;
+    first_name?: string;
+    language_code?: string;
+  };
+  chat: { id: number; type?: string };
   text?: string;
 }
 interface TelegramCallbackQuery {
   id: string;
-  from: { id: number; language_code?: string };
+  from: {
+    id: number;
+    username?: string;
+    first_name?: string;
+    language_code?: string;
+  };
   message?: TelegramMessage;
   data?: string;
 }
@@ -120,33 +149,35 @@ function answerCallback(callbackId: string, text?: string) {
 
 const T = {
   welcome: {
-    en: `✅ <b>Connected to the WeLike website!</b>
-Your Telegram is now linked. Pick what you want from the menu below — content arrives instantly.
+    en: `👋 <b>Welcome to @WeLike_Alerts_bot</b>
+I send push notifications from your WeLike tools — set everything up on the website:
 
 ━━━━━━━━━━━━━━━━━━━━
 🌐 <b>Manage from the web — easiest way</b>
-👉 ${BASE_URL}/tools/news  ·  Create Alerts
+👉 ${BASE_URL}/tools/social-listening  ·  Create Alerts
 ━━━━━━━━━━━━━━━━━━━━
 
 <b>Commands:</b>
   /ainews  → today's top AI news
   /social  → your Social Listening mentions
-  /list  → see your alert
-  /pause  /resume  /delete
+  /track @handle  → start tracking
+  /list  /pause  /resume  /delete
+  /sentiment /urgency /digest /timezone
   /help  → all commands`,
-    zh: `✅ <b>已连接 WeLike 网站！</b>
-你的 Telegram 已绑定。从下方菜单选择，内容立即送达。
+    zh: `👋 <b>欢迎使用 @WeLike_Alerts_bot</b>
+我会把 WeLike 各工具的推送送达给你 —— 推荐在网页端管理：
 
 ━━━━━━━━━━━━━━━━━━━━
 🌐 <b>从网页管理（推荐）</b>
-👉 ${BASE_URL}/tools/news  ·  Create Alerts
+👉 ${BASE_URL}/tools/social-listening  ·  Create Alerts
 ━━━━━━━━━━━━━━━━━━━━
 
 <b>命令：</b>
-  /ainews  → 今日 AI 新闻
-  /social  → 你的 Social Listening 提及
-  /list  → 查看你的告警
-  /pause  /resume  /delete
+  /ainews  → 今日 AI 要闻
+  /social  → 你的社交聆听提及
+  /track @handle  → 开始监测
+  /list  /pause  /resume  /delete
+  /sentiment /urgency /digest /timezone
   /help  → 全部命令`,
   },
   aiNewsHeader: {
@@ -157,22 +188,6 @@ Pick a section:`,
 
 选择一个板块：`,
   },
-  socialPlaceholder: {
-    en: `📡 <b>Social Listening</b>
-
-Real-time mentions for your product and competitors.
-
-🛠 Telegram delivery for Social Listening is coming soon.
-For now, view your dashboard:
-👉 ${BASE_URL}/tools/social-listening`,
-    zh: `📡 <b>Social Listening</b>
-
-实时跟踪你的产品和竞品被讨论的情况。
-
-🛠 Telegram 推送即将上线。
-现在请前往网页：
-👉 ${BASE_URL}/tools/social-listening`,
-  },
   noIssue: {
     en: `📭 No issue published yet. Check back tomorrow morning.`,
     zh: `📭 今天还没发布日报，明早再来看吧。`,
@@ -180,32 +195,38 @@ For now, view your dashboard:
   help: {
     en: `📚 <b>All Commands</b>
 
-/start  → Main menu (this welcome screen)
-/ainews → Today's top AI news
-/social → Your Social Listening mentions
-/list   → See your alert
-/pause  → Pause notifications
-/resume → Resume notifications
-/delete → Remove subscription
-/help   → Show this menu
+🌐 ${BASE_URL}/tools/social-listening
 
-🌐 ${BASE_URL}/tools/news`,
+/ainews → today's top AI news
+/social → your Social Listening mentions
+/track <handle/keyword…> → create an alert (e.g. /track @StableStock tesla)
+/list   → show your alert
+/sentiment <all|csv> → filter by sentiment (e.g. /sentiment negative,neutral)
+/urgency <all|csv>   → filter by urgency (e.g. /urgency high,medium)
+/digest <on|off>     → batch ≥5 hits/poll into a single summary
+/timezone <IANA>     → set your tz (e.g. Asia/Shanghai)
+/run    → poll your alert right now
+/pause  → pause pushes
+/resume → resume pushes
+/delete → delete the alert
+/help   → this menu`,
     zh: `📚 <b>全部命令</b>
 
-/start  → 主菜单（欢迎页）
-/ainews → 今日 AI 新闻
-/social → Social Listening 提及
-/list   → 查看告警
+🌐 ${BASE_URL}/tools/social-listening
+
+/ainews → 今日 AI 要闻
+/social → 你的社交聆听提及
+/track <handle/关键词…> → 创建 alert（例：/track @StableStock tesla）
+/list   → 查看你的 alert
+/sentiment <all|csv> → 情感过滤（例：/sentiment negative,neutral）
+/urgency <all|csv>   → 紧急度过滤（例：/urgency high,medium）
+/digest <on|off>     → 单次轮询 ≥5 条时合并为摘要
+/timezone <IANA>     → 设置时区（例：Asia/Shanghai）
+/run    → 立即运行一次
 /pause  → 暂停推送
 /resume → 恢复推送
-/delete → 删除订阅
-/help   → 显示此菜单
-
-🌐 ${BASE_URL}/tools/news`,
-  },
-  statelessNotice: {
-    en: `ℹ️ This bot runs in pull mode — there's no scheduled push to manage. Use /ainews any time to read the latest issue.`,
-    zh: `ℹ️ 当前为按需拉取模式，没有定时推送可管理。随时发 /ainews 即可获取最新日报。`,
+/delete → 删除 alert
+/help   → 显示此菜单`,
   },
 };
 
@@ -218,14 +239,20 @@ function mainMenuMarkup(lang: Lang): InlineKeyboardMarkup {
     inline_keyboard: [
       [
         {
-          text: lang === "zh" ? "📰 AI News" : "📰 AI News",
+          text: "📰 AI News",
           callback_data: "m:ai",
         },
       ],
       [
         {
-          text: lang === "zh" ? "📡 Social Listening" : "📡 Social Listening",
+          text: "📡 Social Listening",
           callback_data: "m:soc",
+        },
+      ],
+      [
+        {
+          text: lang === "zh" ? "📋 我的 alert" : "📋 My alert",
+          callback_data: "m:list",
         },
       ],
     ],
@@ -233,44 +260,19 @@ function mainMenuMarkup(lang: Lang): InlineKeyboardMarkup {
 }
 
 function aiSectionsMarkup(lang: Lang): InlineKeyboardMarkup {
+  const labels = {
+    en: ["📋 Daily Brief", "💡 Growth Insight", "🚀 Launch Radar", "📊 Daily Case", "✨ All", "← Back"],
+    zh: ["📋 Daily Brief", "💡 Growth Insight", "🚀 Launch Radar", "📊 Daily Case", "✨ 全部", "← 返回"],
+  };
+  const L = lang === "zh" ? labels.zh : labels.en;
   return {
     inline_keyboard: [
-      [
-        {
-          text: lang === "zh" ? "📋 Daily Brief" : "📋 Daily Brief",
-          callback_data: "m:ai:b",
-        },
-      ],
-      [
-        {
-          text: lang === "zh" ? "💡 Growth Insight" : "💡 Growth Insight",
-          callback_data: "m:ai:g",
-        },
-      ],
-      [
-        {
-          text: lang === "zh" ? "🚀 Launch Radar" : "🚀 Launch Radar",
-          callback_data: "m:ai:l",
-        },
-      ],
-      [
-        {
-          text: lang === "zh" ? "📊 Daily Case" : "📊 Daily Case",
-          callback_data: "m:ai:c",
-        },
-      ],
-      [
-        {
-          text: lang === "zh" ? "✨ All" : "✨ All",
-          callback_data: "m:ai:all",
-        },
-      ],
-      [
-        {
-          text: lang === "zh" ? "← 返回" : "← Back",
-          callback_data: "m:root",
-        },
-      ],
+      [{ text: L[0], callback_data: "m:ai:b" }],
+      [{ text: L[1], callback_data: "m:ai:g" }],
+      [{ text: L[2], callback_data: "m:ai:l" }],
+      [{ text: L[3], callback_data: "m:ai:c" }],
+      [{ text: L[4], callback_data: "m:ai:all" }],
+      [{ text: L[5], callback_data: "m:root" }],
     ],
   };
 }
@@ -308,8 +310,6 @@ async function sendIssueSection(chatId: number, lang: Lang, sectionKey: string) 
     return;
   }
   const sections = sectionsForKey(sectionKey);
-  // Pass the user's Telegram language so /ainews delivers Chinese for zh users
-  // when the issue has `_zh` parallel fields, and falls back to English otherwise.
   const text = formatIssueForTelegram(issue, sections, lang);
   await sendMessage(chatId, text);
 }
@@ -337,31 +337,75 @@ export async function POST(req: NextRequest) {
   try {
     // ── Slash commands ─────────────────────────────────────────────
     if (update.message?.text) {
-      const chatId = update.message.chat.id;
-      const lang = detectLang(update.message.from?.language_code);
+      const chat = update.message.chat;
+      // Only DM private chats — silently ignore groups/channels.
+      if (chat.type && chat.type !== "private") {
+        return NextResponse.json({ ok: true });
+      }
+      const chatId = chat.id;
+      const fromUser = update.message.from;
+      const lang = detectLang(fromUser?.language_code);
       const text = update.message.text.trim();
 
-      if (text.startsWith("/start")) {
-        // /start carries an optional payload like "/start connect" when the
-        // user came in via the website Connect button — we don't need to
-        // act on it differently in stateless mode, the welcome screen is
-        // the same.
+      // Auto-register every interacting user so /track et al. can FK to sl_user.
+      if (fromUser) {
+        await upsertUser(
+          chatId,
+          fromUser.username || null,
+          fromUser.first_name || null,
+          lang,
+          null
+        ).catch((err) =>
+          console.warn("[webhook] upsertUser failed", err)
+        );
+      }
+
+      const parts = text.split(/\s+/);
+      const cmd = (parts[0] || "").toLowerCase().split("@")[0]; // strips bot mention
+      const args = parts.slice(1);
+
+      if (cmd === "/start") {
+        // /start <token>  — Web Link binding flow.
+        if (args[0] && /^[A-Za-z0-9_-]{8,64}$/.test(args[0])) {
+          const outcome = await handleStartToken(chatId, args[0], lang);
+          if (outcome === "ok") {
+            // After successful binding the user has been welcomed; nothing to do.
+            return NextResponse.json({ ok: true });
+          }
+          if (outcome !== "not_found") {
+            return NextResponse.json({ ok: true });
+          }
+          // not_found → fall through to default welcome.
+        }
         await showMainMenu(chatId, lang);
-      } else if (text === "/ainews") {
+      } else if (cmd === "/ainews" || cmd === "/news") {
         await showAiSections(chatId, lang);
-      } else if (text === "/social") {
-        await sendMessage(chatId, T.socialPlaceholder[lang]);
-      } else if (
-        text === "/list" ||
-        text === "/pause" ||
-        text === "/resume" ||
-        text === "/delete"
-      ) {
-        // Stateless mode: no subscription state to manage. Tell the user
-        // about pull mode and offer the menu so they can keep going.
-        await sendMessage(chatId, T.statelessNotice[lang], mainMenuMarkup(lang));
-      } else if (text === "/help") {
+      } else if (cmd === "/social" || cmd === "/sociallistening") {
+        await cmdFetchSocialSummary(chatId, lang);
+      } else if (cmd === "/track") {
+        await cmdTrack(chatId, args, lang);
+      } else if (cmd === "/list") {
+        await cmdList(chatId, lang);
+      } else if (cmd === "/pause") {
+        await cmdToggle(chatId, false, lang);
+      } else if (cmd === "/resume") {
+        await cmdToggle(chatId, true, lang);
+      } else if (cmd === "/delete") {
+        await cmdDelete(chatId, lang);
+      } else if (cmd === "/sentiment" || cmd === "/filter") {
+        await cmdSentiment(chatId, args, lang);
+      } else if (cmd === "/urgency") {
+        await cmdUrgency(chatId, args, lang);
+      } else if (cmd === "/digest") {
+        await cmdDigest(chatId, args, lang);
+      } else if (cmd === "/timezone" || cmd === "/tz") {
+        await cmdTimezone(chatId, args, lang);
+      } else if (cmd === "/run") {
+        await cmdRun(chatId, lang);
+      } else if (cmd === "/help") {
         await sendMessage(chatId, T.help[lang]);
+      } else if (cmd === "/tools") {
+        await showMainMenu(chatId, lang);
       }
       // Anything else (plain chat, unknown commands): silent.
     }
@@ -379,16 +423,41 @@ export async function POST(req: NextRequest) {
 
       if (!chatId || !messageId) return NextResponse.json({ ok: true });
 
+      // Auto-register the callback user too (they may have arrived via inline
+      // share / forwarded message without ever sending a text).
+      if (cb.from) {
+        await upsertUser(
+          chatId,
+          cb.from.username || null,
+          cb.from.first_name || null,
+          lang,
+          null
+        ).catch(() => {});
+      }
+
       if (data === "m:root") {
-        await editMessageText(chatId, messageId, T.welcome[lang], mainMenuMarkup(lang));
+        await editMessageText(
+          chatId,
+          messageId,
+          T.welcome[lang],
+          mainMenuMarkup(lang)
+        );
       } else if (data === "m:ai") {
-        await editMessageText(chatId, messageId, T.aiNewsHeader[lang], aiSectionsMarkup(lang));
+        await editMessageText(
+          chatId,
+          messageId,
+          T.aiNewsHeader[lang],
+          aiSectionsMarkup(lang)
+        );
       } else if (data.startsWith("m:ai:")) {
         const sectionKey = data.slice("m:ai:".length); // b / g / l / c / all
         await sendIssueSection(chatId, lang, sectionKey);
       } else if (data === "m:soc") {
-        await sendMessage(chatId, T.socialPlaceholder[lang]);
+        await cmdFetchSocialSummary(chatId, lang);
+      } else if (data === "m:list") {
+        await cmdList(chatId, lang);
       }
+      // Unknown callback data: silent.
     }
   } catch (err) {
     console.error("[telegram:webhook] handler error", err);

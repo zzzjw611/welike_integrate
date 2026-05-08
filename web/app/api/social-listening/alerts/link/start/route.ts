@@ -1,33 +1,45 @@
+/**
+ * POST /api/social-listening/alerts/link/start
+ * Body: { tz?: string }
+ *
+ * Mints a one-time pairing token + Telegram deep link. The deep link looks
+ * like https://t.me/<bot>?start=<token>; when the user taps it and presses
+ * Start in Telegram, our webhook calls consumeWebLink(token, chat_id) and
+ * the user's web session can poll /link/status to see chat_id appear.
+ */
 import { NextRequest, NextResponse } from "next/server";
+import { createWebLink } from "@/lib/social-listening/db";
+import { getBotUsername } from "@/lib/social-listening/telegram-formatters";
 
-// Proxy to the Social Listening FastAPI backend (deployed on Railway). The
-// backend mints a one-time token, stores it in its own DB (SQLite), and
-// returns a deep_link that opens @WeLike_SL_bot with `/start link_<token>`.
-//
-// The bot username is decided server-side by the FastAPI backend's env
-// (TELEGRAM_BOT_USERNAME), not hardcoded here.
-//
-// Set SOCIAL_LISTENING_BACKEND in Vercel env to your Railway public URL.
-
-const BACKEND = process.env.SOCIAL_LISTENING_BACKEND || "http://localhost:8000";
-
+export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
+interface LinkStartBody {
+  tz?: string | null;
+}
+
 export async function POST(req: NextRequest) {
-  try {
-    const body = await req.json().catch(() => ({}));
-    const resp = await fetch(`${BACKEND}/api/web/link/start`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body),
-    });
-    const data = await resp.json();
-    return NextResponse.json(data, { status: resp.status });
-  } catch (err) {
-    console.error("[social-listening:link/start] backend error", err);
+  if (!process.env.TELEGRAM_BOT_TOKEN) {
     return NextResponse.json(
-      { error: "Backend unreachable" },
-      { status: 502 }
+      { error: "Telegram bot 未配置" },
+      { status: 503 }
     );
   }
+  let body: LinkStartBody = {};
+  try {
+    body = (await req.json()) as LinkStartBody;
+  } catch {
+    body = {};
+  }
+  const tz = body.tz || null;
+  const token = await createWebLink(tz);
+  const botUsername = await getBotUsername();
+  const deepLink = botUsername
+    ? `https://t.me/${botUsername}?start=${token}`
+    : null;
+  return NextResponse.json({
+    token,
+    deep_link: deepLink,
+    bot_username: botUsername,
+  });
 }
