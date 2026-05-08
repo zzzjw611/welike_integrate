@@ -4,12 +4,25 @@ import matter from "gray-matter";
 import { remark } from "remark";
 import remarkHtml from "remark-html";
 
+// Bilingual fields (`*_zh`) are optional — older issues authored before the
+// bilingual prompt was rolled out (2026-05 and earlier) won't have them.
+// Renderers should fall back to the English field when `_zh` is missing.
+//
+// Re-exported from ./ai-marketer-news-shared so server callers keep working,
+// but client components MUST import directly from the shared file to avoid
+// dragging fs/path into the browser bundle.
+
+export { pickLang, type Lang } from "./ai-marketer-news-shared";
+
 export type Brief = {
   title: string;
+  title_zh?: string;
   summary: string;
+  summary_zh?: string;
   source: string;
   url?: string;
   soWhat?: string;
+  soWhat_zh?: string;
 };
 
 export type GrowthInsight = {
@@ -17,8 +30,10 @@ export type GrowthInsight = {
   handle: string;
   platform?: string;
   quote: string;
+  quote_zh?: string;
   url?: string;
   commentary?: string;
+  commentary_zh?: string;
 };
 
 export type Launch = {
@@ -27,6 +42,7 @@ export type Launch = {
   category: string;
   tag?: "Big AI" | "Funded" | "Rising";
   summary: string;
+  summary_zh?: string;
   url?: string;
   funding?: string;
   metric?: string;
@@ -35,15 +51,21 @@ export type Launch = {
 export type DailyCase = {
   company: string;
   title: string;
+  title_zh?: string;
   deck: string;
+  deck_zh?: string;
   metrics?: string[];
+  metrics_zh?: string[];
   bodyHtml: string;
+  bodyHtml_zh?: string;
 };
 
 export type Highlight = {
   summary?: string;
   bullets?: string[];
+  bullets_zh?: string[];
 };
+
 
 export type Issue = {
   date: string;
@@ -95,6 +117,12 @@ export async function getIssueByDate(date: string): Promise<Issue | null> {
   const { data, content } = matter(raw);
   const bodyHtml = content.trim() ? await mdToHtml(content) : "";
 
+  // body_zh lives inside frontmatter as a YAML block-scalar string. Process
+  // it through remark only if the prompt produced one.
+  const bodyZhRaw =
+    typeof data.daily_case?.body_zh === "string" ? data.daily_case.body_zh : "";
+  const bodyHtml_zh = bodyZhRaw.trim() ? await mdToHtml(bodyZhRaw) : undefined;
+
   return {
     date: toDateString(data.date, date),
     issueNumber: data.issueNumber,
@@ -106,9 +134,13 @@ export async function getIssueByDate(date: string): Promise<Issue | null> {
     daily_case: {
       company: data.daily_case?.company ?? "",
       title: data.daily_case?.title ?? "",
+      title_zh: data.daily_case?.title_zh,
       deck: data.daily_case?.deck ?? "",
+      deck_zh: data.daily_case?.deck_zh,
       metrics: data.daily_case?.metrics,
+      metrics_zh: data.daily_case?.metrics_zh,
       bodyHtml,
+      bodyHtml_zh,
     },
   };
 }

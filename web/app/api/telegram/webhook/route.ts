@@ -308,7 +308,9 @@ async function sendIssueSection(chatId: number, lang: Lang, sectionKey: string) 
     return;
   }
   const sections = sectionsForKey(sectionKey);
-  const text = formatIssueForTelegram(issue, sections);
+  // Pass the user's Telegram language so /ainews delivers Chinese for zh users
+  // when the issue has `_zh` parallel fields, and falls back to English otherwise.
+  const text = formatIssueForTelegram(issue, sections, lang);
   await sendMessage(chatId, text);
 }
 

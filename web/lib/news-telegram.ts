@@ -2,7 +2,8 @@
 // Used by both CreateAlerts (manual "Send now") and the hourly cron dispatcher
 // at /api/cron/dispatch-alerts.
 
-import type { Issue } from "@/lib/ai-marketer-news";
+import type { Issue, Lang } from "@/lib/ai-marketer-news";
+import { pickLang } from "@/lib/ai-marketer-news";
 
 export interface AlertSections {
   briefs: boolean;
@@ -16,45 +17,75 @@ const PUBLIC_BASE_URL =
   process.env.NEXT_PUBLIC_BASE_URL ||
   "https://welike-integrate.vercel.app";
 
+const HEADERS = {
+  en: {
+    title: "AI Marketer News",
+    daily_brief: "📋 Daily Brief",
+    launch_radar: "🚀 Launch Radar",
+    growth_insights: "💡 Growth Insights",
+    daily_case: "📊 Daily Case",
+    read_full: "📖 Read full issue →",
+  },
+  zh: {
+    title: "AI Marketer News",
+    daily_brief: "📋 每日要闻",
+    launch_radar: "🚀 发布雷达",
+    growth_insights: "💡 增长洞察",
+    daily_case: "📊 案例拆解",
+    read_full: "📖 阅读完整日报 →",
+  },
+} as const;
+
 export function formatIssueForTelegram(
   issue: Pick<
     Issue,
     "date" | "briefs" | "launches" | "growth_insights" | "daily_case"
   >,
-  sections: AlertSections
+  sections: AlertSections,
+  lang: Lang = "en"
 ): string {
-  let text = `🤖 <b>AI Marketer News — ${issue.date}</b>\n\n`;
+  const h = HEADERS[lang];
+  let text = `🤖 <b>${h.title} — ${issue.date}</b>\n\n`;
 
   if (sections.briefs && issue.briefs.length > 0) {
-    text += `<b>📋 Daily Brief</b>\n`;
+    text += `<b>${h.daily_brief}</b>\n`;
     issue.briefs.slice(0, 5).forEach((b) => {
-      text += `• <b>${b.title}</b>\n  ${b.summary.slice(0, 120)}${b.summary.length > 120 ? "…" : ""}\n`;
+      const title = pickLang(b.title, b.title_zh, lang);
+      const summary = pickLang(b.summary, b.summary_zh, lang);
+      text += `• <b>${title}</b>\n  ${summary.slice(0, 120)}${summary.length > 120 ? "…" : ""}\n`;
     });
     text += "\n";
   }
 
   if (sections.launches && issue.launches.length > 0) {
-    text += `<b>🚀 Launch Radar</b>\n`;
+    text += `<b>${h.launch_radar}</b>\n`;
     issue.launches.slice(0, 3).forEach((l) => {
-      text += `• ${l.product} (${l.company})\n  ${l.summary.slice(0, 100)}${l.summary.length > 100 ? "…" : ""}\n`;
+      const summary = pickLang(l.summary, l.summary_zh, lang);
+      text += `• ${l.product} (${l.company})\n  ${summary.slice(0, 100)}${summary.length > 100 ? "…" : ""}\n`;
     });
     text += "\n";
   }
 
   if (sections.growth_insights && issue.growth_insights.length > 0) {
-    text += `<b>💡 Growth Insights</b>\n`;
+    text += `<b>${h.growth_insights}</b>\n`;
     issue.growth_insights.slice(0, 2).forEach((g) => {
-      text += `• "${g.quote.slice(0, 100)}${g.quote.length > 100 ? "…" : ""}" — ${g.author}\n`;
+      const quote = pickLang(g.quote, g.quote_zh, lang);
+      text += `• "${quote.slice(0, 100)}${quote.length > 100 ? "…" : ""}" — ${g.author}\n`;
     });
     text += "\n";
   }
 
   if (sections.daily_case && issue.daily_case && issue.daily_case.company) {
-    text += `<b>📊 Daily Case</b>\n`;
-    text += `• ${issue.daily_case.company} — ${issue.daily_case.title}\n`;
+    const caseTitle = pickLang(
+      issue.daily_case.title,
+      issue.daily_case.title_zh,
+      lang
+    );
+    text += `<b>${h.daily_case}</b>\n`;
+    text += `• ${issue.daily_case.company} — ${caseTitle}\n`;
   }
 
-  text += `\n📖 <a href="${PUBLIC_BASE_URL}/tools/news">Read full issue →</a>`;
+  text += `\n<a href="${PUBLIC_BASE_URL}/tools/news?lang=${lang}">${h.read_full}</a>`;
   return text;
 }
 
