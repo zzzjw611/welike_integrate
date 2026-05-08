@@ -514,6 +514,33 @@ import { classifyTweets } from "@/lib/social-listening/analyzers/classify";
 const SOCIAL_HEADER_EN = "📡 <b>Social Listening · Recent Mentions</b>\n";
 const SOCIAL_HEADER_ZH = "📡 <b>社交聆听 · 最近提及</b>\n";
 
+function applyAlertFilters(
+  tweets: Awaited<ReturnType<typeof classifyTweets>>,
+  alert: AlertDict
+) {
+  let filtered = tweets;
+  const sentimentFilter = alert.sentiment_filter || "all";
+  const urgencyFilter = alert.urgency_filter || "all";
+
+  if (sentimentFilter !== "all") {
+    const wanted = new Set(
+      sentimentFilter.split(",").map((s) => s.trim()).filter(Boolean)
+    );
+    filtered = filtered.filter(
+      (tweet) => tweet.sentiment && wanted.has(tweet.sentiment)
+    );
+  }
+  if (urgencyFilter !== "all") {
+    const wanted = new Set(
+      urgencyFilter.split(",").map((u) => u.trim()).filter(Boolean)
+    );
+    filtered = filtered.filter(
+      (tweet) => tweet.urgency && wanted.has(tweet.urgency)
+    );
+  }
+  return filtered;
+}
+
 export async function cmdFetchSocialSummary(
   chatId: number,
   lang: Lang
@@ -555,9 +582,10 @@ export async function cmdFetchSocialSummary(
 
     let tweets;
     try {
-      tweets = await collectTweets(query, 5, "24h");
+      tweets = await collectTweets(query, 30, "24h");
       if (tweets.length > 0) {
         await classifyTweets(tweets);
+        tweets = applyAlertFilters(tweets, alert);
       }
     } catch {
       continue;
@@ -565,7 +593,18 @@ export async function cmdFetchSocialSummary(
     if (!tweets || tweets.length === 0) continue;
 
     const label = queryParts.join(" ");
-    lines.push(`🔍 <b>${escapeHtml(label)}</b>\n`);
+    const sentLabel = filterLabel(
+      alert.sentiment_filter || "all",
+      "sentiment",
+      lang
+    );
+    const urgLabel = filterLabel(alert.urgency_filter || "all", "urgency", lang);
+    lines.push(`🔍 <b>${escapeHtml(label)}</b>`);
+    lines.push(
+      lang === "en"
+        ? `🎯 Filters: ${escapeHtml(sentLabel)} · ${escapeHtml(urgLabel)}\n`
+        : `🎯 筛选：${escapeHtml(sentLabel)} · ${escapeHtml(urgLabel)}\n`
+    );
     for (const tw of tweets.slice(0, 3)) {
       const author = tw.author_username || "unknown";
       const text = (tw.text || "").slice(0, 150);
