@@ -497,7 +497,7 @@ export async function cmdRun(chatId: number, lang: Lang): Promise<void> {
     chatId,
     tr("⏳ Running your alert now...", "⏳ 正在立即运行你的 alert…", lang)
   );
-  await runAlert(alerts[0]);
+  await runAlert(alerts[0], { force: true, notifyEmpty: true });
 }
 
 // ────────────────────────────────────────────────────────────────────────────

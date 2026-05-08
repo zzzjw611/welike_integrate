@@ -2441,7 +2441,11 @@ async function runAlertNow(btn, opts = {}) {
     const resp = await fetch(`${API_BASE}/api/social-listening/alerts/${currentAlert.id}/run`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ chat_id: chatId }),
+      body: JSON.stringify({
+        chat_id: chatId,
+        sentiment_filter: currentAlert.sentiment_filter || "all",
+        urgency_filter: currentAlert.urgency_filter || "all",
+      }),
     });
     if (!resp.ok) {
       const err = await resp.json().catch(() => ({}));

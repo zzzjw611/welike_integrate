@@ -28,6 +28,13 @@ export const MAX_PUSH_PER_RUN = 5;
 export const FETCH_PER_RUN = 30;
 export const DIGEST_THRESHOLD = 5;
 
+export interface RunAlertOptions {
+  /** Manual runs should push the current matching set, even if seen before. */
+  force?: boolean;
+  /** Send a Telegram note when a manual run finds no matching tweets. */
+  notifyEmpty?: boolean;
+}
+
 function buildQuery(handles: string[], keywords: string[]): string {
   const parts = [
     ...handles.map((h) => `@${h.replace(/^@/, "")}`),
@@ -37,8 +44,36 @@ function buildQuery(handles: string[], keywords: string[]): string {
   return `(${parts.join(" OR ")})`;
 }
 
+function filterLabel(
+  value: string,
+  kind: "sentiment" | "urgency",
+  lang: Lang
+): string {
+  if (!value || value === "all") return lang === "en" ? "all" : "全部";
+  const labels =
+    kind === "sentiment"
+      ? {
+          negative: lang === "en" ? "negative" : "消极",
+          positive: lang === "en" ? "positive" : "积极",
+          neutral: lang === "en" ? "neutral" : "中性",
+        }
+      : {
+          high: lang === "en" ? "high" : "高",
+          medium: lang === "en" ? "medium" : "中",
+          low: lang === "en" ? "low" : "低",
+        };
+  return value
+    .split(",")
+    .map((part) => labels[part.trim() as keyof typeof labels] || part.trim())
+    .filter(Boolean)
+    .join(" + ");
+}
+
 /** Poll one alert end-to-end and push hits to Telegram. */
-export async function runAlert(alertDict: AlertDict): Promise<void> {
+export async function runAlert(
+  alertDict: AlertDict,
+  opts: RunAlertOptions = {}
+): Promise<void> {
   const alertId = alertDict.id;
   const chatId = alertDict.chat_id;
   const handles = alertDict.handles || [];
@@ -75,10 +110,22 @@ export async function runAlert(alertDict: AlertDict): Promise<void> {
 
   // Dedupe against tweets we've already pushed for this alert.
   const allIds = tweets.map((t) => t.id).filter(Boolean);
-  const newIdSet = await filterNewTweetIds(alertId, allIds);
-  let newTweets = tweets.filter((t) => newIdSet.has(t.id));
+  const newIdSet = opts.force
+    ? new Set(allIds)
+    : await filterNewTweetIds(alertId, allIds);
+  let newTweets = opts.force
+    ? tweets.filter((t) => t.id)
+    : tweets.filter((t) => newIdSet.has(t.id));
 
   if (newTweets.length === 0) {
+    if (opts.notifyEmpty) {
+      await sendTelegramMessage(
+        chatId,
+        userLang === "en"
+          ? `No recent tweets were found for ${query}.`
+          : `没有找到 ${query} 的近期帖子。`
+      );
+    }
     await updateAlertLastRun(alertId);
     return;
   }
@@ -156,11 +203,22 @@ export async function runAlert(alertDict: AlertDict): Promise<void> {
         }
       }
     }
+  } else if (opts.notifyEmpty) {
+    const sent = filterLabel(sentimentFilter, "sentiment", userLang);
+    const urg = filterLabel(urgencyFilter, "urgency", userLang);
+    await sendTelegramMessage(
+      chatId,
+      userLang === "en"
+        ? `No matching posts for ${query} with filters: sentiment ${sent}, urgency ${urg}.`
+        : `${query} 暂时没有匹配当前筛选的帖子：情感 ${sent}，紧急度 ${urg}。`
+    );
   }
 
   // Only mark tweets that matched the current alert filters. If the user
   // changes filters later, previously excluded tweets can still be considered.
-  await markTweetsPushed(alertId, matchedTweetIds);
+  if (!opts.force) {
+    await markTweetsPushed(alertId, matchedTweetIds);
+  }
   await updateAlertLastRun(alertId);
 }
 
