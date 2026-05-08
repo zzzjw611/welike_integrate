@@ -13,7 +13,7 @@ const TOOLS_EN = [
     icon: Radio,
     name: "Social Listening",
     description:
-      "Monitor real-time discussions about your product across X, Reddit, and developer communities. Get alerts on sentiment shifts and trending narratives.",
+      "Track public market conversations around your product, competitors, buying friction, and emerging narratives. Get alerts on sentiment shifts and high-signal moments.",
     features: [
       "Real-time mention tracking",
       "Sentiment analysis & alerts",
@@ -61,7 +61,7 @@ const TOOLS_ZH = [
     icon: Radio,
         name: "社交聆听",
     description:
-      "在 X、Reddit 和开发者社区中实时监控关于您产品的讨论。获取情绪变化和热门叙事的提醒。",
+      "追踪公开市场讨论中的产品反馈、竞品叙事和购买阻力。获取情绪变化、热门话题和高信号提醒。",
     features: [
       "实时提及追踪",
       "情绪分析与告警",

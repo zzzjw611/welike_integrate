@@ -60,8 +60,8 @@ export async function generateReport(
           .map(
             (t) =>
               lang === "zh"
-                ? `- ${localizedTopic(t, lang)} (推文 ${t.count}, 情感 ${t.sentiment}, 紧急度 ${t.urgency}, 建议: ${localizedAction(t, lang)})`
-                : `- ${localizedTopic(t, lang)} (tweets ${t.count}, sentiment ${t.sentiment}, urgency ${t.urgency}, advice: ${localizedAction(t, lang)})`
+                ? `- ${localizedTopic(t, lang)} (声音 ${t.count}, 情感 ${t.sentiment}, 紧急度 ${t.urgency}, 建议: ${localizedAction(t, lang)})`
+                : `- ${localizedTopic(t, lang)} (signals ${t.count}, sentiment ${t.sentiment}, urgency ${t.urgency}, advice: ${localizedAction(t, lang)})`
           )
           .join("\n")
       : lang === "zh" ? "暂无" : "None";
@@ -76,7 +76,7 @@ export async function generateReport(
 
   const system =
     lang === "zh"
-      ? `你是一位专业的数字营销社交聆听顾问。请基于给定的 X 平台社交聆听数据，生成一份中文 Markdown 格式的市场应对策略报告。
+      ? `你是一位专业的数字营销社交聆听顾问。请基于给定的公开市场声音数据，生成一份中文 Markdown 格式的市场应对策略报告。
 
 报告必须：
 - 语言专业、具体、可执行，避免空话
@@ -84,7 +84,7 @@ export async function generateReport(
 - 每条建议都要落到具体行动（谁做、做什么、什么时间）
 - 使用 Markdown 格式化（## 二级标题、- 列表、**加粗** 关键词）
 - 产品名、平台名、人名等专有名词可保留英文`
-      : `You are a professional digital marketing and social listening consultant. Based on the provided X social listening data, generate an English Markdown market response strategy report.
+      : `You are a professional digital marketing and social listening consultant. Based on the provided public market voice data, generate an English Markdown market response strategy report.
 
 The report must:
 - Be professional, specific, and actionable
@@ -97,13 +97,13 @@ The report must:
     lang === "zh"
       ? `## 数据摘要
 - 监测关键词：${keyword}
-- 分析推文数：${tweets.length} 条（按互动量排序后的高热度样本）
+- 分析声音样本：${tweets.length} 条（按互动量排序后的高信号样本）
 - 情感分布：积极 ${posPct}% / 消极 ${negPct}% / 中性 ${neuPct}%
 
-## 积极讨论示例
+## 积极市场声音示例
 ${fmtTweets(pos, lang)}
 
-## 消极讨论示例
+## 消极市场声音示例
 ${fmtTweets(neg, lang)}
 
 ## Bug / 问题投诉
@@ -125,7 +125,7 @@ ${topicList}
 ## 一、社交聆听概览
 (整体情绪倾向、讨论热度、核心话题)
 
-## 二、积极讨论与品牌优势
+## 二、积极声音与品牌优势
 (用户认可点、可放大扩散的声音)
 
 ## 三、风险与负面信号
@@ -141,13 +141,13 @@ ${topicList}
 (近 1 周 / 近 1 月)`
       : `## Data summary
 - Monitored keyword: ${keyword}
-- Tweets analyzed: ${tweets.length} high-engagement samples
+- Market signals analyzed: ${tweets.length} high-engagement samples
 - Sentiment distribution: positive ${posPct}% / negative ${negPct}% / neutral ${neuPct}%
 
-## Positive discussion examples
+## Positive market voice examples
 ${fmtTweets(pos, lang)}
 
-## Negative discussion examples
+## Negative market voice examples
 ${fmtTweets(neg, lang)}
 
 ## Bugs / complaints
@@ -169,7 +169,7 @@ Please output the full report exactly in this structure:
 ## 1. Social Listening Overview
 (overall sentiment, discussion heat, core topics)
 
-## 2. Positive Discussion & Brand Strengths
+## 2. Positive Voices & Brand Strengths
 (recognized strengths and voices worth amplifying)
 
 ## 3. Risks & Negative Signals

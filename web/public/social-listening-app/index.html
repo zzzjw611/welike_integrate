@@ -43,16 +43,16 @@
     <!-- ========== VIEW: ANALYZE ========== -->
     <section id="view-analyze" class="view">
       <div class="hero">
-        <span class="hero-eyebrow" data-i18n="hero_title_1">AI 驱动的社交聆听</span>
-        <h1 class="hero-title" data-i18n-html="hero_title_2">实时<span class="accent">捕捉</span>，即刻<span class="accent">决策</span></h1>
-        <p class="hero-desc" data-i18n-html="hero_desc">输入关键词或项目 X 主页链接，WeLike 社交聆听会在几十秒内<br>抓取推文、识别叙事、判定紧急度，并生成可执行的市场策略报告</p>
+        <span class="hero-eyebrow" data-i18n="hero_title_1">AI 驱动的市场声音雷达</span>
+        <h1 class="hero-title" data-i18n-html="hero_title_2">发现真实<span class="accent">声音</span>，转成增长<span class="accent">动作</span></h1>
+        <p class="hero-desc" data-i18n-html="hero_desc">输入产品名、品牌名、竞品名或公司官网，WeLike 会快速汇总公开讨论中的<br>情绪、话题、购买阻力与机会信号，并生成可执行的市场响应报告</p>
 
         <div class="search-box">
           <input
             id="queryInput"
             type="text"
             data-i18n-placeholder="search_placeholder"
-            placeholder="例：Claude  或  https://x.com/AnthropicAI"
+            placeholder="例：Claude、OpenAI 或 anthropic.com"
             autocomplete="off"
           />
           <select id="timeRange" class="time-select" data-i18n-title="time_select_title" title="时间范围">
@@ -93,7 +93,7 @@
         <!-- Stats -->
         <div class="stats-row">
           <div class="stat-card">
-            <div class="stat-label mono" data-i18n="stat_tweets">TWEETS</div>
+            <div class="stat-label mono" data-i18n="stat_tweets">声音样本</div>
             <div id="statTotal" class="stat-value">0</div>
             <div class="stat-unit" data-i18n="unit_count">条</div>
           </div>
@@ -148,7 +148,7 @@
         <div class="card topic-explorer">
           <div class="card-head">
             <h3 class="serif-em" data-i18n="card_topics">Hot Topics</h3>
-            <span class="muted mono" data-i18n="card_topics_hint">click a topic to see driving tweets &amp; actions</span>
+            <span class="muted mono" data-i18n="card_topics_hint">点击话题查看驱动声音与行动建议</span>
           </div>
           <div class="topic-explorer-grid">
             <div class="topic-list-col">
@@ -158,7 +158,7 @@
               <div id="topicDetail" class="topic-detail">
                 <div class="topic-detail-empty">
                   <div class="empty-icon">◎</div>
-                  <p data-i18n="topic_empty">点击左侧任意话题，查看对应的驱动推文与逐条推荐动作</p>
+                  <p data-i18n="topic_empty">点击左侧任意话题，查看对应的驱动声音与逐条推荐动作</p>
                 </div>
               </div>
             </div>
@@ -213,7 +213,7 @@
                   <div class="cta-tg-meta" data-i18n="cta_tg_time">🕐 刚刚</div>
                   <div class="cta-tg-meta">👤 Sample User <span class="cta-tg-mute">(@sample_user) · 12.4K</span></div>
                   <div class="cta-tg-body" id="ctaTgBody"></div>
-                  <div class="cta-tg-summary" data-i18n="cta_tg_summary">📌 AI 一句话提炼这条推文要回什么</div>
+                  <div class="cta-tg-summary" data-i18n="cta_tg_summary">📌 AI 一句话提炼这条声音应该如何回应</div>
                   <div class="cta-tg-time mono" id="ctaTgClock">14:08</div>
                 </div>
               </div>
@@ -221,10 +221,10 @@
           </div>
         </div>
 
-        <!-- Row 3: Raw Tweets (full-width) -->
+        <!-- Row 3: Market Signals (full-width) -->
         <div class="card tweets-card full-width">
           <div class="card-head">
-            <h3 class="serif-em" data-i18n="card_raw_tweets">Raw Tweets</h3>
+            <h3 class="serif-em" data-i18n="card_raw_tweets">市场声音</h3>
             <div class="filter-tabs" id="categoryTabs">
               <button class="tab active" data-filter="all" data-i18n="filter_all">全部</button>
               <button class="tab" data-filter="cat:key_voice" data-i18n="filter_key_voice">Key Voices</button>
@@ -263,7 +263,7 @@
             <button id="chatSendBtn" onclick="sendChat()" data-i18n="chat_send">发送 →</button>
           </div>
           <div class="chat-suggestions" id="chatSuggestions">
-            <button class="chip-sm" data-i18n="chat_suggest_3" data-prompt-zh="总结最值得立刻回复的3条推文，给出具体回复话术" data-prompt-en="Summarize the 3 tweets most worth replying to right now, with concrete reply scripts">3 条立回</button>
+            <button class="chip-sm" data-i18n="chat_suggest_3" data-prompt-zh="总结最值得立刻回应的3条市场声音，给出具体回复话术" data-prompt-en="Summarize the 3 market signals most worth responding to right now, with concrete response scripts">3 条立回</button>
             <button class="chip-sm" data-i18n="chat_suggest_features" data-prompt-zh="按热度列出所有功能建议，并标注重复出现的诉求" data-prompt-en="List all feature requests by frequency, flagging recurring asks">功能建议</button>
             <button class="chip-sm" data-i18n="chat_suggest_neg" data-prompt-zh="消极讨论的核心原因是什么？给出公关回应模板" data-prompt-en="What's the root cause of negative discussion? Give a PR response template">负面根因</button>
             <button class="chip-sm" data-i18n="chat_suggest_compare" data-prompt-zh="和竞品相比，本品牌的差距和优势是什么？" data-prompt-en="Compared with competitors, what are the gaps and advantages?">竞品差距</button>
@@ -342,19 +342,19 @@
               <!-- Left: configuration -->
               <div class="alert-config-col">
                 <div class="form-row">
-                  <label data-i18n="alerts_label_handles">项目 X handles</label>
+                  <label data-i18n="alerts_label_handles">品牌账号</label>
                   <div id="alertHandlesTagInput" class="tag-input">
-                    <input id="alertHandles" type="text" data-i18n-placeholder="alerts_handles_ph" placeholder="@WeLike" />
+                    <input id="alertHandles" type="text" data-i18n-placeholder="alerts_handles_ph" placeholder="@OpenAI" />
                   </div>
                 </div>
                 <div class="form-row">
                   <label>
-                    <span data-i18n="alerts_label_keywords">关键词</span>
+                    <span data-i18n="alerts_label_keywords">品牌 / 产品关键词</span>
                     <span class="muted" data-i18n="alerts_optional">(选填)</span>
                     <span class="muted" data-i18n="alerts_keywords_max">· 最多 3 个</span>
                   </label>
                   <div id="alertKeywordsTagInput" class="tag-input">
-                    <input id="alertKeywords" type="text" data-i18n-placeholder="alerts_keywords_ph" placeholder="WeLike（输入后空格或回车）" />
+                    <input id="alertKeywords" type="text" data-i18n-placeholder="alerts_keywords_ph" placeholder="OpenAI Sora GPT-4o（输入后空格或回车）" />
                   </div>
                 </div>
                 <div class="form-row">
@@ -439,14 +439,14 @@
                         <span class="tg-msg-mute">(@<span id="tgAuthorHandle">sample_user</span>) · 12.4K followers</span>
                       </div>
                       <div class="tg-msg-body" id="tgMsgBody"></div>
-                      <div class="tg-msg-line tg-msg-summary" id="tgMsgSummary">📌 <span data-i18n="alerts_preview_summary">AI 一句话提炼这条推文要回什么</span></div>
+                      <div class="tg-msg-line tg-msg-summary" id="tgMsgSummary">📌 <span data-i18n="alerts_preview_summary">AI 一句话提炼这条声音应该如何回应</span></div>
                       <div class="tg-msg-foot">
                         <span class="tg-msg-time mono" id="tgMsgTime">12:34</span>
                       </div>
                     </div>
                   </div>
                 </div>
-                <p class="preview-empty-note" id="previewEmptyNote" data-i18n="alerts_preview_hint">在左侧填入 handle 或关键词，预览会立即更新 ✨</p>
+                <p class="preview-empty-note" id="previewEmptyNote" data-i18n="alerts_preview_hint">在左侧填入品牌账号或关键词，预览会立即更新</p>
               </div>
             </div>
           </div>
@@ -465,7 +465,7 @@
   </main>
 
   <footer>
-    <span class="mono" data-i18n="footer">WeLike · Social Listening · powered by Claude API + X API</span>
+    <span class="mono" data-i18n="footer">WeLike · Social Listening · AI GTM signal engine</span>
   </footer>
 
   <!-- Floating shortcut: bottom-right button that scrolls to the inline chat.

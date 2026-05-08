@@ -6,16 +6,16 @@ const I18N = {
     nav_analyze: "社交聆听",
     nav_compare: "竞品对比",
     nav_alerts: "智能提醒",
-    hero_title_1: "AI 驱动的社交聆听",
-    hero_title_2: '实时<span class="accent">捕捉</span>，即刻<span class="accent">决策</span>',
+    hero_title_1: "AI 驱动的市场声音雷达",
+    hero_title_2: '发现真实<span class="accent">声音</span>，转成增长<span class="accent">动作</span>',
     time_select_title: "时间范围",
     progress_preparing: "准备中...",
     err_generic: "发生错误",
     btn_search_again: "重新搜索",
     server_error: "服务器错误",
     submitting_task: "提交任务...",
-    hero_desc: "输入关键词或项目 X 主页链接，WeLike 社交聆听会在几十秒内<br>抓取推文、识别叙事、判定紧急度，并生成可执行的市场策略报告",
-    search_placeholder: "例：Claude  或  https://x.com/AnthropicAI",
+    hero_desc: "输入产品名、品牌名、竞品名或公司官网，WeLike 会快速汇总公开讨论中的<br>情绪、话题、购买阻力与机会信号，并生成可执行的市场响应报告",
+    search_placeholder: "例：Claude、OpenAI 或 anthropic.com",
     btn_analyze: "开始分析",
     btn_analyzing: "分析中...",
     btn_reanalyze: "重新分析",
@@ -23,7 +23,7 @@ const I18N = {
     time_7d: "近 7 天",
     time_14d: "近 14 天",
     examples: "快速示例：",
-    stat_tweets: "推文总数",
+    stat_tweets: "声音样本",
     stat_pos: "积极占比",
     stat_neg: "消极占比",
     stat_neu: "中性占比",
@@ -32,15 +32,15 @@ const I18N = {
     card_sentiment: "情感分布",
     card_categories: "类别分布",
     card_topics: "热点话题",
-    card_topics_hint: "点击话题查看驱动推文与行动建议",
-    card_raw_tweets: "原始推文",
+    card_topics_hint: "点击话题查看驱动声音与行动建议",
+    card_raw_tweets: "市场声音",
     card_report: "市场策略报告",
     card_chat: "追问 AI",
     card_chat_hint: "基于已采集的数据",
-    topic_empty: "点击左侧任意话题，查看对应的驱动推文与逐条推荐动作",
+    topic_empty: "点击左侧任意话题，查看对应的驱动声音与逐条推荐动作",
     topic_overall_advice: "整体建议：",
-    topic_driving_tweets_count: "条驱动推文",
-    topic_no_tweets: "该话题没有关联的具体推文",
+    topic_driving_tweets_count: "条驱动声音",
+    topic_no_tweets: "该话题没有关联的具体声音",
     topic_urgency_suffix: " urgency",
     suggested_action_label: "SUGGESTED ACTION",
     filter_all: "全部",
@@ -63,7 +63,7 @@ const I18N = {
     cat_bug_issue: "问题反馈",
     cat_competitor: "竞品对比",
     cat_general: "一般讨论",
-    type_tweet: "Tweet",
+    type_tweet: "Post",
     type_quote: "Quote RT",
     type_reply: "Comment",
     type_thread: "Thread",
@@ -84,14 +84,14 @@ const I18N = {
     chat_suggest_features: "功能建议",
     chat_suggest_neg: "负面根因",
     chat_suggest_compare: "竞品差距",
-    no_tweets: "暂无推文",
+    no_tweets: "暂无市场声音",
     no_topics: "未识别出话题",
     err_no_backend: "分析服务暂时不可用。<br/><br/>",
     err_polling: "轮询状态失败：",
     err_run_first: "请先运行一次分析",
     compare_title_em: "Competitor",
     compare_title_rest: "side-by-side.",
-    compare_desc: "最多输入 4 个关键词（项目 / 竞品），并排查看情绪、类别分布和高互动推文。",
+    compare_desc: "最多输入 4 个品牌、产品或竞品关键词，并排查看情绪、类别分布和高互动声音。",
     compare_input_1: "竞品 1 (必填)",
     compare_input_2: "竞品 2 (必填)",
     compare_input_3: "竞品 3 (选填)",
@@ -99,17 +99,17 @@ const I18N = {
     compare_btn: "开始对比 →",
     compare_min2: "至少填入 2 个关键词",
     compare_failed: "对比失败：",
-    compare_top_tweets_label: "TOP TWEETS",
+    compare_top_tweets_label: "TOP SIGNALS",
     alerts_eyebrow: "实时舆情预警",
     alerts_title_em: "Smart",
     alerts_title_rest: "Alerts",
     alerts_desc: "通过 Telegram Bot 接收实时舆情推送。先连接你的 Telegram 账号，之后网页和 Telegram 共享同一份监听",
     alerts_optional: "(选填)",
     alerts_create_title: "创建你的监听",
-    alerts_label_handles: "项目 X handles",
-    alerts_handles_ph: "@WeLike",
-    alerts_label_keywords: "关键词",
-    alerts_keywords_ph: "WeLike（空格分隔，最多 3 个）",
+    alerts_label_handles: "品牌账号",
+    alerts_handles_ph: "@OpenAI",
+    alerts_label_keywords: "品牌 / 产品关键词",
+    alerts_keywords_ph: "OpenAI Sora GPT-4o（空格分隔，最多 3 个）",
     alerts_keywords_max: "· 最多 3 个",
     alerts_keywords_too_many: "关键词最多 {n} 个，请精简后再创建",
     alerts_digest_hint_short: "把高频通知合并成一条摘要",
@@ -123,13 +123,13 @@ const I18N = {
     alerts_label_filter: "情感过滤",
     alerts_filter_multi_hint: "(可多选)",
     alerts_preview_label: "实时预览：Telegram 推送长这样",
-    alerts_preview_hint: "在左侧填入 handle 或关键词，预览会立即更新 ✨",
+    alerts_preview_hint: "在左侧填入品牌账号或关键词，预览会立即更新",
     alerts_preview_meta_time: "2 分钟前",
     alerts_preview_bot_status: "bot · online",
     alerts_preview_new_mention: "· 新提及",
     alerts_preview_time: "刚刚",
-    alerts_preview_summary: "AI 一句话提炼这条推文要回什么",
-    alerts_handles_too_many: "Project Handle 最多 {n} 个",
+    alerts_preview_summary: "AI 一句话提炼这条声音应该如何回应",
+    alerts_handles_too_many: "品牌账号最多 {n} 个",
     alerts_banner_active_title: "ACTIVE · 正在监听",
     alerts_banner_active_sub: "每 {interval} 分钟自动扫描新提及",
     alerts_banner_paused_title: "PAUSED · 已暂停",
@@ -151,7 +151,7 @@ const I18N = {
     cta_btn_dismiss: "稍后再说",
     cta_tg_suffix: "· 新提及",
     cta_tg_time: "🕐 刚刚",
-    cta_tg_summary: "📌 AI 一句话提炼这条推文要回什么",
+    cta_tg_summary: "📌 AI 一句话提炼这条声音应该如何回应",
     alerts_btn_create: "创建 Alert",
     alerts_btn_refresh: "刷新 ↻",
     alerts_active: "当前监听",
@@ -165,7 +165,7 @@ const I18N = {
     alerts_pause: "⏸ 暂停",
     alerts_resume: "▶ 恢复",
     alerts_delete: "删除",
-    alerts_inputs_required: "至少要填一个 handle 或关键词",
+    alerts_inputs_required: "至少要填一个品牌账号或关键词",
     alerts_create_failed: "创建失败：",
     alerts_confirm_delete: "确定删除这个监听？",
     alerts_meta_filter: "情感过滤",
@@ -205,34 +205,34 @@ const I18N = {
     progress_init: "正在初始化...",
     progress_connecting: "正在连接服务器...",
     err_unknown: "出错了：",
-    footer: "WeLike · 社交聆听 · 基于 Claude API + X API",
+    footer: "WeLike · Social Listening · AI GTM signal engine",
     // Timeline + reply
     card_timeline: "热度 & 里程碑",
     card_timeline_hint: "日热度折线 + AI 推断的项目里程碑",
     timeline_loading: "正在分析时间线…",
     timeline_empty: "时间范围内的数据不足以构建时间线",
-    timeline_y_count: "推文数",
+    timeline_y_count: "声量",
     timeline_y_engagement: "互动量",
     milestone_label: "里程碑",
     milestone_empty: "未发现明显的里程碑事件",
     btn_gen_reply: "✨ 生成回复",
     btn_gen_reply_loading: "起草中…",
-    reply_user_question: "请帮我为 @{handle} 这条推文起草回复",
+    reply_user_question: "请帮我为 @{handle} 这条市场声音起草回复",
   },
   en: {
     nav_analyze: "Analyze",
     nav_compare: "Compare",
     nav_alerts: "Smart Alerts",
-    hero_title_1: "AI-powered social listening",
-    hero_title_2: '<span class="accent">Capture</span> in real time, <span class="accent">decide</span> instantly',
+    hero_title_1: "AI-powered market signal radar",
+    hero_title_2: 'Turn real <span class="accent">voices</span> into growth <span class="accent">moves</span>',
     time_select_title: "Time range",
     progress_preparing: "Preparing...",
     err_generic: "Something went wrong",
     btn_search_again: "Search again",
     server_error: "Server error",
     submitting_task: "Submitting task...",
-    hero_desc: "Paste a keyword or project X handle.<br>WeLike Social Listening captures tweets, identifies narratives, scores urgency, and generates an executable market response report in seconds",
-    search_placeholder: "e.g., Claude  or  https://x.com/AnthropicAI",
+    hero_desc: "Enter a product, brand, competitor, or company website.<br>WeLike surfaces public market voices, narratives, buying friction, and response opportunities in seconds",
+    search_placeholder: "e.g., Claude, OpenAI, or anthropic.com",
     btn_analyze: "Analyze",
     btn_analyzing: "Analyzing...",
     btn_reanalyze: "Re-analyze",
@@ -240,7 +240,7 @@ const I18N = {
     time_7d: "Last 7 days",
     time_14d: "Last 14 days",
     examples: "Try:",
-    stat_tweets: "TWEETS",
+    stat_tweets: "SIGNALS",
     stat_pos: "POSITIVE",
     stat_neg: "NEGATIVE",
     stat_neu: "NEUTRAL",
@@ -249,15 +249,15 @@ const I18N = {
     card_sentiment: "Sentiment",
     card_categories: "Categories",
     card_topics: "Hot Topics",
-    card_topics_hint: "click a topic to see driving tweets & actions",
-    card_raw_tweets: "Raw Tweets",
+    card_topics_hint: "click a topic to see driving voices & actions",
+    card_raw_tweets: "Market Signals",
     card_report: "Strategy Report",
     card_chat: "Ask follow-up",
     card_chat_hint: "grounded in your data",
-    topic_empty: "Click any topic on the left to see its driving tweets and per-tweet recommended actions",
+    topic_empty: "Click any topic on the left to see its driving voices and recommended actions",
     topic_overall_advice: "Overall recommendation:",
-    topic_driving_tweets_count: "driving tweets",
-    topic_no_tweets: "No tweets linked to this topic",
+    topic_driving_tweets_count: "driving voices",
+    topic_no_tweets: "No signals linked to this topic",
     topic_urgency_suffix: " urgency",
     suggested_action_label: "SUGGESTED ACTION",
     filter_all: "All",
@@ -280,7 +280,7 @@ const I18N = {
     cat_bug_issue: "Bug / Issue",
     cat_competitor: "Competitor",
     cat_general: "General",
-    type_tweet: "Tweet",
+    type_tweet: "Post",
     type_quote: "Quote RT",
     type_reply: "Comment",
     type_thread: "Thread",
@@ -301,14 +301,14 @@ const I18N = {
     chat_suggest_features: "Feature requests",
     chat_suggest_neg: "Negative root cause",
     chat_suggest_compare: "Vs. competitors",
-    no_tweets: "No tweets",
+    no_tweets: "No market signals yet",
     no_topics: "No topics detected",
     err_no_backend: "The analysis service is temporarily unavailable.<br/><br/>",
     err_polling: "Status polling failed: ",
     err_run_first: "Please run an analysis first",
     compare_title_em: "Competitor",
     compare_title_rest: "side-by-side.",
-    compare_desc: "Up to 4 keywords (project / competitor) compared side-by-side: sentiment, category mix, top tweets.",
+    compare_desc: "Compare up to 4 brands, products, or competitors side-by-side: sentiment, category mix, and top market signals.",
     compare_input_1: "Competitor 1 (required)",
     compare_input_2: "Competitor 2 (required)",
     compare_input_3: "Competitor 3 (optional)",
@@ -316,21 +316,21 @@ const I18N = {
     compare_btn: "Compare →",
     compare_min2: "Please enter at least 2 keywords",
     compare_failed: "Compare failed: ",
-    compare_top_tweets_label: "TOP TWEETS",
+    compare_top_tweets_label: "TOP SIGNALS",
     alerts_eyebrow: "Real-time signal alerts",
     alerts_title_em: "Smart",
     alerts_title_rest: "Alerts",
     alerts_desc: "Receive real-time alerts through our Telegram bot. Connect your Telegram once — then manage from web or Telegram, both share the same alert",
     alerts_optional: "(optional)",
     alerts_create_title: "Create your alert",
-    alerts_label_handles: "Project X handles",
-    alerts_handles_ph: "@WeLike",
-    alerts_label_keywords: "Keywords",
-    alerts_keywords_ph: "WeLike (space-separated, up to 3)",
+    alerts_label_handles: "Brand account",
+    alerts_handles_ph: "@OpenAI",
+    alerts_label_keywords: "Brand / product keywords",
+    alerts_keywords_ph: "OpenAI Sora GPT-4o (space-separated, up to 3)",
     alerts_keywords_max: "· up to 3",
     alerts_keywords_too_many: "Up to {n} keywords. Please trim and try again.",
     alerts_digest_hint_short: "Bundle high-frequency hits into one summary",
-    alerts_digest_tooltip: "When enabled, we'll merge bursts of matching tweets into a single summary so you're not flooded with notifications.",
+    alerts_digest_tooltip: "When enabled, we'll merge bursts of matching signals into a single summary so you're not flooded with notifications.",
     disconnect_title: "Telegram disconnected",
     disconnect_desc: "Web management is offline. Reconnect Telegram to keep receiving real-time alerts.",
     disconnect_btn: "Reconnect now →",
@@ -340,13 +340,13 @@ const I18N = {
     alerts_label_filter: "Sentiment filter",
     alerts_filter_multi_hint: "(multi-select)",
     alerts_preview_label: "Live preview — what your Telegram push looks like",
-    alerts_preview_hint: "Fill in a handle or keyword on the left — this preview updates live ✨",
+    alerts_preview_hint: "Fill in a brand account or keyword on the left — this preview updates live",
     alerts_preview_meta_time: "2 min ago",
     alerts_preview_bot_status: "bot · online",
     alerts_preview_new_mention: "· New mention",
     alerts_preview_time: "just now",
-    alerts_preview_summary: "AI one-liner summarizing what to reply to",
-    alerts_handles_too_many: "Up to {n} project handle",
+    alerts_preview_summary: "AI one-liner on how to respond",
+    alerts_handles_too_many: "Up to {n} brand account",
     alerts_banner_active_title: "ACTIVE · monitoring",
     alerts_banner_active_sub: "Auto-scan for new mentions every {interval} min",
     alerts_banner_paused_title: "PAUSED",
@@ -368,7 +368,7 @@ const I18N = {
     cta_btn_dismiss: "Maybe later",
     cta_tg_suffix: "· New mention",
     cta_tg_time: "🕐 just now",
-    cta_tg_summary: "📌 AI one-liner summarizing what to reply to",
+    cta_tg_summary: "📌 AI one-liner on how to respond",
     alerts_btn_create: "Create Alert",
     alerts_btn_refresh: "Refresh ↻",
     alerts_active: "Your alert",
@@ -382,7 +382,7 @@ const I18N = {
     alerts_pause: "⏸ Pause",
     alerts_resume: "▶ Resume",
     alerts_delete: "Delete",
-    alerts_inputs_required: "Please enter at least one handle or keyword",
+    alerts_inputs_required: "Please enter at least one brand account or keyword",
     alerts_create_failed: "Create failed: ",
     alerts_confirm_delete: "Delete this alert?",
     alerts_meta_filter: "sentiment",
@@ -422,19 +422,19 @@ const I18N = {
     progress_init: "Initializing...",
     progress_connecting: "Connecting to server...",
     err_unknown: "Error: ",
-    footer: "WeLike · Social Listening · powered by Claude API + X API",
+    footer: "WeLike · Social Listening · AI GTM signal engine",
     // Timeline + reply
     card_timeline: "Heat & Milestones",
     card_timeline_hint: "Daily heat line + AI-inferred project milestones",
     timeline_loading: "Building timeline…",
     timeline_empty: "Not enough data in this time range to build a timeline",
-    timeline_y_count: "tweets",
+    timeline_y_count: "signals",
     timeline_y_engagement: "engagement",
     milestone_label: "milestones",
     milestone_empty: "No clear milestone events detected",
     btn_gen_reply: "✨ Draft reply",
     btn_gen_reply_loading: "Drafting…",
-    reply_user_question: "Draft a reply for @{handle}'s tweet",
+    reply_user_question: "Draft a response to this market signal from @{handle}",
   },
 };
 
@@ -625,23 +625,48 @@ const $ = id => document.getElementById(id);
 const show = id => $(id).classList.remove("hidden");
 const hide = id => $(id).classList.add("hidden");
 
-// Backend sends Chinese progress strings; map them to English when in EN mode.
+// Backend sends implementation-flavored progress strings; translate them into
+// market-facing product language before rendering.
+const BACKEND_MSG_ZH = {
+  "任务已创建": "任务已创建",
+  "正在从 X 平台采集候选推文 (多页 relevancy + recency 双路)...": "正在采集公开市场声音样本...",
+  "正在从 X 平台采集候选推文 (multi-page relevancy + recency)...": "正在采集公开市场声音样本...",
+  "正在采集公开市场声音样本...": "正在采集公开市场声音样本...",
+  "正在判定情感、紧急度与建议动作...": "正在判定情感、紧急度与建议动作...",
+  "正在识别叙事与热点话题...": "正在识别叙事与热点话题...",
+  "正在生成可执行的市场策略...": "正在生成可执行的市场策略...",
+  "分析完成": "分析完成",
+  "未找到相关推文": "未找到相关市场声音",
+};
 const BACKEND_MSG_EN = {
   "任务已创建": "Task created",
-  "正在从 X 平台采集候选推文 (多页 relevancy + recency 双路)...": "Collecting candidate tweets from X (multi-page relevancy + recency dual pass)...",
+  "正在从 X 平台采集候选推文 (多页 relevancy + recency 双路)...": "Collecting public market signal candidates...",
+  "正在从 X 平台采集候选推文 (multi-page relevancy + recency)...": "Collecting public market signal candidates...",
+  "正在采集公开市场声音样本...": "Collecting public market signal candidates...",
   "正在判定情感、紧急度与建议动作...": "Scoring sentiment, urgency, and recommended actions...",
   "正在识别叙事与热点话题...": "Identifying narratives and hot topics...",
   "正在生成可执行的市场策略...": "Generating an executable market strategy...",
   "分析完成": "Analysis complete",
-  "未找到相关推文": "No matching tweets found",
+  "未找到相关推文": "No matching market signals found",
 };
 
 function translateBackendMsg(msg) {
-  if (currentLang !== "en" || !msg) return msg;
-  if (BACKEND_MSG_EN[msg]) return BACKEND_MSG_EN[msg];
+  if (!msg) return msg;
+  const dict = currentLang === "en" ? BACKEND_MSG_EN : BACKEND_MSG_ZH;
+  if (dict[msg]) return dict[msg];
   // Pattern: "已从 N 条候选中筛出 M 条最热推文 (top engagement=X)..."
   const m = msg.match(/已从 (\d+) 条候选中筛出 (\d+) 条最热推文 \(top engagement=(\d+)\)/);
-  if (m) return `Picked top ${m[2]} hottest tweets from ${m[1]} candidates (top engagement=${m[3]})...`;
+  if (m) {
+    return currentLang === "en"
+      ? `Selected ${m[2]} high-signal market voices from ${m[1]} candidates...`
+      : `已从 ${m[1]} 条候选中筛出 ${m[2]} 条高信号市场声音...`;
+  }
+  const signalMatch = msg.match(/已从 (\d+) 条候选中筛出 (\d+) 条高信号市场声音/);
+  if (signalMatch) {
+    return currentLang === "en"
+      ? `Selected ${signalMatch[2]} high-signal market voices from ${signalMatch[1]} candidates...`
+      : `已从 ${signalMatch[1]} 条候选中筛出 ${signalMatch[2]} 条高信号市场声音...`;
+  }
   // Pattern: "错误：..."
   if (msg.startsWith("错误：")) return "Error: " + msg.slice(3);
   return msg;
@@ -685,9 +710,41 @@ async function readApiError(resp) {
   }
 }
 
+function normalizeMarketQuery(raw) {
+  const value = String(raw || "").trim();
+  if (!value) return "";
+
+  // Keep exact account inputs when the user provides one. For a company
+  // website, search the brand name instead of the full URL.
+  if (/^(?:@|(?:https?:\/\/)?(?:www\.)?(?:x|twitter)\.com\/)/i.test(value)) {
+    return value;
+  }
+
+  const domainLike = value.match(/^(?:https?:\/\/)?(?:www\.)?([a-z0-9-]+)\.(?:ai|app|com|co|io|dev|so|xyz|net|org)(?:\/.*)?$/i);
+  if (!domainLike) return value;
+
+  const knownBrands = {
+    openai: "OpenAI",
+    anthropic: "Anthropic",
+    perplexity: "Perplexity",
+    cursor: "Cursor",
+    vercel: "Vercel",
+    linear: "Linear",
+    runwayml: "Runway",
+  };
+  const slug = domainLike[1].toLowerCase();
+  if (knownBrands[slug]) return knownBrands[slug];
+  return slug
+    .split("-")
+    .filter(Boolean)
+    .map(part => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(" ");
+}
+
 async function startAnalysis() {
-  const query = $("queryInput").value.trim();
+  const query = normalizeMarketQuery($("queryInput").value);
   if (!query) { $("queryInput").focus(); return; }
+  $("queryInput").value = query;
   const timeRange = $("timeRange").value;
 
   hide("dashboard"); hide("errorSection");
@@ -1106,7 +1163,7 @@ function renderReportCta() {
         <div class="report-cta-icon">📊</div>
         <h4 class="report-cta-title">按需生成市场策略报告</h4>
         <p class="report-cta-desc">
-          基于本次 <strong>${allTweets.length} 条推文</strong> 输出一份结构化策略报告：风险信号、话题拆解、1 周 / 1 月行动计划。
+          基于本次 <strong>${allTweets.length} 条市场声音</strong> 输出一份结构化策略报告：风险信号、话题拆解、1 周 / 1 月行动计划。
         </p>
         <p class="report-cta-meta muted">预计耗时 ~30 秒</p>
         <button class="pill-btn primary" id="generateReportBtn">✨ 确认生成</button>
@@ -1118,7 +1175,7 @@ function renderReportCta() {
       <div class="report-cta-icon">📊</div>
       <h4 class="report-cta-title">Generate strategy report on demand</h4>
       <p class="report-cta-desc">
-        Based on this run's <strong>${allTweets.length} tweets</strong>, the AI outputs a structured strategy report: risk signals, topic deep-dive, and a 1-week / 1-month action plan.
+        Based on this run's <strong>${allTweets.length} market signals</strong>, the AI outputs a structured strategy report: risk signals, topic deep-dive, and a 1-week / 1-month action plan.
       </p>
       <p class="report-cta-meta muted">~30s to generate</p>
       <button class="pill-btn primary" id="generateReportBtn">✨ Generate report</button>
@@ -1272,7 +1329,7 @@ function showError(msg) {
 const ALERT_CTA_DISMISS_PREFIX = "welike_cta_dismiss_";
 let pendingCtaPrefill = null; // applied when alertCreateBox becomes visible
 
-// Try to extract a single X handle from the user's query string. Accepts:
+// Try to extract a single brand account from the user's query string. Accepts:
 //   "@AnthropicAI"      → "AnthropicAI"
 //   "https://x.com/AnthropicAI" / "twitter.com/AnthropicAI" → "AnthropicAI"
 //   anything else       → null (treat as keyword instead)
@@ -1332,16 +1389,16 @@ function renderAlertCta(data) {
   const isZh = currentLang === "zh";
   if (isZh) {
     const parts = [];
-    parts.push(`本次分析里 ${focusLabel} 共 <strong>${p.totalN} 条推文</strong>`);
+    parts.push(`本次分析里 ${focusLabel} 共 <strong>${p.totalN} 条市场声音</strong>`);
     if (p.urgentN > 0) parts.push(`其中 <span class="warn">${p.urgentN} 条紧急</span>`);
     if (p.negativeN > 0) parts.push(`<span class="neg">${p.negativeN} 条消极声音</span>`);
-    desc.innerHTML = parts.join("、") + "。<br>创建 Smart Alert，新出现的高紧急度推文会立即推送到你的 Telegram，避免错过下一次舆情风暴。";
+    desc.innerHTML = parts.join("、") + "。<br>创建 Smart Alert，新出现的高信号声音会立即推送到你的 Telegram，避免错过下一次舆情风暴。";
   } else {
     const parts = [];
-    parts.push(`This run picked up <strong>${p.totalN} tweets</strong> for ${focusLabel}`);
+    parts.push(`This run picked up <strong>${p.totalN} market signals</strong> for ${focusLabel}`);
     if (p.urgentN > 0) parts.push(`<span class="warn">${p.urgentN} urgent</span>`);
     if (p.negativeN > 0) parts.push(`<span class="neg">${p.negativeN} negative</span>`);
-    desc.innerHTML = parts.join(" · ") + ".<br>Create a Smart Alert and any new high-urgency tweet will be pushed to your Telegram in real time.";
+    desc.innerHTML = parts.join(" · ") + ".<br>Create a Smart Alert and new high-signal voices will be pushed to your Telegram in real time.";
   }
 
   // Prefill chips
@@ -1477,8 +1534,8 @@ function generateChatSuggestions(data) {
       priority: 100,
       labelZh: `🚨 紧急 ${urgentN} 条`,
       labelEn: `🚨 ${urgentN} urgent`,
-      promptZh: `当前最紧急的 ${urgentN} 条推文是什么？请逐条给出具体的回复话术或处理动作`,
-      promptEn: `What are the ${urgentN} most urgent tweets right now? Give a concrete reply or action for each`,
+      promptZh: `当前最紧急的 ${urgentN} 条市场声音是什么？请逐条给出具体的回复话术或处理动作`,
+      promptEn: `What are the ${urgentN} most urgent market signals right now? Give a concrete reply or action for each`,
     });
   }
 
@@ -1506,7 +1563,7 @@ function generateChatSuggestions(data) {
       labelZh: `🐛 ${bugN} 条 Bug`,
       labelEn: `🐛 ${bugN} bug reports`,
       promptZh: `把 ${bugN} 条 Bug/投诉按重复频次和严重度排序，哪些是产品必须立刻修的？`,
-      promptEn: `Sort the ${bugN} bug/complaint tweets by frequency and severity. Which must be fixed immediately?`,
+      promptEn: `Sort the ${bugN} bug/complaint signals by frequency and severity. Which must be fixed immediately?`,
     });
   }
 
@@ -1529,7 +1586,7 @@ function generateChatSuggestions(data) {
       priority: 70,
       labelZh: `🥊 ${compN} 条竞品提及`,
       labelEn: `🥊 ${compN} competitor mentions`,
-      promptZh: `推文中具体提到了哪些竞品？我们相对它们的优势和差距各是什么？`,
+      promptZh: `市场声音中具体提到了哪些竞品？我们相对它们的优势和差距各是什么？`,
       promptEn: `Which competitors are explicitly mentioned? Where do we lead, where do we lag?`,
     });
   }
@@ -2504,8 +2561,8 @@ function buildPreviewSentence(handles, keywords, lang) {
       : `${kw} hasn't felt as solid lately — anyone else seeing this?`;
   } else {
     raw = lang === "zh"
-      ? "在左侧填入 handle 和关键词，预览会立即更新 ✨"
-      : "Fill in a handle or keyword on the left — this preview will update live ✨";
+      ? "在左侧填入品牌账号或关键词，预览会立即更新"
+      : "Fill in a brand account or keyword on the left — this preview will update live";
   }
 
   // Highlight every matched term

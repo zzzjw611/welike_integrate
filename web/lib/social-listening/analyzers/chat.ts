@@ -28,13 +28,13 @@ function buildEvidence(
   const evidence = sample
     .map(
       (t, i) =>
-        `[推文${i + 1}] @${t.author_username} (情感:${t.sentiment ?? "?"}, 类别:${t.category ?? "?"}, 紧急度:${t.urgency ?? "?"}, 建议:${t.action ?? "?"}): ${(t.text || "").slice(0, 180)}`
+        `[声音${i + 1}] @${t.author_username} (情感:${t.sentiment ?? "?"}, 类别:${t.category ?? "?"}, 紧急度:${t.urgency ?? "?"}, 建议:${t.action ?? "?"}): ${(t.text || "").slice(0, 180)}`
     )
     .join("\n");
   const topicBlock = topics
     .map(
       (t) =>
-        `- ${t.topic} (紧急度:${t.urgency ?? "?"}, 建议:${t.action ?? "?"}, 关联推文:${(t.tweet_ids || []).map((i) => `#${i}`).join(",")})`
+        `- ${t.topic} (紧急度:${t.urgency ?? "?"}, 建议:${t.action ?? "?"}, 关联声音:${(t.tweet_ids || []).map((i) => `#${i}`).join(",")})`
     )
     .join("\n");
 
@@ -43,20 +43,20 @@ function buildEvidence(
   const rulesZh = `# 回答规则
 - 只基于以上证据回答，不要编造
 - 用中文回复，简洁专业，使用 Markdown
-- 引用证据时用 [推文1] [推文3] 格式，用户可点击跳转
+- 引用证据时用 [声音1] [声音3] 格式，用户可点击跳转
 - 如果证据不足，明确说明"当前数据无法支撑此结论"
 - 给出的建议要具体、可执行（谁做、做什么、什么时间）`;
   const rulesEn = `# Answer rules
 - Only use the evidence above. Do not fabricate.
 - Reply in English, concise and professional, in Markdown.
-- Reference evidence with [Tweet 1] [Tweet 3] style — they're clickable.
+- Reference evidence with [Signal 1] [Signal 3] style — they're clickable.
 - If evidence is insufficient, explicitly say "the current data cannot support this conclusion".
 - Recommendations must be concrete and actionable (who, what, when).`;
   const rulesBlock = lang === "en" ? rulesEn : rulesZh;
 
   return `你是 WeLike 社交聆听的分析助手。用户监测的关键词是「${keyword}」。
 
-# 已采集的推文证据（共 ${sample.length} 条，按编号引用）
+# 已采集的市场声音证据（共 ${sample.length} 条，按编号引用）
 ${evidence}
 
 # 已识别的话题

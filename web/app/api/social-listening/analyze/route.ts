@@ -49,8 +49,8 @@ function dedupeKey(query: string, timeRange: string): string {
 function emptyResult(query: string, timeRange: string, lang: Lang) {
   const reportMarkdown =
     lang === "zh"
-      ? `# 未找到数据\n\n关键词 **${query}**（范围 ${timeRange}）内未找到相关推文。\n\n建议：\n- 使用英文关键词\n- 延长时间范围\n- 使用项目官方 X 账号链接`
-      : `# No Data Found\n\nNo related tweets were found for **${query}** in the ${timeRange} window.\n\nSuggestions:\n- Try an English keyword\n- Extend the time range\n- Use the project's official X profile link`;
+      ? `# 未找到数据\n\n关键词 **${query}**（范围 ${timeRange}）内暂时没有足够的市场声音。\n\n建议：\n- 尝试产品名、品牌名或竞品名\n- 延长时间范围\n- 使用更常见的英文关键词`
+      : `# No Data Found\n\nNot enough market signals were found for **${query}** in the ${timeRange} window.\n\nSuggestions:\n- Try the product, brand, or competitor name\n- Extend the time range\n- Use a more common English keyword`;
   return {
     query,
     time_range: timeRange,
@@ -121,7 +121,7 @@ export async function POST(req: NextRequest) {
     await updateTask(taskId, {
       status: "running",
       progress: 8,
-      message: "正在从 X 平台采集候选推文 (multi-page relevancy + recency)...",
+      message: "正在采集公开市场声音样本...",
     });
 
     const candidates: Tweet[] = await collectTweets(
@@ -134,7 +134,7 @@ export async function POST(req: NextRequest) {
       await updateTask(taskId, {
         status: "done",
         progress: 100,
-        message: "未找到相关推文",
+        message: "未找到相关市场声音",
         result_json: emptyResult(query, timeRange, lang),
       });
       return NextResponse.json({ task_id: taskId, cached: false });
@@ -149,7 +149,7 @@ export async function POST(req: NextRequest) {
     const topEng = tweets[0]?.engagement || 0;
     await updateTask(taskId, {
       progress: 25,
-      message: `已从 ${candidates.length} 条候选中筛出 ${tweets.length} 条最热推文 (top engagement=${topEng})...`,
+      message: `已从 ${candidates.length} 条候选中筛出 ${tweets.length} 条高信号市场声音 (top engagement=${topEng})...`,
     });
 
     await updateTask(taskId, {
