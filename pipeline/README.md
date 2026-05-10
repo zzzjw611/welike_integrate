@@ -16,8 +16,8 @@
                                 │  raw JSON（4 fields）
                                 ▼
                         ┌────────────────┐
-                        │ Claude Opus 4.7 │  ← prompts/draft.md
-                        │ adaptive think  │  ← CASE_QUEUE rotation
+                        │    Claude      │  ← prompts/draft.md
+                        │ streaming API  │  ← CASE_QUEUE rotation
                         └────────┬────────┘
                                  │  YAML frontmatter + Markdown
                                  ▼
@@ -162,7 +162,7 @@ pipeline/
 │   ├── product_hunt.py  # GraphQL API（投票 ≥ 50）
 │   └── substack.py      # Lenny / Stratechery / Late Checkout RSS
 ├── draft/
-│   └── generate.py      # Claude Opus 4.7 + adaptive thinking + streaming
+│   └── generate.py      # Claude + streaming
 ├── prompts/
 │   └── draft.md         # 主编辑 system prompt（中文 + tone 规则）
 ├── run.py               # 端到端编排
@@ -215,10 +215,10 @@ Prompt 里两条硬规则避免"AI 味"和"爹味"：
 
 ### 模型切换
 
-默认 `claude-opus-4-7`（在 [`pipeline/draft/generate.py`](draft/generate.py) 顶部 `MODEL` 常量）：
+默认 `claude-sonnet-4-6`（可通过 GitHub Secret / env `AI_NEWS_MODEL` 覆盖）：
 
-- 默认：`claude-opus-4-7` — 最强，每期 ~$0.30
-- 成本敏感：`claude-sonnet-4-6` — ~$0.07/期，质量略降
+- 默认：`claude-sonnet-4-6` — 稳定、成本适中，每期 ~$0.07
+- 高质量：`claude-opus-4-7` — 如果账号有权限，可通过 `AI_NEWS_MODEL=claude-opus-4-7` 启用
 - 极致省钱：`claude-haiku-4-5` — ~$0.015/期，文案会比较干
 
 ## 成本估算
@@ -227,12 +227,12 @@ Prompt 里两条硬规则避免"AI 味"和"爹味"：
 
 | 项目 | 月成本 |
 |---|---|
-| Anthropic（Claude Opus 4.7，~16K in + 8K out） | **~$8.6** |
+| Anthropic（Claude Sonnet，~16K in + 8K out） | **~$2.1** |
 | Product Hunt API | $0 |
 | TechCrunch / 量子位 / Substack RSS | $0 |
 | GitHub Actions（私有仓库 2000 分钟/月免费，本任务 ~3 分钟/次 = 90 分钟/月） | $0 |
 | Vercel Hobby | $0 |
-| **合计** | **~$8.6/月** |
+| **合计** | **~$2.1/月** |
 
 > 早期版本配 Apify 抓 X 时是 $61/月，现在只剩 Anthropic 一项实际付费。如果切到 Sonnet 4.6，月成本可降到 $2 以内。
 

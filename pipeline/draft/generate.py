@@ -1,22 +1,23 @@
-"""Generate daily news draft using Claude Opus 4.7.
+"""Generate daily news draft using Claude.
 
 Uses streaming + `get_final_message()` to avoid HTTP timeouts when the model
-takes time for adaptive thinking.
+takes time to draft a full issue.
 
 Prompt caching is intentionally NOT used: this pipeline makes one call per day,
-so there are no repeat requests to hit the cache. Opus 4.7 also requires a
-minimum 4096-token prefix to cache — our system prompt is close to that bound.
+so there are no repeat requests to hit the cache.
 """
 from __future__ import annotations
 
 import json
+import os
 import re
+import sys
 from pathlib import Path
 
 import anthropic
 
 
-MODEL = "claude-opus-4-7"
+MODEL = os.environ.get("AI_NEWS_MODEL", "claude-sonnet-4-6")
 PIPELINE_DIR = Path(__file__).resolve().parent.parent
 PROMPT_PATH = PIPELINE_DIR / "prompts" / "draft.md"
 
@@ -72,20 +73,25 @@ def generate_draft(
         },
     )
 
-    with client.messages.stream(
-        model=MODEL,
-        max_tokens=16000,
-        thinking={"type": "adaptive"},
-        output_config={"effort": "high"},
-        system=system,
-        messages=[
-            {
-                "role": "user",
-                "content": f"请生成 {target_date} 这一期 AI Marketer News。严格按 system 中的格式输出。",
-            },
-        ],
-    ) as stream:
-        message = stream.get_final_message()
+    try:
+        with client.messages.stream(
+            model=MODEL,
+            max_tokens=16000,
+            system=system,
+            messages=[
+                {
+                    "role": "user",
+                    "content": f"请生成 {target_date} 这一期 AI Marketer News。严格按 system 中的格式输出。",
+                },
+            ],
+        ) as stream:
+            message = stream.get_final_message()
+    except Exception as exc:
+        print(
+            f"[draft] Claude request failed: {type(exc).__name__}: {exc}",
+            file=sys.stderr,
+        )
+        raise
 
     if message.stop_reason == "max_tokens":
         raise RuntimeError(
