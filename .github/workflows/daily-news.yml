@@ -1,11 +1,8 @@
 name: Daily News Pipeline
 
-# Runs at 23:45 UTC → ~23:48 UTC done = 北京 07:48. Aimed at Beijing 8 AM
-# morning-commute reading window. EU 00:45 / US PT 16:45 prev day acceptable.
-# Trigger manually from the Actions tab via "workflow_dispatch" anytime.
+# Automatic daily generation is disabled. Trigger manually from the Actions tab
+# via "workflow_dispatch" when a new AI News draft is needed.
 on:
-  schedule:
-    - cron: "45 23 * * *"
   workflow_dispatch:
     inputs:
       target_date:
