@@ -68,13 +68,13 @@ export function extractKeywords(tweets: Tweet[], topN = 30): KeywordEntry[] {
 // ────────────────────────────────────────────────────────────────────────────
 
 interface TopicOutput {
-  topic: string;
+  topic?: string;
   topic_zh?: string;
   topic_en?: string;
   count: number;
   sentiment: "positive" | "negative" | "mixed" | "neutral";
   urgency: "high" | "medium" | "low";
-  action: string;
+  action?: string;
   action_zh?: string;
   action_en?: string;
   tweet_ids: number[];
@@ -145,13 +145,164 @@ const TOPICS_SCHEMA: JsonSchema = {
 };
 
 function normalizeTopicOutputs(input: unknown): TopicOutput[] {
+  if (Array.isArray(input)) return input as TopicOutput[];
   if (!input || typeof input !== "object") return [];
-  const maybeTopics = (input as { topics?: unknown }).topics;
+  const obj = input as {
+    topics?: unknown;
+    results?: unknown;
+    items?: unknown;
+  };
+  const maybeTopics = obj.topics ?? obj.results ?? obj.items;
   if (Array.isArray(maybeTopics)) return maybeTopics as TopicOutput[];
   if (maybeTopics && typeof maybeTopics === "object") {
     return Object.values(maybeTopics) as TopicOutput[];
   }
   return [];
+}
+
+function pickTopicTitle(t: TopicOutput): string {
+  return String(t.topic || t.topic_zh || t.topic_en || "").trim();
+}
+
+function pickTopicAction(t: TopicOutput): string {
+  return String(t.action || t.action_zh || t.action_en || "").trim();
+}
+
+function validSentiment(value: unknown): Topic["sentiment"] {
+  return ["positive", "negative", "mixed", "neutral"].includes(String(value))
+    ? (value as Topic["sentiment"])
+    : "neutral";
+}
+
+function validUrgency(value: unknown): Topic["urgency"] {
+  return ["high", "medium", "low"].includes(String(value))
+    ? (value as Topic["urgency"])
+    : "low";
+}
+
+function normalizeTopicsResult(result: unknown, tweets: Tweet[], lang: Lang): Topic[] {
+  const maxId = tweets.length;
+  const topics: Array<Topic | null> = normalizeTopicOutputs(result)
+    .map((t): Topic | null => {
+      const title = pickTopicTitle(t);
+      if (!title) return null;
+      const action = pickTopicAction(t);
+      const tweetIds = (Array.isArray(t.tweet_ids) ? t.tweet_ids : [])
+        .map((i) => Number(i))
+        .filter((i) => Number.isInteger(i) && i >= 1 && i <= maxId);
+      return {
+        topic:
+          lang === "en"
+            ? t.topic_en || t.topic || title
+            : t.topic_zh || t.topic || title,
+        topic_zh: t.topic_zh || t.topic || title,
+        topic_en: t.topic_en || t.topic || title,
+        count: Number.isFinite(Number(t.count))
+          ? Number(t.count)
+          : Math.max(1, tweetIds.length),
+        sentiment: validSentiment(t.sentiment),
+        urgency: validUrgency(t.urgency),
+        action:
+          lang === "en"
+            ? t.action_en || t.action || action
+            : t.action_zh || t.action || action,
+        action_zh: t.action_zh || t.action || action,
+        action_en: t.action_en || t.action || action,
+        tweet_ids: tweetIds,
+      };
+    });
+  return topics.filter((topic): topic is Topic => topic !== null);
+}
+
+const CATEGORY_LABELS: Record<string, { zh: string; en: string }> = {
+  key_voice: { zh: "关键声音集中讨论", en: "Key voices driving the conversation" },
+  feature_request: { zh: "功能需求与期待", en: "Feature requests and expectations" },
+  bug_issue: { zh: "问题反馈与使用阻力", en: "Issues and usage friction" },
+  competitor: { zh: "竞品对比与替代选择", en: "Competitor comparisons and alternatives" },
+  general: { zh: "泛讨论与品牌提及", en: "General discussion and brand mentions" },
+};
+
+function fallbackAction(
+  label: { zh: string; en: string },
+  urgency: Topic["urgency"],
+  lang: Lang
+): { zh: string; en: string } {
+  const urgentZh = urgency === "high" ? "优先" : "持续";
+  const urgentEn = urgency === "high" ? "Prioritize" : "Monitor";
+  return {
+    zh: `${urgentZh}查看相关声音，提炼可回应的信息点，并同步到产品/市场动作。`,
+    en: `${urgentEn} the related voices, extract response angles, and route them into product or GTM actions.`,
+  };
+}
+
+function buildFallbackTopics(tweets: Tweet[], lang: Lang): Topic[] {
+  const groups = new Map<string, { tweets: Array<{ tweet: Tweet; id: number }>; score: number }>();
+
+  tweets.forEach((tweet, index) => {
+    const category = tweet.category || "general";
+    const key = category;
+    const urgencyBoost = tweet.urgency === "high" ? 500 : tweet.urgency === "medium" ? 150 : 0;
+    const sentimentBoost = tweet.sentiment === "negative" ? 120 : tweet.sentiment === "positive" ? 60 : 0;
+    const score = Number(tweet.engagement || 0) + urgencyBoost + sentimentBoost;
+    const group = groups.get(key) || { tweets: [], score: 0 };
+    group.tweets.push({ tweet, id: index + 1 });
+    group.score += score;
+    groups.set(key, group);
+  });
+
+  const topics = [...groups.entries()]
+    .sort((a, b) => b[1].score - a[1].score)
+    .slice(0, 6)
+    .map(([category, group]) => {
+      const sorted = group.tweets.sort(
+        (a, b) => Number(b.tweet.engagement || 0) - Number(a.tweet.engagement || 0)
+      );
+      const label = CATEGORY_LABELS[category] || CATEGORY_LABELS.general;
+      const highCount = sorted.filter((item) => item.tweet.urgency === "high").length;
+      const negativeCount = sorted.filter((item) => item.tweet.sentiment === "negative").length;
+      const positiveCount = sorted.filter((item) => item.tweet.sentiment === "positive").length;
+      const urgency: Topic["urgency"] =
+        highCount > 0 ? "high" : sorted.some((item) => item.tweet.urgency === "medium") ? "medium" : "low";
+      const sentiment: Topic["sentiment"] =
+        negativeCount > positiveCount
+          ? "negative"
+          : positiveCount > negativeCount
+            ? "positive"
+            : "neutral";
+      const action = fallbackAction(label, urgency, lang);
+      return {
+        topic: lang === "en" ? label.en : label.zh,
+        topic_zh: label.zh,
+        topic_en: label.en,
+        count: sorted.length,
+        sentiment,
+        urgency,
+        action: lang === "en" ? action.en : action.zh,
+        action_zh: action.zh,
+        action_en: action.en,
+        tweet_ids: sorted.slice(0, 8).map((item) => item.id),
+      };
+    });
+
+  if (topics.length > 0) return topics;
+
+  const keywords = extractKeywords(tweets, 1);
+  const keyword = keywords[0]?.word || (lang === "en" ? "Market conversation" : "市场声音");
+  return [{
+    topic: lang === "en" ? `${keyword} market signals` : `${keyword} 相关市场声音`,
+    topic_zh: `${keyword} 相关市场声音`,
+    topic_en: `${keyword} market signals`,
+    count: tweets.length,
+    sentiment: "neutral",
+    urgency: tweets.some((tweet) => tweet.urgency === "high") ? "high" : "low",
+    action:
+      lang === "en"
+        ? "Review the highest-engagement voices and identify which ones need response, amplification, or product follow-up."
+        : "查看高互动声音，判断哪些需要回应、放大或同步产品跟进。",
+    action_zh: "查看高互动声音，判断哪些需要回应、放大或同步产品跟进。",
+    action_en: "Review the highest-engagement voices and identify which ones need response, amplification, or product follow-up.",
+    tweet_ids: tweets.slice(0, 8).map((_, index) => index + 1),
+  }];
 }
 
 function topicsSystemPrompt(lang: Lang): string {
@@ -171,42 +322,25 @@ export async function extractTopics(
     .map((t, i) => `${i + 1}. ${t.text.slice(0, 180)}`)
     .join("\n");
 
-  const result = await generateStructured<TopicsResult>({
-    model: MODEL_SONNET,
-    system: topicsSystemPrompt(lang),
-    user:
-      lang === "en"
-        ? `Tweet list (1-based ids):\n\n${numbered}`
-        : `推文列表（编号 1-based）：\n\n${numbered}`,
-    schema: TOPICS_SCHEMA,
-    maxTokens: 3200,
-  });
-
-  if (!result) return [];
-
-  const maxId = tweets.length;
-  return normalizeTopicOutputs(result)
-    .filter((t) => t && typeof t.topic === "string")
-    .map((t) => ({
-      topic:
+  try {
+    const result = await generateStructured<TopicsResult>({
+      model: MODEL_SONNET,
+      system: topicsSystemPrompt(lang),
+      user:
         lang === "en"
-          ? t.topic_en || t.topic
-          : t.topic_zh || t.topic,
-      topic_zh: t.topic_zh || t.topic,
-      topic_en: t.topic_en || t.topic,
-      count: Number.isFinite(Number(t.count)) ? Number(t.count) : 1,
-      sentiment: t.sentiment,
-      urgency: t.urgency,
-      action:
-        lang === "en"
-          ? t.action_en || t.action || ""
-          : t.action_zh || t.action || "",
-      action_zh: t.action_zh || t.action || "",
-      action_en: t.action_en || t.action || "",
-      tweet_ids: (Array.isArray(t.tweet_ids) ? t.tweet_ids : []).filter(
-        (i) => i >= 1 && i <= maxId
-      ),
-    }));
+          ? `Tweet list (1-based ids):\n\n${numbered}`
+          : `推文列表（编号 1-based）：\n\n${numbered}`,
+      schema: TOPICS_SCHEMA,
+      maxTokens: 3200,
+    });
+
+    const normalized = normalizeTopicsResult(result, tweets, lang);
+    if (normalized.length > 0) return normalized;
+  } catch (err) {
+    console.error("[social-listening] topic extraction failed", err);
+  }
+
+  return buildFallbackTopics(tweets, lang);
 }
 
 // ────────────────────────────────────────────────────────────────────────────
